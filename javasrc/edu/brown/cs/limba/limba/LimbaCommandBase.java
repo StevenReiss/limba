@@ -1,0 +1,335 @@
+/********************************************************************************/
+/*                                                                              */
+/*              LimbaCommandBase.java                                           */
+/*                                                                              */
+/*      Command implementions for LIMBA                                         */
+/*                                                                              */
+/********************************************************************************/
+/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
+/*********************************************************************************
+ *  Copyright 2011, Brown University, Providence, RI.                            *
+ *                                                                               *
+ *                        All Rights Reserved                                    *
+ *                                                                               *
+ * This program and the accompanying materials are made available under the      *
+ * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
+ * and is available at                                                           *
+ *      http://www.eclipse.org/legal/epl-v10.html                                *
+ *                                                                               *
+ ********************************************************************************/
+
+
+
+package edu.brown.cs.limba.limba;
+
+import java.io.IOException;
+import java.net.http.HttpTimeoutException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+
+import edu.brown.cs.ivy.file.IvyLog;
+import io.github.ollama4j.OllamaAPI;
+import io.github.ollama4j.exceptions.OllamaBaseException;
+import io.github.ollama4j.models.generate.OllamaStreamHandler;
+import io.github.ollama4j.models.response.Model;
+import io.github.ollama4j.models.response.ModelDetail;
+import io.github.ollama4j.models.response.OllamaResult;
+import io.github.ollama4j.utils.Options;
+
+class LimbaCommandFactory implements LimbaConstants
+{
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Private Storage                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+private LimbaMain                limba_main;
+      
+
+/********************************************************************************/
+/*                                                                              */
+/*      Constructors                                                            */
+/*                                                                              */
+/********************************************************************************/
+
+LimbaCommandFactory(LimbaMain lm) 
+{
+   limba_main = lm;
+}
+
+
+LimbaCommand createCommand(String line)
+{
+   StringTokenizer tok = new StringTokenizer(line);
+   if (!tok.hasMoreTokens()) return null;
+   String cmd = tok.nextToken();
+   cmd = cmd.toUpperCase();
+   switch (cmd) {
+      case "LIST" :
+         return new CommandList(line);
+      case "DETAIL" :
+      case "DETAILS" :
+         return new CommandDetails(line);
+      case "QUERY" :
+      case "ASK" :
+         return new CommandQuery(line);
+    }
+   
+   return null;
+}
+
+/********************************************************************************/
+/*                                                                              */
+/*      Base for commands                                                       */
+/*                                                                              */
+/********************************************************************************/
+
+private abstract class CommandBase implements LimbaCommand {
+   
+   private String end_token;
+   private boolean end_on_blank;
+   protected Map<String,String> option_set;
+   protected String command_text;
+   private String first_line;
+   
+   CommandBase(String line) {
+      end_token  = "END";
+      option_set = null;
+      end_on_blank = false;
+      command_text = null;
+      readOptions(line);
+    }
+
+   @Override public boolean getEndOnBlank()             { return end_on_blank; }
+   @Override public boolean getNeedsInput()             { return false; }
+   @Override public String getEndToken()                { return end_token; } 
+   
+   protected OllamaAPI getOllama() {
+      return limba_main.getOllama();
+    }
+   protected String getModel() {
+      return limba_main.getModel();
+    }
+   protected boolean getRawFlag() {
+      return limba_main.getRawFlag();
+    }
+   protected boolean getThinkFlag() {
+      return limba_main.getThinkFlag();
+    }
+   protected Options getOllamaOptions() {
+      return limba_main.getOllamaOptions();
+    }
+   
+   private  void readOptions(String line) {
+      StringTokenizer tok = new StringTokenizer(line);
+      if (tok.hasMoreTokens()) {
+         tok.nextToken();                       // skip the command
+       }
+      
+      boolean haveeol = false;
+      while (tok.hasMoreTokens()) {
+         String opt = tok.nextToken();
+         if (opt.equals("--")) {
+            if (!haveeol) end_on_blank = true;
+            haveeol = true;
+            first_line = tok.nextToken("\n");
+            break;
+          }
+         if (opt.equals("-b")) {
+            end_on_blank = true;
+            continue;
+          }
+         if (opt.startsWith("-")) {
+            haveeol = true;
+            if (option_set == null) option_set = new HashMap<>();
+            int idx = opt.indexOf("=");
+            String key = opt;
+            String value = "";
+            if (idx > 0) {
+               key = opt.substring(0,idx);
+               value = opt.substring(idx+1);
+             }
+            option_set.put(key,value);
+          }
+         else if (!haveeol) {
+            end_token = opt;
+            haveeol = true;
+          }
+         else {
+            first_line = opt + " " + tok.nextToken("\n");
+          }
+       }
+    }
+   
+   @Override public void setupCommand(String complete) {
+      StringBuffer text = new StringBuffer();
+      StringTokenizer lines = new StringTokenizer(complete,"\n");
+      int ct = 0;
+      while (lines.hasMoreTokens()) {
+         String line = lines.nextToken();
+         if (ct == 0) {
+            line = first_line.trim();
+          }
+         text.append(line);
+         text.append("\n");
+       }
+      command_text = text.toString();
+    }
+   
+   @Override public void process() {
+      boolean retry = true;
+      for (int i = 0; retry && i < 10; ++i) {
+         retry = false;
+         try {
+            localProcess();
+          }
+         catch (OllamaBaseException e) {
+            IvyLog.logE("LIMBA","Problem processinq " + getCommandName(),e);
+          }
+         catch (HttpTimeoutException e) {
+            IvyLog.logE("LIMBA","Timeout processing " + getCommandName(),e);
+            retry = true;
+          }
+         catch (IOException e) {
+            IvyLog.logE("LIMBA","I/O Problem processinq query",e);
+          }
+         catch (InterruptedException e) {
+            IvyLog.logE("LIMBA","Command " + getCommandName() + " interrputed",e);
+            retry = true;
+          }
+         catch (Throwable t) {
+            IvyLog.logE("LIMBA","Problem with " + getCommandName(),t);
+          }
+       }
+    }
+   
+   abstract protected void localProcess() throws Exception;
+   
+}       // end of abstract class CommandBase
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      List Models command                                                     */
+/*                                                                              */
+/********************************************************************************/
+
+private class CommandList extends CommandBase {
+   
+   CommandList(String line) { 
+      super(line);
+    }
+   
+   @Override public String getCommandName()             { return "LIST"; }
+   @Override public void setupCommand(String complete)  { }
+   
+   @Override public void localProcess() throws Exception {
+      List<Model> models = getOllama().listModels();
+      for (Model m : models) {
+         System.out.println(m.getName());
+       }
+    }
+   
+}       // end of inner class CommandList
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      DETAILS command                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+private class CommandDetails extends CommandBase {
+
+   CommandDetails(String line) { 
+      super(line);
+    }
+   
+   @Override public String getCommandName()             { return "DETAILS"; }
+   @Override public void setupCommand(String complete)  { }
+   
+   @Override public void localProcess() throws Exception {
+      ModelDetail md = getOllama().getModelDetails(getModel());
+      System.out.println(md);
+    }
+
+}       // end of inner class CommandList
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      QUERY command                                                           */
+/*                                                                              */
+/********************************************************************************/
+
+private class CommandQuery extends CommandBase {
+   
+   CommandQuery(String line) {
+      super(line);
+    }
+   
+   @Override public boolean getNeedsInput()             { return true; }
+   @Override public String getCommandName()             { return "QUERY"; }
+   
+   @Override public void localProcess() throws Exception {
+      IvyLog.logD("LIMBA","Query: " + command_text);
+      StreamHandler hdlr = new StreamHandler();
+      OllamaResult rslt = null;
+      if (getThinkFlag()) {
+         rslt = getOllama().generate(getModel(),command_text,
+               getRawFlag(),getOllamaOptions(),hdlr,
+               new ThinkHandler());
+       }
+      else {
+         rslt = getOllama().generate(getModel(),command_text,
+            getRawFlag(),getOllamaOptions(),hdlr);
+       }
+      IvyLog.logD("LIMBA","Response: " + rslt.getResponse());
+      System.out.println(rslt.getResponse());
+      return;
+    }
+   
+}       // end of inner class CommandQuery
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Stream handler for async processing                                     */
+/*                                                                              */
+/********************************************************************************/
+
+private final class StreamHandler implements OllamaStreamHandler {
+   
+   @Override public void accept(String message) {
+//    System.out.println(message);
+//    IvyLog.logD("LIMBA","Received: " + message);
+    }
+   
+}       // end of inner class StreamHandler
+
+
+private final class ThinkHandler implements OllamaStreamHandler {
+   
+   @Override public void accept(String message) {
+      System.out.print(message);
+//    IvyLog.logD("LIMBA","Received: " + message);
+    }
+
+}       // end of inner class StreamHandler
+
+
+}       // end of class LimbaCommandBase
+
+
+
+
+/* end of LimbaCommandBase.java */
+

@@ -9,11 +9,23 @@
 
 package edu.brown.cs.limba.limba;
 
+
 public interface LimbaConstants {
 
-enum LimbaCommand {
+enum LimbaCommandType {
    LIST_MODELS,
    MODEL_DETAILS;
+}
+
+
+interface LimbaCommand {
+   String getCommandName();
+   boolean getEndOnBlank();
+   boolean getNeedsInput();
+   String getEndToken();
+   
+   void setupCommand(String complete);
+   void process();
 }
 
 }   // end of interface LimbaConstants

@@ -1,5 +1,18 @@
-Who are you?
+ASK -- Who are you?
 
-You are an expert Java programmer.\
+QUERY EOL
+You are an expert Java programmer.
 Tell me the most efficient way of clearing a Java StringBuffer.  Just return the code needed.
+EOL
+
+
+
+
+
+
+
+
+
+
+
 

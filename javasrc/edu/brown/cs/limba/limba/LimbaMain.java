@@ -27,15 +27,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.net.http.HttpTimeoutException;
-import java.util.List;
 
 import io.github.ollama4j.OllamaAPI;
-import io.github.ollama4j.exceptions.OllamaBaseException;
-import io.github.ollama4j.models.generate.OllamaStreamHandler;
-import io.github.ollama4j.models.response.Model;
-import io.github.ollama4j.models.response.ModelDetail;
-import io.github.ollama4j.models.response.OllamaResult;
 import io.github.ollama4j.utils.Options;
 import io.github.ollama4j.utils.OptionsBuilder;
 import edu.brown.cs.ivy.file.IvyLog;
@@ -75,13 +68,13 @@ private String ollama_model;
 private boolean interactive_mode;
 private boolean server_mode;
 private MintControl mint_control;
-private LimbaCommand process_command;
 private File project_file;
 private File input_file;
 private OllamaAPI ollama_api;
 private boolean raw_flag;
 private boolean think_flag;
 private Options generate_options;
+private LimbaCommandFactory command_factory;
 
 
 
@@ -99,7 +92,6 @@ private LimbaMain(String [] args)
    interactive_mode = false;
    server_mode = false;
    ollama_model = "codellama:latest";
-   process_command = null;
    project_file = null;
    input_file = null;
    raw_flag = false;
@@ -109,6 +101,23 @@ private LimbaMain(String [] args)
    scanArgs(args);
 }
 
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+String getModel()                       { return ollama_model; }
+
+OllamaAPI getOllama()                   { return ollama_api; }
+
+boolean getRawFlag()                    { return raw_flag; }
+
+boolean getThinkFlag()                  { return think_flag; }
+
+Options getOllamaOptions()              { return generate_options; }
 
 
 
@@ -162,12 +171,6 @@ private void scanArgs(String [] args)
                raw_flag = true;
                think_flag = true;
              }
-            else if (args[i].startsWith("-L")) {                   // -LIST_MODEL
-               process_command = LimbaCommand.LIST_MODELS; 
-             }  
-            else if (args[i].startsWith("-D")) {                   // -DETAILS
-               process_command = LimbaCommand.MODEL_DETAILS;
-             }
             else badArgs();
           }
          else {
@@ -184,7 +187,6 @@ private void badArgs()
    System.err.println("LIMBA: limba [-host <ollama host>] [-port <ollama port>] ");
    System.err.println("          [-llama <llama model>] [-m <mint id>]");
    System.err.println("          [-directory <project file or directory>] [-interactive]");
-   System.err.println("          [-LIST_MODEL | -DETAILS]");
    System.exit(1);
 }
 
@@ -205,20 +207,14 @@ private void process()
    File f2 = new File(f1,"limba.log");
    IvyLog.setLogFile(f2);
    IvyLog.useStdErr(true);
-         
+   
    startOllama();
    
-   if (process_command != null) {
-      switch (process_command) {
-         case LIST_MODELS:
-            handleListModels();
-            break;
-         case MODEL_DETAILS :
-            handleModelDetails();
-            break;
-       }
-      return;
+   if (project_file != null) {
+      // set up RAG for project
     }
+   
+   command_factory = new LimbaCommandFactory(this);
    
    if (server_mode && mint_id != null) {
       mint_control = MintControl.create(mint_id,MintSyncMode.ONLY_REPLIES);
@@ -257,28 +253,65 @@ private void processFile(Reader r,boolean prompt)
 {
    try (BufferedReader rdr = new BufferedReader(r)) {
       StringBuffer buf = new StringBuffer();
+      
+      String promptxt = "LIMBA> ";
+      String endtoken = "END";
+      boolean endonblank = false;
+            
       for ( ; ; ) {
-         if (prompt) System.out.print("LIMBA> ");
+         if (prompt) {
+            System.out.print(promptxt);
+            promptxt = "LIMBA>>> ";
+          }
+         
          String line = rdr.readLine();
          if (line == null) break;
          line = line.trim();
          if (line.isEmpty() && buf.isEmpty()) continue;
-         boolean fini = true;
+         if (buf.isEmpty()) {
+            LimbaCommand cmd = command_factory.createCommand(line); 
+            if (cmd == null) continue;
+            endonblank = cmd.getEndOnBlank();
+            endtoken = cmd.getEndToken(); 
+          }
+         boolean fini = false;
+         if (endtoken != null && line.trim().equals(endtoken)) {
+            line = "";
+            fini = true;
+          }
+         if (endonblank && line.isEmpty()) fini = true;
+         
          if (line.endsWith("\\")) {
             line = line.substring(0,line.length()-1);
-            fini = false;
           }
-         if (!buf.isEmpty()) buf.append(" ");
+         
+         if (!buf.isEmpty()) buf.append("\n");
          buf.append(line);
          if (fini) {
-            handleQuery(buf.toString());
+            handleCommand(buf.toString());
             buf.setLength(0);
-            System.out.println();
+            if (prompt) {
+               System.out.println();
+               promptxt = "LIMBA> ";
+             }
+            endtoken = "END";
+            endonblank = false;
           }
        }
     }
    catch (IOException e) {
       IvyLog.logE("LIMBA","Problem reading commands",e);
+    }
+}
+
+
+private void handleCommand(String cmd)
+{
+   try {
+      // handle command here
+    }
+   catch (Throwable t) {
+      IvyLog.logE("LIMBA","Problem handling command",t);
     }
 }
 
@@ -306,111 +339,6 @@ private void startOllama()
    System.err.println("OLLAMA server not running");
    System.exit(1);
 }
-
-
-
-/********************************************************************************/
-/*                                                                              */
-/*      List models                                                             */
-/*                                                                              */
-/********************************************************************************/
-
-private void handleListModels()
-{
-   try {
-      List<Model> models = ollama_api.listModels();
-      for (Model m : models) {
-         System.out.println(m.getName());
-       }
-    }
-   catch (Throwable t) {
-      IvyLog.logE("LIMBA","Problem with list models",t);
-    }
-}
-
-
-
-/********************************************************************************/
-/*                                                                              */
-/*      Model details                                                           */
-/*                                                                              */
-/********************************************************************************/
-
-private void handleModelDetails()
-{
-   try {
-      ModelDetail md = ollama_api.getModelDetails(ollama_model);
-      System.out.println(md);
-    }
-   catch (Throwable t) {
-      IvyLog.logE("LIMBA","Problem with model details",t);
-    }
-}
-
-
-
-
-/********************************************************************************/
-/*                                                                              */
-/*      Send text to LLM                                                        */
-/*                                                                              */
-/********************************************************************************/
-
-private void handleQuery(String q)
-{
-   for (int i = 0; i < 10; ++i) { 
-      try {
-         IvyLog.logD("LIMBA","Query: " + q);
-//       OllamaResult rslt = ollama_api.generate(ollama_model,q,
-//             raw_flag,think_flag,generate_options);
-//       IvyLog.logD("LIMBA","Response: " + rslt.getResponse());
-//       System.out.println(rslt.getResponse());
-         StreamHandler hdlr = new StreamHandler();
-         OllamaResult rslt = ollama_api.generate(ollama_model,q,
-               raw_flag,generate_options,hdlr);
-         IvyLog.logD("LIMBA","Response: " + rslt.getResponse());
-         System.out.println(rslt.getResponse());
-         return;
-       }
-      catch (OllamaBaseException e) {
-         IvyLog.logE("LIMBA","Problem processinq query",e);
-         return;
-       }
-      catch (HttpTimeoutException e) {
-         IvyLog.logE("LIMBA","Query timeout",e);
-         continue;
-       }
-      catch (IOException e) {
-         IvyLog.logE("LIMBA","I/O Problem processinq query",e);
-         return;
-       }
-      catch (InterruptedException e) {
-         IvyLog.logE("LIMBA","Query interrputed",e);
-         continue;
-       }
-      catch (Throwable t) {
-         IvyLog.logE("LIMBA","Query processing problem",t);
-         return;
-       }
-    }
-}
-
-
-
-/********************************************************************************/
-/*                                                                              */
-/*      Handle stream output                                                    */
-/*                                                                              */
-/********************************************************************************/
-
-private final class StreamHandler implements OllamaStreamHandler {
-
-   @Override public void accept(String message) {
-//    System.out.println(message);
-//    IvyLog.logD("LIMBA","Received: " + message);
-}
-
-}       // end of inner class StreamHandler
 
 
 
