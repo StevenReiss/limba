@@ -1,18 +1,91 @@
 ASK -- Who are you?
 
 QUERY EOL
-You are an expert Java programmer.
 Tell me the most efficient way of clearing a Java StringBuffer.  Just return the code needed.
 EOL
 
+GENERATE EOL
+Write a function with the signature "String convert(int num)" that converts a number into its
+lower case roman numeral representation.
+EOL
 
+CLEAN EOL
+private void process()
+{
+IvyLog.setupLogging("LIMBA",true);
+IvyLog.setLogLevel(IvyLog.LogLevel.DEBUG);
+String home = System.getProperty("user.home");
+File f1 = new File(home);
+File f2 = new File(f1,"limba.log");
+IvyLog.setLogFile(f2);
+IvyLog.useStdErr(true);
+			
+startOllama();
+			
+if (project_file != null) {
+// set up RAG for project
+}
+					
+command_factory = new LimbaCommandFactory(this);
+					
+if (server_mode && mint_id != null) {
+mint_control = MintControl.create(mint_id,MintSyncMode.ONLY_REPLIES);
+mint_control.register("<LIMBA DO='_VAR_0' SID='_VAR_1'/>",
+new CommandHandler());
+}
+									
+if (input_file != null) {
+try (FileReader fr = new FileReader(input_file)) {
+processFile(fr,false);
+}
+catch (IOException e) {
+IvyLog.logE("LIMBA","Problem reading input file " + input_file,e);
+}
+}
+															
+if (interactive_mode) {
+try (Reader r = new InputStreamReader(System.in)) {
+processFile(r,true);
+}
+catch (IOException e) {
+IvyLog.logE("LIMBA","Problem reading stdin",e);
+}
+}
+}
 
+EOL
 
+JAVADOC EOL
 
+LimbaCommand createCommand(String line)
+{
+StringTokenizer tok = new StringTokenizer(line);
+if (!tok.hasMoreTokens()) return null;
+String cmd = tok.nextToken();
+cmd = cmd.toUpperCase();
+String prompt = getPrompt(cmd);
+		
+switch (cmd) {
+case "LIST" :
+return new CommandList(line);
+case "DETAIL" :
+case "DETAILS" :
+return new CommandDetails(line);
+case "QUERY" :
+return new CommandQuery(prompt,line);
+case "ASK" :
+return new CommandQuery(prompt,line);
+case "CLEAN" :
+return new CommandQuery(prompt,line);
+case "GENERATE" :
+return new CommandQuery(prompt,line);
+case "JAVADOC" :
+break;
+case "SUGGEST" :
+break;
+}
+																		
+return null;
+}
 
-
-
-
-
-
-
+EOL

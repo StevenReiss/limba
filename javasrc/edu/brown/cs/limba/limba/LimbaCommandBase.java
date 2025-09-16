@@ -23,13 +23,17 @@
 package edu.brown.cs.limba.limba;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.http.HttpTimeoutException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import org.w3c.dom.Element;
+
 import edu.brown.cs.ivy.file.IvyLog;
+import edu.brown.cs.ivy.xml.IvyXml;
 import io.github.ollama4j.OllamaAPI;
 import io.github.ollama4j.exceptions.OllamaBaseException;
 import io.github.ollama4j.models.generate.OllamaStreamHandler;
@@ -69,6 +73,8 @@ LimbaCommand createCommand(String line)
    if (!tok.hasMoreTokens()) return null;
    String cmd = tok.nextToken();
    cmd = cmd.toUpperCase();
+   String prompt = getPrompt(cmd);
+   
    switch (cmd) {
       case "LIST" :
          return new CommandList(line);
@@ -76,12 +82,54 @@ LimbaCommand createCommand(String line)
       case "DETAILS" :
          return new CommandDetails(line);
       case "QUERY" :
+         return new CommandQuery(prompt,line);
       case "ASK" :
-         return new CommandQuery(line);
+         return new CommandQuery(prompt,line);
+      case "CLEAN" :
+         return new CommandQuery(prompt,line);
+      case "GENERATE" :
+         return new CommandQuery(prompt,line);
+      case "JAVADOC" :
+         return new CommandQuery(prompt,line);
+      case "SUGGEST" :
+         break;
+      case "EXIT" :
+         System.exit(0);
     }
    
    return null;
 }
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Get prompt from resource file                                           */
+/*                                                                              */
+/********************************************************************************/
+
+private String getPrompt(String cmd)
+{
+   InputStream ins = getClass().getClassLoader().getResourceAsStream("prompts.xml");
+   if (ins == null) return null;
+   Element xml = IvyXml.loadXmlFromStream(ins);
+   if (xml == null) return null;
+   String base = null;
+   String ptxt = null;
+   for (Element pmpt : IvyXml.children(xml,"PROMPT")) {
+      String what = IvyXml.getAttrString(pmpt,"COMMAND");
+      if (what == null) base = IvyXml.getText(pmpt).trim();
+      else if (what.equals(cmd)) {
+         ptxt = IvyXml.getText(pmpt).trim();
+       }
+    }
+   
+   if (base == null) return ptxt;
+   if (ptxt == null) return base;
+   return base + " " + ptxt;
+}
+
+
 
 /********************************************************************************/
 /*                                                                              */
@@ -172,7 +220,8 @@ private abstract class CommandBase implements LimbaCommand {
       int ct = 0;
       while (lines.hasMoreTokens()) {
          String line = lines.nextToken();
-         if (ct == 0) {
+         if (ct++ == 0) {
+            if (first_line == null) continue;
             line = first_line.trim();
           }
          text.append(line);
@@ -208,7 +257,7 @@ private abstract class CommandBase implements LimbaCommand {
        }
     }
    
-   abstract protected void localProcess() throws Exception;
+   protected abstract void localProcess() throws Exception;
    
 }       // end of abstract class CommandBase
 
@@ -271,24 +320,31 @@ private class CommandDetails extends CommandBase {
 
 private class CommandQuery extends CommandBase {
    
-   CommandQuery(String line) {
+   private String programmer_prompt;
+   
+   CommandQuery(String prompt,String line) {
       super(line);
+      programmer_prompt = prompt;
     }
    
    @Override public boolean getNeedsInput()             { return true; }
    @Override public String getCommandName()             { return "QUERY"; }
    
    @Override public void localProcess() throws Exception {
-      IvyLog.logD("LIMBA","Query: " + command_text);
+      String cmd = command_text;
+      if (programmer_prompt != null) {
+         cmd = programmer_prompt + " " + command_text;
+       }
+      IvyLog.logD("LIMBA","Query: " + cmd);
       StreamHandler hdlr = new StreamHandler();
       OllamaResult rslt = null;
       if (getThinkFlag()) {
-         rslt = getOllama().generate(getModel(),command_text,
+         rslt = getOllama().generate(getModel(),cmd,
                getRawFlag(),getOllamaOptions(),hdlr,
                new ThinkHandler());
        }
       else {
-         rslt = getOllama().generate(getModel(),command_text,
+         rslt = getOllama().generate(getModel(),cmd,
             getRawFlag(),getOllamaOptions(),hdlr);
        }
       IvyLog.logD("LIMBA","Response: " + rslt.getResponse());

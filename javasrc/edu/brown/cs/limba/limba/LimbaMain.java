@@ -257,6 +257,7 @@ private void processFile(Reader r,boolean prompt)
       String promptxt = "LIMBA> ";
       String endtoken = "END";
       boolean endonblank = false;
+      LimbaCommand cmd = null;
             
       for ( ; ; ) {
          if (prompt) {
@@ -269,7 +270,7 @@ private void processFile(Reader r,boolean prompt)
          line = line.trim();
          if (line.isEmpty() && buf.isEmpty()) continue;
          if (buf.isEmpty()) {
-            LimbaCommand cmd = command_factory.createCommand(line); 
+            cmd = command_factory.createCommand(line); 
             if (cmd == null) continue;
             endonblank = cmd.getEndOnBlank();
             endtoken = cmd.getEndToken(); 
@@ -288,7 +289,7 @@ private void processFile(Reader r,boolean prompt)
          if (!buf.isEmpty()) buf.append("\n");
          buf.append(line);
          if (fini) {
-            handleCommand(buf.toString());
+            handleCommand(cmd,buf.toString());
             buf.setLength(0);
             if (prompt) {
                System.out.println();
@@ -296,6 +297,7 @@ private void processFile(Reader r,boolean prompt)
              }
             endtoken = "END";
             endonblank = false;
+            cmd = null;
           }
        }
     }
@@ -305,10 +307,11 @@ private void processFile(Reader r,boolean prompt)
 }
 
 
-private void handleCommand(String cmd)
+private void handleCommand(LimbaCommand cmd,String cmdtxt)
 {
    try {
-      // handle command here
+      cmd.setupCommand(cmdtxt);
+      cmd.process();
     }
    catch (Throwable t) {
       IvyLog.logE("LIMBA","Problem handling command",t);
