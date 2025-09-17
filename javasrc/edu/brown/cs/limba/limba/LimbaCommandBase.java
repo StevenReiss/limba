@@ -92,6 +92,10 @@ LimbaCommand createCommand(String line)
       case "JAVADOC" :
          return new CommandQuery(prompt,line);
       case "SUGGEST" :
+         return new CommandQuery(prompt,line);
+      case "EXPLAIN" :
+         return new CommandQuery(prompt,line);
+      case "PROJECT" :
          break;
       case "EXIT" :
          System.exit(0);
@@ -333,7 +337,7 @@ private class CommandQuery extends CommandBase {
    @Override public void localProcess() throws Exception {
       String cmd = command_text;
       if (programmer_prompt != null) {
-         cmd = programmer_prompt + " " + command_text;
+         cmd = programmer_prompt + "\n" + command_text;
        }
       IvyLog.logD("LIMBA","Query: " + cmd);
       StreamHandler hdlr = new StreamHandler();
@@ -348,6 +352,7 @@ private class CommandQuery extends CommandBase {
             getRawFlag(),getOllamaOptions(),hdlr);
        }
       IvyLog.logD("LIMBA","Response: " + rslt.getResponse());
+      IvyLog.logD("LIMBA","\n------------------------\n\n");
       System.out.println(rslt.getResponse());
       return;
     }

@@ -75,6 +75,7 @@ private boolean raw_flag;
 private boolean think_flag;
 private Options generate_options;
 private LimbaCommandFactory command_factory;
+private LimbaRag rag_model;
 
 
 
@@ -96,6 +97,7 @@ private LimbaMain(String [] args)
    input_file = null;
    raw_flag = false;
    think_flag = false;
+   rag_model = null;
    generate_options = new OptionsBuilder().build();
    
    scanArgs(args);
@@ -118,6 +120,13 @@ boolean getRawFlag()                    { return raw_flag; }
 boolean getThinkFlag()                  { return think_flag; }
 
 Options getOllamaOptions()              { return generate_options; }
+
+LimbaRag getRagModel()                  { return rag_model; }
+
+String getUrl()
+{
+   return "http://" + ollama_host + ":" + ollama_port;
+}
 
 
 
@@ -211,7 +220,8 @@ private void process()
    startOllama();
    
    if (project_file != null) {
-      // set up RAG for project
+      rag_model = new LimbaRag(this,project_file);
+      rag_model.getChain();             // FOR DEBUGGING ONLY
     }
    
    command_factory = new LimbaCommandFactory(this);
