@@ -13,7 +13,7 @@ EOL
 GENERATE EOL
 Write a function with the signature "String convert(int num)" that converts a number into its
 lowercase roman numeral representation.  For example convert(17) = "xvii".  It should handle
-all integers including 0, negative numbers and numbers larger that 10000 as arabic.
+all integers including 0, negative numbers and numbers larger that 5000 as arabic numerals.
 EOL
 
 CLEAN EOL
@@ -32,15 +32,15 @@ startOllama();
 if (project_file != null) {
 // set up RAG for project
 }
-	
+
 command_factory = new LimbaCommandFactory(this);
-	
+
 if (server_mode && mint_id != null) {
 mint_control = MintControl.create(mint_id,MintSyncMode.ONLY_REPLIES);
 mint_control.register("<LIMBA DO='_VAR_0' SID='_VAR_1'/>",
 new CommandHandler());
 }
-					
+			
 if (input_file != null) {
 try (FileReader fr = new FileReader(input_file)) {
 processFile(fr,false);
@@ -49,7 +49,7 @@ catch (IOException e) {
 IvyLog.logE("LIMBA","Problem reading input file " + input_file,e);
 }
 }
-											
+									
 if (interactive_mode) {
 try (Reader r = new InputStreamReader(System.in)) {
 processFile(r,true);
@@ -91,7 +91,7 @@ break;
 case "SUGGEST" :
 break;
 }
-														
+												
 return null;
 }
 

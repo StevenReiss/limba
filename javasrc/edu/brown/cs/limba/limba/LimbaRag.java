@@ -41,6 +41,7 @@ import dev.langchain4j.model.ollama.OllamaEmbeddingModel;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
+// import dev.langchain4j.store.embedding.chroma.ChromaEmbeddingStore;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.project.IvyProject;
@@ -132,13 +133,20 @@ private EmbeddingStoreContentRetriever setupRAG()
          .logRequests(true)
          .logResponses(true)
          .build();
-   EmbeddingStore<TextSegment> store = new InMemoryEmbeddingStore<>();
+   EmbeddingStore<TextSegment> store;
+   store = new InMemoryEmbeddingStore<>();
+// need class okhttp3/Interceptor
+// store = ChromaEmbeddingStore.builder()
+//       .baseUrl(limba_main.getUrl())
+//       .build();
    EmbeddingStoreIngestor ingest = EmbeddingStoreIngestor.builder()
          .documentSplitter(spliter)
          .embeddingModel(embed)
          .embeddingStore(store)
          .build();
+   IvyLog.logD("LIMBA","Ingest documents " + docs.size());
    ingest.ingest(docs);
+   IvyLog.logD("LIMBA","Done ingest");
    EmbeddingStoreContentRetriever retrv = EmbeddingStoreContentRetriever.builder()
          .embeddingModel(embed)
          .embeddingStore(store)

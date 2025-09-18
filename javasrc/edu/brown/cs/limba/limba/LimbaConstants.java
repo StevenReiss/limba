@@ -9,6 +9,7 @@
 
 package edu.brown.cs.limba.limba;
 
+import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 public interface LimbaConstants {
 
@@ -24,8 +25,9 @@ interface LimbaCommand {
    boolean getNeedsInput();
    String getEndToken();
    
-   void setupCommand(String complete);
-   void process();
+   void setupCommand(String complete,boolean user);
+   void setOptions(String options);
+   void process(IvyXmlWriter rslt);
 }
 
 }   // end of interface LimbaConstants

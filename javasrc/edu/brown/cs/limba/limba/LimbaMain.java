@@ -32,11 +32,6 @@ import io.github.ollama4j.OllamaAPI;
 import io.github.ollama4j.utils.Options;
 import io.github.ollama4j.utils.OptionsBuilder;
 import edu.brown.cs.ivy.file.IvyLog;
-import edu.brown.cs.ivy.mint.MintArguments;
-import edu.brown.cs.ivy.mint.MintControl;
-import edu.brown.cs.ivy.mint.MintHandler;
-import edu.brown.cs.ivy.mint.MintMessage;
-import edu.brown.cs.ivy.mint.MintConstants.MintSyncMode; 
 
 public final class LimbaMain implements LimbaConstants
 {
@@ -67,7 +62,6 @@ private int ollama_port;
 private String ollama_model;
 private boolean interactive_mode;
 private boolean server_mode;
-private MintControl mint_control;
 private File project_file;
 private File input_file;
 private OllamaAPI ollama_api;
@@ -99,6 +93,7 @@ private LimbaMain(String [] args)
    think_flag = false;
    rag_model = null;
    generate_options = new OptionsBuilder().build();
+   command_factory = null;
    
    scanArgs(args);
 }
@@ -128,6 +123,10 @@ String getUrl()
    return "http://" + ollama_host + ":" + ollama_port;
 }
 
+LimbaCommand createCommand(String line)
+{
+   return command_factory.createCommand(line);
+}
 
 
 /********************************************************************************/
@@ -217,6 +216,8 @@ private void process()
    IvyLog.setLogFile(f2);
    IvyLog.useStdErr(true);
    
+   IvyLog.logD("LIMBA","Running with " + getUrl() + " " + getModel());
+   
    startOllama();
    
    if (project_file != null) {
@@ -227,9 +228,7 @@ private void process()
    command_factory = new LimbaCommandFactory(this);
    
    if (server_mode && mint_id != null) {
-      mint_control = MintControl.create(mint_id,MintSyncMode.ONLY_REPLIES);
-      mint_control.register("<LIMBA DO='_VAR_0' SID='_VAR_1'/>",
-            new CommandHandler());
+      new LimbaMsg(this,mint_id);
     }
    
    if (input_file != null) {
@@ -320,8 +319,8 @@ private void processFile(Reader r,boolean prompt)
 private void handleCommand(LimbaCommand cmd,String cmdtxt)
 {
    try {
-      cmd.setupCommand(cmdtxt);
-      cmd.process();
+      cmd.setupCommand(cmdtxt,true);
+      cmd.process(null);
     }
    catch (Throwable t) {
       IvyLog.logE("LIMBA","Problem handling command",t);
@@ -353,21 +352,6 @@ private void startOllama()
    System.exit(1);
 }
 
-
-
-/********************************************************************************/
-/*                                                                              */
-/*      Handle commands from BUBBLES                                            */
-/*                                                                              */
-/********************************************************************************/
-
-private final class CommandHandler implements MintHandler {
-   
-   @Override public void receive(MintMessage msg,MintArguments args) {
-      IvyLog.logD("LIMBA","Process command " + msg.getText());
-    }
-   
-}       // end of inner class CommandHandler
 
 
 }       // end of class LimbaMain

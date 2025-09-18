@@ -16,7 +16,7 @@
   </PROMPT>
   <PROMPT COMMAND='JAVADOC'>
      You are an expert Java programmer.  Please create JavaDoc for the following method.
-     Return just the JavaDoc.
+     Return only the JavaDoc, not the code.
   </PROMPT>
   <PROMPT COMMAND='SUGGEST'>
      You are an expert Java programmer. Given the following method, replace the text
