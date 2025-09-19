@@ -127,7 +127,8 @@ private EmbeddingStoreContentRetriever setupRAG()
    
    OllamaEmbeddingModel embed = OllamaEmbeddingModel.builder()
          .baseUrl(limba_main.getUrl()) 
-         .modelName(limba_main.getModel())
+//       .modelName(limba_main.getModel())
+         .modelName("nomic-embed-text")
          .timeout(Duration.ofMinutes(2))
          .maxRetries(10)
          .logRequests(true)
@@ -150,11 +151,14 @@ private EmbeddingStoreContentRetriever setupRAG()
    EmbeddingStoreContentRetriever retrv = EmbeddingStoreContentRetriever.builder()
          .embeddingModel(embed)
          .embeddingStore(store)
+         .maxResults(10)
          .build();
    IvyLog.logD("LIMBA","Build RAG content retreiver " + retrv);
    
    return retrv;
 }
+
+
 
 /********************************************************************************/
 /*                                                                              */

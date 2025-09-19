@@ -7,7 +7,7 @@ EOL
 
 GENERATE EOL
 Write a function with the signature "String convert(int num)" that converts a number into its
-lowercase roman numeral representation.
+lowercase roman numeral representation.  Please generate 3 different solutions.
 EOL
 
 GENERATE EOL
@@ -40,7 +40,7 @@ mint_control = MintControl.create(mint_id,MintSyncMode.ONLY_REPLIES);
 mint_control.register("<LIMBA DO='_VAR_0' SID='_VAR_1'/>",
 new CommandHandler());
 }
-			
+		
 if (input_file != null) {
 try (FileReader fr = new FileReader(input_file)) {
 processFile(fr,false);
@@ -49,7 +49,7 @@ catch (IOException e) {
 IvyLog.logE("LIMBA","Problem reading input file " + input_file,e);
 }
 }
-									
+								
 if (interactive_mode) {
 try (Reader r = new InputStreamReader(System.in)) {
 processFile(r,true);
@@ -91,7 +91,7 @@ break;
 case "SUGGEST" :
 break;
 }
-												
+											
 return null;
 }
 

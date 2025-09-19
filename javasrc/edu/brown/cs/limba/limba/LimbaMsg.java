@@ -83,6 +83,9 @@ private String processCommand(String cmd,Element xml) throws LimbaException
          case "PING" :
             xw.text("PONG");
             break;
+         case "PROJECT" :
+            loadProjectData();
+            break;
          case "LIST" :
          case "DETAILS" :
             // immediate commands
@@ -120,6 +123,18 @@ private LimbaCommand setupLimbaCommand(String cmd,Element xml)
    lcmd.setupCommand(body,false);
    
    return lcmd;
+}
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Load project infromation from BUBBLES                                   */
+/*                                                                              */
+/********************************************************************************/
+
+private void loadProjectData()
+{
+   
 }
 
 

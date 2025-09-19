@@ -440,9 +440,15 @@ private class CommandQuery extends CommandBase {
          System.out.println("RESPONSE TIME: " + rslt.getResponseTime());
          System.out.println(rslt.getResponse());
          String jcode = getJavaCode(resp);
-         if (jcode != null) System.out.println("\n\nJAVA CODE:\n" + jcode + "\n\n");
+         if (jcode != null) {
+            IvyLog.logD("LIMBA","JAVA CODE" + jcode);
+            System.out.println("\n\nJAVA CODE:\n" + jcode + "\n\n");
+          }
          String jdoc = getJavaDoc(resp);
-         if (jdoc != null) System.out.println("\n\nJAVA DOC:\n" + jdoc + "\n\n");
+         if (jdoc != null) {
+            IvyLog.logD("LIMBA","JAVADOC" + jdoc);
+            System.out.println("\n\nJAVA DOC:\n" + jdoc + "\n\n");
+          }
        }
       return;
     }

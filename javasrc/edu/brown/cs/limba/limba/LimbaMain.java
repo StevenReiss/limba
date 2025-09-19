@@ -340,6 +340,7 @@ private void startOllama()
    String host = "http://" + ollama_host + ":" + ollama_port + "/";
    try {
       ollama_api = new OllamaAPI(host);
+      ollama_api.setRequestTimeoutSeconds(300L);
       boolean ping = ollama_api.ping();
       if (ping) return;
     }
