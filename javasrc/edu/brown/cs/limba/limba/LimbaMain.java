@@ -59,8 +59,6 @@ public static void main(String [] args)
 /********************************************************************************/
 
 private String mint_id;
-private String server_host;
-private int server_port;
 private String ollama_host;
 private int ollama_port;
 private String ollama_model;
@@ -75,6 +73,7 @@ private Options generate_options;
 private LimbaCommandFactory command_factory;
 private LimbaRag rag_model;
 private Map<String,String> key_map;
+private boolean remote_files;
 
 
 
@@ -87,8 +86,6 @@ private Map<String,String> key_map;
 private LimbaMain(String [] args) 
 {
    mint_id = null;
-   server_host = null;
-   server_port = 0;
    ollama_host = "localhost";
    ollama_port = 11434;
    interactive_mode = false;
@@ -103,6 +100,7 @@ private LimbaMain(String [] args)
    command_factory = null;
    key_map = new HashMap<>();
    key_map.put("LANGUAGE","java");
+   remote_files = false;
    
    scanArgs(args);
 }
@@ -144,6 +142,9 @@ void setKeyMap(String key,String val)
    if (val == null) key_map.remove(key);
    else key_map.put(key,val);
 }
+
+boolean getRemoteFileAccess()           { return remote_files; }
+
 
 
 /********************************************************************************/
@@ -187,25 +188,23 @@ private void scanArgs(String [] args)
                input_file = new File(args[++i]);
                continue;
              }
-            else if (args[i].startsWith("-sh")) {               // -sh <server host>
-               server_host = args[++i];
-             }
-            else if (args[i].startsWith("-sp")) {               // -sp <server port>
-               try {
-                  server_port = Integer.parseInt(args[++i]);
-                }
-               catch (NumberFormatException e) {
-                  badArgs();
-                }
+            else if (args[i].startsWith("-L")) {                // -Log <logfile>
+               // set log file
              }
           }
          if (args[i].startsWith("-")) {
             if (args[i].startsWith("-i")) {                     // -interactive
                interactive_mode = true;
              }
-            else if (args[i].startsWith("-d")) {
+            else if (args[i].startsWith("-think")) {
                raw_flag = true;
                think_flag = true;
+             }
+            else if (args[i].startsWith("-remote")) {           // -remoteFileAccess
+               remote_files = true;
+             }
+            else if (args[i].startsWith("-D")) {                // -DEBUG  
+               // set log level
              }
             else badArgs();
           }
@@ -258,14 +257,6 @@ private void process()
    
    if (server_mode && mint_id != null) {
       new LimbaMsg(this,mint_id);
-    }
-   else if (server_mode && server_host != null && server_port > 0) {
-      try {
-         new LimbaMsg(this,server_host,server_port);
-       }
-      catch (IOException e) {
-         IvyLog.logE("Can't talk to server",e);
-       }
     }
    
    if (input_file != null) {

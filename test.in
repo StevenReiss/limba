@@ -1,3 +1,22 @@
+GENERATE EOL
+Write a Java class that implements a text message interface.  It should have box
+where the user can enter text and do a send.  It should also have a scrolling
+region that displays the user's messages right justified and the responses left
+justified.  There should be a abstract method that is called with the user's
+message. There should be a method that is called with the non-user text that inserts
+that text into the output stream.  Input should be displayed in a yellow box that
+occupies the right 2/3 of the scrolling region.  Output should be displayed
+in a green box that occupes the full scrolling region.	The class
+should be implemented using Java Swing.  The class should not use annonymous
+classes, using nested classes instead.	The input field should accept multiple
+lines of input.
+
+EOL
+
+
+
+EXIT
+
 ASK -- Who are you?
 
 QUERY EOL
@@ -40,7 +59,7 @@ mint_control = MintControl.create(mint_id,MintSyncMode.ONLY_REPLIES);
 mint_control.register("<LIMBA DO='_VAR_0' SID='_VAR_1'/>",
 new CommandHandler());
 }
-		
+
 if (input_file != null) {
 try (FileReader fr = new FileReader(input_file)) {
 processFile(fr,false);
@@ -49,7 +68,7 @@ catch (IOException e) {
 IvyLog.logE("LIMBA","Problem reading input file " + input_file,e);
 }
 }
-								
+					
 if (interactive_mode) {
 try (Reader r = new InputStreamReader(System.in)) {
 processFile(r,true);
@@ -91,11 +110,29 @@ break;
 case "SUGGEST" :
 break;
 }
-											
+								
 return null;
 }
 
 EOL
 
+GENERATE EOL
+Write a Java class that implements a text message interface.  It should have box
+where the user can enter text and do a send.  It should also have a scrolling
+region that displays the user's messages right justified and the responses left
+justified.  There should be a abstract method that is called with the user's
+message. There should be a method that is called with the non-user text that inserts
+that text into the output stream.  Input should be displayed in a yellow box that
+occupies the right 2/3 of the scrolling region.  Output should be displayed
+in a green box that occupes the full scrolling region.	The class
+should be implemented using Java Swing.  The class should not use annonymous
+classes, using nested classes instead.	The input field should accept multiple
+lines of input.
+
+EOL
+
+
+
 
 EXIT
+

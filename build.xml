@@ -42,15 +42,53 @@
      </javac>
   </target>
 
-  <target name='jar' depends='compile'>
+  <target name='jar' depends='setup,compile'>
      <jar destfile='limba.jar'>
 	<manifest>
 	   <attribute name='Main-Class' value='edu.brown.cs.limba.limba.LimbaMain' />
 	</manifest>
 	<fileset dir='${LIMBA}/java' includes='**/*.class' />
 	<fileset dir='${LIMBA}/resources' includes='*.xml' />
+	<fileset dir='${PRO}/ivy/java' includes='**/*.class' />
 	<zipfileset src='${LIMBALIB}/ollama4j.jar' excludes='META-INF/*' />
+	<zipfileset src='${LIMBALIB}/langchain-http-client.jar' excludes='META-INF/*' />
+	<zipfileset src='${LIMBALIB}/langchain4j-chroma.jar' excludes='META-INF/*' />
+	<zipfileset src='${LIMBALIB}/langchain4j-core.jar' excludes='META-INF/*' />
+	<zipfileset src='${LIMBALIB}/langchain4j-http-client-jdk.jar' excludes='META-INF/*' />
+	<zipfileset src='${LIMBALIB}/langchain4j-ollama.jar' excludes='META-INF/*' />
+	<zipfileset src='${LIMBALIB}/langchain4j.jar' excludes='META-INF/*' />
+	<zipfileset src='${LIMBALIB}/okhttp.jar' excludes='META-INF/*' />
+	<zipfileset src='${LIMBALIB}/ollama4j.jar' excludes='META-INF/*' />
+	<zipfileset src='${LIMBALIB}/openlp-tools.jar' excludes='META-INF/*' />
      </jar>
+   </target>
+
+   <target name='bubbles' depends='all'>
+      <jar destfile='limba.jar'>
+	 <manifest>
+	    <attribute name="Bubbles-start" value='edu.brown.cs.limba.limba.LimbaMain' />
+	    <attribute name="Bubbles-palette" value='limbabb.palette' />
+	    <attribute name="Bubbles-resource" value='Bait.props' />
+	    <attribute name="Bubbles-depends" value='' />
+	 </manifest>
+	 <fileset dir='${LIMBA}/java' includes='**/*.class' />
+	 <fileset dir='${LIMBA}/resources' includes='*.xml' />
+	 <fileset dir='${PRO}/ivy/java' includes='**/*.class' />
+	 <zipfileset src='${LIMBALIB}/ollama4j.jar' excludes='META-INF/*' />
+	 <zipfileset src='${LIMBALIB}/langchain-http-client.jar' excludes='META-INF/*' />
+	 <zipfileset src='${LIMBALIB}/langchain4j-chroma.jar' excludes='META-INF/*' />
+	 <zipfileset src='${LIMBALIB}/langchain4j-core.jar' excludes='META-INF/*' />
+	 <zipfileset src='${LIMBALIB}/langchain4j-http-client-jdk.jar' excludes='META-INF/*' />
+	 <zipfileset src='${LIMBALIB}/langchain4j-ollama.jar' excludes='META-INF/*' />
+	 <zipfileset src='${LIMBALIB}/langchain4j.jar' excludes='META-INF/*' />
+	 <zipfileset src='${LIMBALIB}/okhttp.jar' excludes='META-INF/*' />
+	 <zipfileset src='${LIMBALIB}/ollama4j.jar' excludes='META-INF/*' />
+	 <zipfileset src='${LIMBALIB}/openlp-tools.jar' excludes='META-INF/*' />
+	 <fileset dir='${PRO}/limbabb' includes='Bait.props' />
+	 <fileset dir='${PRO}/limbabb' includes='limbabb.palette' />
+      </jar>
+      <copy file='limba.jar' tofile='${PRO}/bubbles/dropins/limba.jar' verbose='true' />
+      <copy file='limba.jar' tofile='${PRO}/bubbles/dropins.export/limba.jar' verbose='true' />
    </target>
 
 </project>
