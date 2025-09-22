@@ -30,7 +30,7 @@
    <path id='spr.classpath'>
      <pathelement location='${LIMBA}/java' />
      <pathelement location='${LIMBA}/javasrc' />
-     <fileset dir='${LIMBALIB}' includes='ollama4j.jar' />
+     <fileset dir='${LIMBALIB}' includes='*.jar' />
      <fileset dir='${IVYLIB}' includes='ivy.jar' />
   </path>
 

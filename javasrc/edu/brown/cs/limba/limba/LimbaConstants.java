@@ -22,7 +22,6 @@ enum LimbaCommandType {
 interface LimbaCommand {
    String getCommandName();
    boolean getEndOnBlank();
-   boolean getNeedsInput();
    String getEndToken();
    
    void setupCommand(String complete,boolean user);

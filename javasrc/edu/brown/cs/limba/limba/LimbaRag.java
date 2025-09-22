@@ -136,9 +136,10 @@ private EmbeddingStoreContentRetriever setupRAG()
          .build();
    EmbeddingStore<TextSegment> store;
    store = new InMemoryEmbeddingStore<>();
-// need class okhttp3/Interceptor
+// need class okhttp3/Interceptor -- if this fails, defer to immemboery model
 // store = ChromaEmbeddingStore.builder()
-//       .baseUrl(limba_main.getUrl())
+//       .collectionName("LIMBA-" + IvyExecQuery.getProcessId())
+//       .baseUrl("http://localhost:8000")
 //       .build();
    EmbeddingStoreIngestor ingest = EmbeddingStoreIngestor.builder()
          .documentSplitter(spliter)

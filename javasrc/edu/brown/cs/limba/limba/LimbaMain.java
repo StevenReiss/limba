@@ -27,6 +27,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.HashMap;
+import java.util.Map;
 
 import io.github.ollama4j.OllamaAPI;
 import io.github.ollama4j.utils.Options;
@@ -57,6 +59,8 @@ public static void main(String [] args)
 /********************************************************************************/
 
 private String mint_id;
+private String server_host;
+private int server_port;
 private String ollama_host;
 private int ollama_port;
 private String ollama_model;
@@ -70,6 +74,7 @@ private boolean think_flag;
 private Options generate_options;
 private LimbaCommandFactory command_factory;
 private LimbaRag rag_model;
+private Map<String,String> key_map;
 
 
 
@@ -82,6 +87,8 @@ private LimbaRag rag_model;
 private LimbaMain(String [] args) 
 {
    mint_id = null;
+   server_host = null;
+   server_port = 0;
    ollama_host = "localhost";
    ollama_port = 11434;
    interactive_mode = false;
@@ -94,6 +101,8 @@ private LimbaMain(String [] args)
    rag_model = null;
    generate_options = new OptionsBuilder().build();
    command_factory = null;
+   key_map = new HashMap<>();
+   key_map.put("LANGUAGE","java");
    
    scanArgs(args);
 }
@@ -126,6 +135,14 @@ String getUrl()
 LimbaCommand createCommand(String line)
 {
    return command_factory.createCommand(line);
+}
+
+Map<String,String> getKeyMap()          { return key_map; }
+
+void setKeyMap(String key,String val)
+{
+   if (val == null) key_map.remove(key);
+   else key_map.put(key,val);
 }
 
 
@@ -170,6 +187,17 @@ private void scanArgs(String [] args)
                input_file = new File(args[++i]);
                continue;
              }
+            else if (args[i].startsWith("-sh")) {               // -sh <server host>
+               server_host = args[++i];
+             }
+            else if (args[i].startsWith("-sp")) {               // -sp <server port>
+               try {
+                  server_port = Integer.parseInt(args[++i]);
+                }
+               catch (NumberFormatException e) {
+                  badArgs();
+                }
+             }
           }
          if (args[i].startsWith("-")) {
             if (args[i].startsWith("-i")) {                     // -interactive
@@ -194,6 +222,7 @@ private void badArgs()
 {
    System.err.println("LIMBA: limba [-host <ollama host>] [-port <ollama port>] ");
    System.err.println("          [-llama <llama model>] [-m <mint id>]");
+   System.err.println("          [-sh host -sp port]");
    System.err.println("          [-directory <project file or directory>] [-interactive]");
    System.exit(1);
 }
@@ -229,6 +258,14 @@ private void process()
    
    if (server_mode && mint_id != null) {
       new LimbaMsg(this,mint_id);
+    }
+   else if (server_mode && server_host != null && server_port > 0) {
+      try {
+         new LimbaMsg(this,server_host,server_port);
+       }
+      catch (IOException e) {
+         IvyLog.logE("Can't talk to server",e);
+       }
     }
    
    if (input_file != null) {
@@ -290,10 +327,12 @@ private void processFile(Reader r,boolean prompt)
             fini = true;
           }
          if (endonblank && line.isEmpty()) fini = true;
+         if (!endonblank && endtoken == null) fini = true;
          
          if (line.endsWith("\\")) {
             line = line.substring(0,line.length()-1);
           }
+
          
          if (!buf.isEmpty()) buf.append("\n");
          buf.append(line);

@@ -25,6 +25,7 @@ package edu.brown.cs.limba.limba;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpTimeoutException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ import java.util.StringTokenizer;
 
 import org.w3c.dom.Element;
 
+import edu.brown.cs.ivy.file.IvyFile;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
@@ -97,7 +99,9 @@ LimbaCommand createCommand(String line)
       case "EXPLAIN" :
          return new CommandQuery(prompt,line);
       case "PROJECT" :
-         break;
+         return new CommandProject(line);
+      case "PROPERTY" :
+         return new CommandProperty(line);
       case "EXIT" :
          System.exit(0);
     }
@@ -129,6 +133,12 @@ private String getPrompt(String cmd)
        }
     }
    
+   Map<String,String> keymap = limba_main.getKeyMap(); 
+   if (keymap != null) {
+      base = IvyFile.expandName(base,keymap);
+      ptxt = IvyFile.expandName(ptxt,keymap);
+    }
+   
    if (base == null) return ptxt;
    if (ptxt == null) return base;
    return base + " " + ptxt;
@@ -142,40 +152,55 @@ private String getPrompt(String cmd)
 /*                                                                              */
 /********************************************************************************/
 
-private String getJavaCode(String resp)
+private List<String> getJavaCode(String resp)
 {
    if (resp == null) return null;
-   int idx0 = resp.indexOf("```");
-   if (idx0 < 0) return resp;
-   int idx1 = resp.indexOf("\n",idx0);
-   if (idx1 < 0) {
-      return resp.substring(idx0+3);
-    }
-   String text0 = resp.substring(idx0+3,idx1).trim();
-   if (!text0.isEmpty() && !text0.equals("java")) {
-      idx1 = idx0 + 3;
-    }
-   else idx1 = idx1+1;
+   if (!resp.contains("```")) return List.of(resp);
    
-   int idx2 = resp.indexOf("```",idx1);
-   if (idx2 < 0) return resp.substring(idx1);
-   return resp.substring(idx1,idx2);
+   List<String> rslt = new ArrayList<>();
+   int start = 0;
+   for ( ; ; ) {
+      int idx0 = resp.indexOf("```",start);
+      if (idx0 < 0) break;
+      int idx1 = resp.indexOf("\n",idx0);
+      if (idx1 < 0) {
+         return List.of(resp.substring(idx0+3));
+       }
+      String text0 = resp.substring(idx0+3,idx1).trim();
+      if (!text0.isEmpty() && !text0.equals("java")) {
+         idx1 = idx0 + 3;
+       }
+      else idx1 = idx1+1;
+      int idx2 = resp.indexOf("```",idx1);
+      if (idx2 < 0)  {
+         rslt.add(resp.substring(idx1));
+         break;
+       }
+      else {
+         rslt.add(resp.substring(idx1,idx2));
+         start = idx2;
+       }
+    }
+   return rslt;
 }
 
 
 private String getJavaDoc(String resp)
 {
-   String jcode = getJavaCode(resp);
-   if (jcode == null) return null;
-   int idx0 = jcode.indexOf("/**");
-   if (idx0 < 0) return null;
-   int idx1 = jcode.indexOf("*/",idx0);
-   if (idx1 < 0) jcode.substring(idx0);
-   int idx2 = jcode.indexOf("\n",idx1);
-   if (idx2 > 0) idx1 = idx2+1;
-   String jdoc = jcode.substring(idx0,idx1);
-   if (!jdoc.endsWith("\n")) jdoc += "\n";
-   return jdoc;
+   List<String> jcodes = getJavaCode(resp);
+   if (jcodes == null) return null;
+   for (String jcode : jcodes) {
+      int idx0 = jcode.indexOf("/**");
+      if (idx0 < 0) continue;
+      int idx1 = jcode.indexOf("*/",idx0);
+      if (idx1 < 0) jcode.substring(idx0);
+      int idx2 = jcode.indexOf("\n",idx1);
+      if (idx2 > 0) idx1 = idx2+1;
+      String jdoc = jcode.substring(idx0,idx1);
+      if (!jdoc.endsWith("\n")) jdoc += "\n";
+      return jdoc;
+    }
+   return null;
 }
 
 
@@ -195,7 +220,7 @@ private abstract class CommandBase implements LimbaCommand {
    private String first_line;
    
    CommandBase(String line) {
-      end_token  = "END";
+      end_token  = "EOL";
       option_set = null;
       end_on_blank = false;
       command_text = null;
@@ -203,7 +228,6 @@ private abstract class CommandBase implements LimbaCommand {
     }
 
    @Override public boolean getEndOnBlank()             { return end_on_blank; }
-   @Override public boolean getNeedsInput()             { return false; }
    @Override public String getEndToken()                { return end_token; } 
    
    protected OllamaAPI getOllama() {
@@ -405,7 +429,7 @@ private class CommandQuery extends CommandBase {
       programmer_prompt = prompt;
     }
    
-   @Override public boolean getNeedsInput()             { return true; }
+   
    @Override public String getCommandName()             { return "QUERY"; }
    
    @Override public void localProcess(IvyXmlWriter xw) throws Exception {
@@ -431,18 +455,24 @@ private class CommandQuery extends CommandBase {
       if (xw != null) {
          xw.field("TIME",rslt.getResponseTime());
          xw.cdataElement("RESPONSE",rslt.getResponse());
-         String jcode = getJavaCode(resp);
-         if (jcode != null) xw.cdataElement("JAVA",jcode);
+         List<String> jcodes = getJavaCode(resp);
+         if (jcodes != null) {
+            for (String jcode : jcodes) {
+               xw.cdataElement("JAVA",jcode);
+             }
+          }
          String jdoc = getJavaDoc(resp);
          if (jdoc != null) xw.cdataElement("JAVADOC",jdoc);
        }
       else {
          System.out.println("RESPONSE TIME: " + rslt.getResponseTime());
          System.out.println(rslt.getResponse());
-         String jcode = getJavaCode(resp);
-         if (jcode != null) {
-            IvyLog.logD("LIMBA","JAVA CODE" + jcode);
-            System.out.println("\n\nJAVA CODE:\n" + jcode + "\n\n");
+         List<String> jcodes = getJavaCode(resp);
+         if (jcodes != null) {
+            for (String jcode : jcodes) {
+               IvyLog.logD("LIMBA","JAVA CODE" + jcode);
+               System.out.println("\n\nJAVA CODE:\n" + jcode + "\n\n");
+             }
           }
          String jdoc = getJavaDoc(resp);
          if (jdoc != null) {
@@ -454,6 +484,55 @@ private class CommandQuery extends CommandBase {
     }
    
 }       // end of inner class CommandQuery
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Local commands                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+private abstract class LocalCommand extends CommandBase {
+   
+   LocalCommand(String line) {
+      super(line);
+    }
+   
+}       // end of inner class LocalCommand
+
+
+
+private class CommandProperty extends LocalCommand {
+
+   CommandProperty(String line) {
+      super(line);
+    }
+   
+   @Override public String getCommandName()             { return "PROPERTY"; }
+   
+   @Override public void localProcess(IvyXmlWriter xw) {
+      // PROPERTY x=y or PROPERTY x y
+    }
+   
+}       // end of inner class CommandProperty
+
+
+
+private class CommandProject extends LocalCommand {
+   
+   CommandProject(String line) {
+      super(line);
+    }
+   
+   @Override public String getCommandName()             { return "PROPERTY"; }
+   
+   @Override public void localProcess(IvyXmlWriter xw) {
+      // PROJECT <file> or PROJECT QUERY
+    }
+   
+}       // end of inner class CommandProject
+
+
 
 
 
