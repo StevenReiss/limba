@@ -28,7 +28,9 @@ import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.mint.MintArguments;
+import edu.brown.cs.ivy.mint.MintConstants;
 import edu.brown.cs.ivy.mint.MintControl;
+import edu.brown.cs.ivy.mint.MintDefaultReply;
 import edu.brown.cs.ivy.mint.MintHandler;
 import edu.brown.cs.ivy.mint.MintMessage;
 import edu.brown.cs.ivy.mint.MintConstants.MintSyncMode;
@@ -63,6 +65,9 @@ LimbaMsg(LimbaMain lm,String mintid)
    mint_control = MintControl.create(mintid,MintSyncMode.ONLY_REPLIES);
    mint_control.register("<LIMBA DO='_VAR_0' />",
          new CommandHandler());
+   mint_control.register("<BUBBLES DO='EXIT' />",new ExitHandler());
+   
+   IvyLog.logD("LIMBA","Listening for messages on " + mintid);
 }
 
 
@@ -76,7 +81,6 @@ private String processCommand(String cmd,Element xml) throws LimbaException
 {
    try (IvyXmlWriter xw = new IvyXmlWriter()) {
       xw.begin("RESULT");
-      
       switch (cmd) {
          case "PING" :
             xw.text("PONG");
@@ -103,9 +107,11 @@ private String processCommand(String cmd,Element xml) throws LimbaException
        }
       
       xw.end("RESULT");
+      
       return xw.toString();
     }
 }
+
 
 
 private LimbaCommand setupLimbaCommand(String cmd,Element xml)
@@ -139,6 +145,29 @@ private void loadProjectData()
 
 /********************************************************************************/
 /*                                                                              */
+/*      Send message to client                                                  */
+/*                                                                              */
+/********************************************************************************/
+
+boolean sendPing()
+{
+   try (IvyXmlWriter xw = new IvyXmlWriter()) {
+      xw.begin("LIMBAREPLY");
+      xw.field("DO","PING");
+      xw.end("LIMBAREPLY");
+      MintDefaultReply mdr = new MintDefaultReply();
+      mint_control.send(xw.toString(),mdr,
+            MintConstants.MINT_MSG_FIRST_NON_NULL);
+      String s = mdr.waitForString();
+      if (s != null) return true;
+    }
+   return false;
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
 /*      Background command processor                                            */
 /*                                                                              */
 /********************************************************************************/
@@ -156,22 +185,22 @@ private class CommandProcessor extends Thread {
    
    @Override public void run() {
       try (IvyXmlWriter xw = new IvyXmlWriter()) {
-         xw.begin("LIMBA");
+         xw.begin("LIMBAREPLY");
          xw.field("RID",reply_id);
          xw.begin("RESULT");
          for_command.process(xw);
          xw.end("RESULT");
-         xw.end("LIMBA");
+         xw.end("LIMBAREPLY");
          mint_control.send(xw.toString());
        }
       catch (Throwable t) {
          IvyXmlWriter xw = new IvyXmlWriter();
-         xw.begin("LIMBA");
+         xw.begin("LIMBAREPLY");
          xw.field("RID",reply_id);
          xw.begin("ERROR");
          xw.textElement("MESSAGE",t);
          xw.end("ERROR");
-         xw.end("LIMBA");
+         xw.end("LIMBAREPLY");
          mint_control.send(xw.toString());
          xw.close();
        }
@@ -215,10 +244,20 @@ private final class CommandHandler implements MintHandler {
          rslt = xw.toString();
          xw.close();
        }
+      IvyLog.logD("LIMBA","Reply for " + cmd + ": " + rslt);
       msg.replyTo(rslt);
     }
 }
 
+
+
+private final class ExitHandler implements MintHandler {
+   
+   @Override public void receive(MintMessage msg,MintArguments args) {
+      System.exit(0);
+    }
+
+}	// end of inner class ExitHandler
 
 
 }       // end of class LimbaMsg

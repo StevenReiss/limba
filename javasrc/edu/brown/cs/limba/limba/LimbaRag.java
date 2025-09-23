@@ -74,6 +74,8 @@ LimbaRag(LimbaMain lm,File base)
    project_files = new HashSet<>();
    content_retriever = null;
    
+   IvyLog.logD("LIMBA","Loading project files for " + base);
+   
    findProjectFiles(base);
 }
 

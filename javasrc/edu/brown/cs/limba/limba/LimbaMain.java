@@ -74,6 +74,9 @@ private LimbaCommandFactory command_factory;
 private LimbaRag rag_model;
 private Map<String,String> key_map;
 private boolean remote_files;
+private File log_file;
+private IvyLog.LogLevel log_level;
+private boolean log_stderr;
 
 
 
@@ -101,6 +104,11 @@ private LimbaMain(String [] args)
    key_map = new HashMap<>();
    key_map.put("LANGUAGE","java");
    remote_files = false;
+   log_level = IvyLog.LogLevel.DEBUG;
+   String home = System.getProperty("user.home");
+   File f1 = new File(home);
+   log_file = new File(f1,"limba.log");
+   log_stderr = false;
    
    scanArgs(args);
 }
@@ -189,7 +197,8 @@ private void scanArgs(String [] args)
                continue;
              }
             else if (args[i].startsWith("-L")) {                // -Log <logfile>
-               // set log file
+               log_file = new File(args[++i]);
+               continue;
              }
           }
          if (args[i].startsWith("-")) {
@@ -204,6 +213,8 @@ private void scanArgs(String [] args)
                remote_files = true;
              }
             else if (args[i].startsWith("-D")) {                // -DEBUG  
+               log_level = IvyLog.LogLevel.DEBUG;
+               log_stderr = true;
                // set log level
              }
             else badArgs();
@@ -236,13 +247,12 @@ private void badArgs()
 
 private void process()
 {
+   LimbaMsg msg = null;
+   
    IvyLog.setupLogging("LIMBA",true);
-   IvyLog.setLogLevel(IvyLog.LogLevel.DEBUG);
-   String home = System.getProperty("user.home");
-   File f1 = new File(home);
-   File f2 = new File(f1,"limba.log");
-   IvyLog.setLogFile(f2);
-   IvyLog.useStdErr(true);
+   IvyLog.setLogLevel(log_level);
+   IvyLog.setLogFile(log_file);
+   IvyLog.useStdErr(log_stderr);
    
    IvyLog.logD("LIMBA","Running with " + getUrl() + " " + getModel());
    
@@ -256,7 +266,7 @@ private void process()
    command_factory = new LimbaCommandFactory(this);
    
    if (server_mode && mint_id != null) {
-      new LimbaMsg(this,mint_id);
+      msg = new LimbaMsg(this,mint_id);
     }
    
    if (input_file != null) {
@@ -274,6 +284,21 @@ private void process()
        }
       catch (IOException e) {
          IvyLog.logE("LIMBA","Problem reading stdin",e);
+       }
+    }
+   else if (server_mode) {
+      boolean haveping = msg.sendPing();
+      synchronized (this) {
+         for ( ; ; ) {
+            // wait for explicit exit command
+            try {
+               wait(10000);
+             }
+            catch (InterruptedException e) { }
+            boolean chk = msg.sendPing();
+            if (haveping && !chk) break;
+            else if (!haveping && chk) haveping = true;
+          }
        }
     }
 }
@@ -368,11 +393,15 @@ private void handleCommand(LimbaCommand cmd,String cmdtxt)
 private void startOllama()
 {
    String host = "http://" + ollama_host + ":" + ollama_port + "/";
+   IvyLog.logD("LIMBA","Starting OLLAMA at " + host);
    try {
       ollama_api = new OllamaAPI(host);
       ollama_api.setRequestTimeoutSeconds(300L);
       boolean ping = ollama_api.ping();
-      if (ping) return;
+      if (ping) {
+         IvyLog.logD("LIMBA","OLLAMA started successfully");
+         return;
+       }
     }
    catch (Throwable t) {
       IvyLog.logE("LIMBA","Problem with ollama",t);
