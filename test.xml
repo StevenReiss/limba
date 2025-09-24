@@ -1,0 +1,50 @@
+<LIMBA DO='FIND' TYPE='METHOD'>
+<SEARCH WHAT='METHOD' NAME='edu.brown.cs.bubbles.tutorial.romp.Angle.reduce'>
+  <SIGNATURE>static double reduce(double)</SIGNATURE>
+  <DESCRIPTION><![CDATA[Reduce a negative angle or an angle greater than 2PI
+to something between 0 and 2P]]></DESCRIPTION>
+  <TESTS>
+    <TESTCASE NAME='TEST_1' TYPE='CALLS'>
+      <CALL METHOD='edu.brown.cs.bubbles.tutorial.romp.Angle.reduce' OP='=='>
+	<INPUT>
+	  <VALUE><![CDATA[3]]></VALUE>
+	</INPUT>
+	<OUTPUT>
+	  <VALUE><![CDATA[3]]></VALUE>
+	</OUTPUT>
+      </CALL>
+    </TESTCASE>
+    <TESTCASE NAME='TEST_2' TYPE='CALLS'>
+      <CALL METHOD='edu.brown.cs.bubbles.tutorial.romp.Angle.reduce' OP='!='>
+	<INPUT>
+	  <VALUE><![CDATA[6]]></VALUE>
+	</INPUT>
+	<OUTPUT>
+	  <VALUE><![CDATA[6]]></VALUE>
+	</OUTPUT>
+      </CALL>
+    </TESTCASE>
+    <TESTCASE NAME='TEST_3' TYPE='CALLS'>
+      <CALL METHOD='edu.brown.cs.bubbles.tutorial.romp.Angle.reduce' OP='!='>
+	<INPUT>
+	  <VALUE><![CDATA[-1]]></VALUE>
+	</INPUT>
+	<OUTPUT>
+	  <VALUE><![CDATA[-1]]></VALUE>
+	</OUTPUT>
+      </CALL>
+    </TESTCASE>
+  </TESTS>
+</SEARCH>
+</LIMBA>
+
+
+
+
+
+
+
+
+
+
+
