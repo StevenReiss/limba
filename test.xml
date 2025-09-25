@@ -1,9 +1,13 @@
+<LIMBA DO='PING' />
+<LIMBA DO='LIST' />
+
+
 <LIMBA DO='FIND' TYPE='METHOD'>
 <SEARCH WHAT='METHOD' NAME='edu.brown.cs.bubbles.tutorial.romp.Angle.reduce' USECONTEXT='false'
    FILE='/home/spr/Eclipse/tutorial/romp/src/edu/brown/cs/bubbles/tutorial/romp/Angle.java' >
   <SIGNATURE>static double reduce(double)</SIGNATURE>
   <DESCRIPTION><![CDATA[Reduce a negative angle or an angle greater than 2PI
-to something between 0 and 2P]]></DESCRIPTION>
+to something between 0 and 2PI. ]]></DESCRIPTION>
   <TESTS>
     <TESTCASE NAME='TEST_1' TYPE='CALLS'>
       <CALL METHOD='edu.brown.cs.bubbles.tutorial.romp.Angle.reduce' OP='=='>

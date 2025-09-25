@@ -20,6 +20,35 @@ enum LimbaCommandType {
    MODEL_DETAILS;
 }
 
+enum LimbaTestType {
+   USERCODE,
+   CALLS,
+   JUNIT
+}
+
+
+enum LimbaTestOp {        
+   NONE,
+   EQL,
+   NEQ,
+   SAVE,
+   IGNORE,
+   THROW,
+   SAME,
+   DIFF,
+   SHOW,
+   INTERACT,
+   HIERARCHY,
+   SCOREHIER
+}
+
+
+enum LimbaTestArgType {
+   LITERAL,		// value should match literal
+   STRING,		// value should match string
+   VARIABLE,		// value should match contents of variable
+   SAVE 		// store value in variable, no checking
+}
 
 interface LimbaCommand {
    String getCommandName();

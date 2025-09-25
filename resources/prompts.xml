@@ -14,6 +14,9 @@
   <PROMPT COMMAND='GENERATE'>
      You are an expert Java programmer.  Return only the resultant code.
   </PROMPT>
+  <PROMPT COMMAND='FIND'>
+     You are an expert Java programmer.  Return only the resultant code.
+  </PROMPT>
   <PROMPT COMMAND='JAVADOC'>
      You are an expert Java programmer.  Please create JavaDoc for the following method.
      Return only the JavaDoc, not the code.

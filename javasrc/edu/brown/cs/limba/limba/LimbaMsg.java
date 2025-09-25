@@ -82,21 +82,19 @@ private String processCommand(String cmd,Element xml) throws LimbaException
    try (IvyXmlWriter xw = new IvyXmlWriter()) {
       xw.begin("RESULT");
       switch (cmd) {
-         case "PING" :
-            xw.text("PONG");
-            break;
          case "PROJECT" :
             loadProjectData();
             break;
          case "LIST" :
          case "DETAILS" :
+         case "PING" :
             // immediate commands
-            LimbaCommand lcmd = setupLimbaCommand(cmd,xml);
+            LimbaCommand lcmd = limba_main.setupLimbaCommand(xml);
             lcmd.process(xw);
             break;
          default :
             // background commands
-            LimbaCommand bcmd = setupLimbaCommand(cmd,xml);
+            LimbaCommand bcmd = limba_main.setupLimbaCommand(xml);
             String rid = IvyXml.getAttrString(xml,"RID");
             if (rid == null) {
                rid = "LIMBA_" + random_gen.nextInt(1000000);
@@ -114,20 +112,7 @@ private String processCommand(String cmd,Element xml) throws LimbaException
 
 
 
-private LimbaCommand setupLimbaCommand(String cmd,Element xml)
-   throws LimbaException
-{
-   LimbaCommand lcmd = limba_main.createCommand(cmd);
-   if (lcmd == null) {
-      throw new LimbaException("Invalid command " + cmd);
-    }
-   String opts = IvyXml.getAttrString(xml,"OPTIONS");
-   lcmd.setOptions(opts);
-   String body = IvyXml.getTextElement(xml,"BODY");
-   lcmd.setupCommand(body,false);
-   
-   return lcmd;
-}
+
 
 
 /********************************************************************************/

@@ -27,15 +27,20 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.w3c.dom.Element;
 
 import io.github.ollama4j.OllamaAPI;
+import io.github.ollama4j.models.generate.OllamaStreamHandler;
+import io.github.ollama4j.models.response.OllamaResult;
 import io.github.ollama4j.utils.Options;
 import io.github.ollama4j.utils.OptionsBuilder;
 import edu.brown.cs.ivy.file.IvyLog;
+import edu.brown.cs.ivy.jcomp.JcompControl;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlReader;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
@@ -82,6 +87,7 @@ private boolean remote_files;
 private File log_file;
 private IvyLog.LogLevel log_level;
 private boolean log_stderr;
+private JcompControl jcomp_main;
 
 
 
@@ -114,6 +120,7 @@ private LimbaMain(String [] args)
    File f1 = new File(home);
    log_file = new File(f1,"limba.log");
    log_stderr = false;
+   jcomp_main = new JcompControl();
    
    scanArgs(args);
 }
@@ -158,6 +165,8 @@ void setKeyMap(String key,String val)
 
 boolean getRemoteFileAccess()           { return remote_files; }
 
+JcompControl getJcompControl()          { return jcomp_main; 
+}
 
 
 /********************************************************************************/
@@ -267,7 +276,7 @@ private void process()
       rag_model = new LimbaRag(this,project_file);
       rag_model.getChain();             // FOR DEBUGGING ONLY
     }
-   
+    
    command_factory = new LimbaCommandFactory(this);
    
    if (server_mode && mint_id != null) {
@@ -391,9 +400,11 @@ private void processXmlFile(FileReader fr)
          try {
             LimbaCommand cmd = setupLimbaCommand(xml);
             try (IvyXmlWriter xw = new IvyXmlWriter()) {
+               xw.begin("RESULT");
                cmd.process(xw);
+               xw.end("RESULT");
                IvyLog.logD("LIMBA","Command " + cmd.getCommandName() + ":\n");
-               IvyLog.logD("LIMBA",xw.toString());
+               IvyLog.logD("LIMBA","RESULT: " + xw.toString());
              }
             catch (Throwable t) {
                IvyLog.logE("LIMBA",
@@ -416,10 +427,6 @@ LimbaCommand setupLimbaCommand(Element xml) throws LimbaException
    if (lcmd == null) {
       throw new LimbaException("Invalid command " + cmd);
     }
-   String opts = IvyXml.getAttrString(xml,"OPTIONS");
-   lcmd.setOptions(opts);
-   String body = IvyXml.getTextElement(xml,"BODY");
-   lcmd.setupCommand(body,false);
    lcmd.setupCommand(xml); 
    
    return lcmd;
@@ -437,6 +444,124 @@ private void handleCommand(LimbaCommand cmd,String cmdtxt)
     }
 }
 
+
+/********************************************************************************/
+/*                                                                              */
+/*      Issue long ollama query                                                 */
+/*                                                                              */
+/********************************************************************************/
+
+String askOllama(String cmd) throws Exception
+{
+   IvyLog.logD("LIMBA","Query: " + cmd);
+   StreamHandler hdlr = new StreamHandler();
+   OllamaResult rslt = null;
+   if (getThinkFlag()) {
+      rslt = getOllama().generate(getModel(),cmd,
+            getRawFlag(),getOllamaOptions(),hdlr,
+            new ThinkHandler());
+    }
+   else {
+      rslt = getOllama().generate(getModel(),cmd,
+            getRawFlag(),getOllamaOptions(),hdlr);
+    }
+   IvyLog.logD("LIMBA","Response: " + rslt.getResponse());
+   IvyLog.logD("LIMBA","Stats: " + rslt.getDoneReason() + " " +
+         rslt.getEvalCount() + " " + rslt.getEvalDuration() + " " +
+         rslt.getLoadDuration() + " " + rslt.getPromptEvalCount() + " " +
+         rslt.getTotalDuration());
+   if (getThinkFlag()) {
+      String thnk = rslt.getThinking();
+      IvyLog.logD("LIMBA","Thinging: " + thnk);
+    }
+   IvyLog.logD("LIMBA","\n------------------------\n\n");
+   
+   return rslt.getResponse();
+}
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Response extraction methods                                             */
+/*                                                                              */
+/********************************************************************************/
+
+static List<String> getJavaCode(String resp)
+{
+   if (resp == null) return null;
+   if (!resp.contains("```")) return List.of(resp);
+   
+   List<String> rslt = new ArrayList<>();
+   int start = 0;
+   for ( ; ; ) {
+      int idx0 = resp.indexOf("```",start);
+      if (idx0 < 0) break;
+      int idx1 = resp.indexOf("\n",idx0);
+      if (idx1 < 0) {
+         break;
+       }
+      String text0 = resp.substring(idx0+3,idx1).trim();
+      if (!text0.isEmpty() && !text0.equals("java")) {
+         idx1 = idx0 + 3;
+       }
+      else idx1 = idx1+1;
+      int idx2 = resp.indexOf("```",idx1);
+      if (idx2 < 0)  {
+         break;
+       }
+      else {
+         rslt.add(resp.substring(idx1,idx2));
+         start = idx2+3;
+       }
+    }
+   return rslt;
+}
+
+
+static String getJavaDoc(String resp)
+{
+   List<String> jcodes = getJavaCode(resp);
+   if (jcodes == null) return null;
+   for (String jcode : jcodes) {
+      int idx0 = jcode.indexOf("/**");
+      if (idx0 < 0) continue;
+      int idx1 = jcode.indexOf("*/",idx0);
+      if (idx1 < 0) jcode.substring(idx0);
+      int idx2 = jcode.indexOf("\n",idx1);
+      if (idx2 > 0) idx1 = idx2+1;
+      String jdoc = jcode.substring(idx0,idx1);
+      if (!jdoc.endsWith("\n")) jdoc += "\n";
+      return jdoc;
+    }
+   return null;
+}
+
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Stream handler for async processing                                     */
+/*                                                                              */
+/********************************************************************************/
+
+private final class StreamHandler implements OllamaStreamHandler {
+   
+   @Override public void accept(String message) {
+//    System.out.println(message);
+//    IvyLog.logD("LIMBA","Received: " + message);
+    }
+   
+}       // end of inner class StreamHandler
+
+
+private final class ThinkHandler implements OllamaStreamHandler {
+   
+   @Override public void accept(String message) {
+      System.out.print(message);
+    }
+   
+}       // end of inner class StreamHandler
 
 
 /********************************************************************************/

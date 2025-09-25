@@ -25,7 +25,6 @@ package edu.brown.cs.limba.limba;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpTimeoutException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,11 +38,8 @@ import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import io.github.ollama4j.OllamaAPI;
 import io.github.ollama4j.exceptions.OllamaBaseException;
-import io.github.ollama4j.models.generate.OllamaStreamHandler;
 import io.github.ollama4j.models.response.Model;
 import io.github.ollama4j.models.response.ModelDetail;
-import io.github.ollama4j.models.response.OllamaResult;
-import io.github.ollama4j.utils.Options;
 
 class LimbaCommandFactory implements LimbaConstants
 {
@@ -79,6 +75,8 @@ LimbaCommand createCommand(String line)
    String prompt = getPrompt(cmd);
    
    switch (cmd) {
+      case "PING" :
+         return new CommandPing(line);
       case "LIST" :
          return new CommandList(line);
       case "DETAIL" :
@@ -102,6 +100,8 @@ LimbaCommand createCommand(String line)
          return new CommandProject(line);
       case "PROPERTY" :
          return new CommandProperty(line);
+      case "FIND" :
+         return new CommandFind(prompt,line);
       case "EXIT" :
          System.exit(0);
     }
@@ -146,64 +146,6 @@ private String getPrompt(String cmd)
 
 
 
-/********************************************************************************/
-/*                                                                              */
-/*      Response extraction methods                                             */
-/*                                                                              */
-/********************************************************************************/
-
-private List<String> getJavaCode(String resp)
-{
-   if (resp == null) return null;
-   if (!resp.contains("```")) return List.of(resp);
-   
-   List<String> rslt = new ArrayList<>();
-   int start = 0;
-   for ( ; ; ) {
-      int idx0 = resp.indexOf("```",start);
-      if (idx0 < 0) break;
-      int idx1 = resp.indexOf("\n",idx0);
-      if (idx1 < 0) {
-         return List.of(resp.substring(idx0+3));
-       }
-      String text0 = resp.substring(idx0+3,idx1).trim();
-      if (!text0.isEmpty() && !text0.equals("java")) {
-         idx1 = idx0 + 3;
-       }
-      else idx1 = idx1+1;
-      int idx2 = resp.indexOf("```",idx1);
-      if (idx2 < 0)  {
-         rslt.add(resp.substring(idx1));
-         break;
-       }
-      else {
-         rslt.add(resp.substring(idx1,idx2));
-         start = idx2;
-       }
-    }
-   return rslt;
-}
-
-
-private String getJavaDoc(String resp)
-{
-   List<String> jcodes = getJavaCode(resp);
-   if (jcodes == null) return null;
-   for (String jcode : jcodes) {
-      int idx0 = jcode.indexOf("/**");
-      if (idx0 < 0) continue;
-      int idx1 = jcode.indexOf("*/",idx0);
-      if (idx1 < 0) jcode.substring(idx0);
-      int idx2 = jcode.indexOf("\n",idx1);
-      if (idx2 > 0) idx1 = idx2+1;
-      String jdoc = jcode.substring(idx0,idx1);
-      if (!jdoc.endsWith("\n")) jdoc += "\n";
-      return jdoc;
-    }
-   return null;
-}
-
-
 
 /********************************************************************************/
 /*                                                                              */
@@ -236,18 +178,9 @@ private abstract class CommandBase implements LimbaCommand {
    protected String getModel() {
       return limba_main.getModel();
     }
-   protected boolean getRawFlag() {
-      return limba_main.getRawFlag();
-    }
-   protected boolean getThinkFlag() {
-      return limba_main.getThinkFlag();
-    }
-   protected Options getOllamaOptions() {
-      return limba_main.getOllamaOptions();
-    }
    
   @Override public void setOptions(String opts) {
-      if (opts == null) return;
+      if (opts == null || opts.isEmpty()) return;
       StringTokenizer tok = new StringTokenizer(opts);
       while (tok.hasMoreTokens()) {
          String opt = tok.nextToken();
@@ -322,7 +255,10 @@ private abstract class CommandBase implements LimbaCommand {
     }
    
    @Override public void setupCommand(Element xml) {
-      // handle command setup from xml for limbabb and debugging
+      String opts = IvyXml.getAttrString(xml,"OPTIONS");
+      setOptions(opts);
+      String body = IvyXml.getTextElement(xml,"BODY");
+      if (body != null) setupCommand(body,false);
     }
    
    @Override public void process(IvyXmlWriter rslt) { 
@@ -360,32 +296,57 @@ private abstract class CommandBase implements LimbaCommand {
 
 /********************************************************************************/
 /*                                                                              */
+/*      Ping command                                                            */
+/*                                                                              */
+/********************************************************************************/
+
+private class CommandPing extends CommandBase {
+   
+   CommandPing(String line) { 
+      super(line);
+    }
+   
+   @Override public String getCommandName()             { return "PING"; }
+   @Override public void setupCommand(String complete,boolean user)  { }
+   
+   @Override public void localProcess(IvyXmlWriter xw) throws Exception {
+      xw.text("PONG");
+    }
+   
+}       // end of inner class CommandPing
+
+
+
+/********************************************************************************/
+/*                                                                              */
 /*      List Models command                                                     */
 /*                                                                              */
 /********************************************************************************/
 
 private class CommandList extends CommandBase {
-   
-   CommandList(String line) { 
-      super(line);
-    }
-   
-   @Override public String getCommandName()             { return "LIST"; }
-   @Override public void setupCommand(String complete,boolean user)  { }
-   
-   @Override public void localProcess(IvyXmlWriter xw) throws Exception {
-      List<Model> models = getOllama().listModels();
-      for (Model m : models) {
-         if (xw != null) {
-            xw.textElement("MODEL",m.getName());
-          }
-         else {
-            System.out.println(m.getName());
-          }
+
+CommandList(String line) { 
+   super(line);
+}
+
+@Override public String getCommandName()             { return "LIST"; }
+@Override public void setupCommand(String complete,boolean user)  { }
+
+@Override public void localProcess(IvyXmlWriter xw) throws Exception {
+   List<Model> models = getOllama().listModels();
+   for (Model m : models) {
+      if (xw != null) {
+         xw.textElement("MODEL",m.getName());
+       }
+      else {
+         System.out.println(m.getName());
        }
     }
-   
+}
+
 }       // end of inner class CommandList
+
+
 
 
 
@@ -441,44 +402,28 @@ private class CommandQuery extends CommandBase {
       if (programmer_prompt != null) {
          cmd = programmer_prompt + "\n" + command_text;
        }
-      IvyLog.logD("LIMBA","Query: " + cmd);
-      StreamHandler hdlr = new StreamHandler();
-      OllamaResult rslt = null;
-      if (getThinkFlag()) {
-         rslt = getOllama().generate(getModel(),cmd,
-               getRawFlag(),getOllamaOptions(),hdlr,
-               new ThinkHandler());
-       }
-      else {
-         rslt = getOllama().generate(getModel(),cmd,
-            getRawFlag(),getOllamaOptions(),hdlr);
-       }
-      IvyLog.logD("LIMBA","Response: " + rslt.getResponse());
-      IvyLog.logD("LIMBA","\n------------------------\n\n");
-      String resp = rslt.getResponse();
+      String resp = limba_main.askOllama(cmd); 
       if (xw != null) {
-         xw.field("TIME",rslt.getResponseTime());
-         xw.cdataElement("RESPONSE",rslt.getResponse());
-         List<String> jcodes = getJavaCode(resp);
+         xw.cdataElement("RESPONSE",resp);
+         List<String> jcodes = LimbaMain.getJavaCode(resp);
          if (jcodes != null) {
             for (String jcode : jcodes) {
                xw.cdataElement("JAVA",jcode);
              }
           }
-         String jdoc = getJavaDoc(resp);
+         String jdoc = LimbaMain.getJavaDoc(resp);
          if (jdoc != null) xw.cdataElement("JAVADOC",jdoc);
        }
       else {
-         System.out.println("RESPONSE TIME: " + rslt.getResponseTime());
-         System.out.println(rslt.getResponse());
-         List<String> jcodes = getJavaCode(resp);
+         System.out.println(resp);
+         List<String> jcodes = LimbaMain.getJavaCode(resp);
          if (jcodes != null) {
             for (String jcode : jcodes) {
                IvyLog.logD("LIMBA","JAVA CODE" + jcode);
                System.out.println("\n\nJAVA CODE:\n" + jcode + "\n\n");
              }
           }
-         String jdoc = getJavaDoc(resp);
+         String jdoc = LimbaMain.getJavaDoc(resp);
          if (jdoc != null) {
             IvyLog.logD("LIMBA","JAVADOC" + jdoc);
             System.out.println("\n\nJAVA DOC:\n" + jdoc + "\n\n");
@@ -532,38 +477,41 @@ private class CommandProject extends LocalCommand {
    
    @Override public void localProcess(IvyXmlWriter xw) {
       // PROJECT <file> or PROJECT QUERY
+      // or loadProjecrtData() if have MSG
     }
    
 }       // end of inner class CommandProject
 
 
 
-
-
 /********************************************************************************/
 /*                                                                              */
-/*      Stream handler for async processing                                     */
+/*      FIND (generate and test) commands                                       */
 /*                                                                              */
 /********************************************************************************/
 
-private final class StreamHandler implements OllamaStreamHandler {
+private class CommandFind extends CommandBase {
+
+   private String use_prompt;
+   private LimbaFinder limba_finder;
    
-   @Override public void accept(String message) {
-//    System.out.println(message);
-//    IvyLog.logD("LIMBA","Received: " + message);
+   CommandFind(String prompt,String line) {
+      super(line);
+      use_prompt = prompt;
     }
    
-}       // end of inner class StreamHandler
-
-
-private final class ThinkHandler implements OllamaStreamHandler {
+   @Override public String getCommandName()             { return "FIND"; }
    
-   @Override public void accept(String message) {
-      System.out.print(message);
-      IvyLog.logD("LIMBA","THINK: " + message);
+   @Override public void setupCommand(Element xml) {
+      super.setupCommand(xml);          // handle options
+      limba_finder = new LimbaFinder(limba_main,use_prompt,xml); 
     }
-
-}       // end of inner class StreamHandler
+   
+   @Override public void localProcess(IvyXmlWriter xw) throws Exception {
+      limba_finder.process(); 
+    }
+   
+}       // end of inner class CommandFind
 
 
 }       // end of class LimbaCommandBase
