@@ -30,10 +30,15 @@ import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.w3c.dom.Element;
+
 import io.github.ollama4j.OllamaAPI;
 import io.github.ollama4j.utils.Options;
 import io.github.ollama4j.utils.OptionsBuilder;
 import edu.brown.cs.ivy.file.IvyLog;
+import edu.brown.cs.ivy.xml.IvyXml;
+import edu.brown.cs.ivy.xml.IvyXmlReader;
+import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 public final class LimbaMain implements LimbaConstants
 {
@@ -271,7 +276,12 @@ private void process()
    
    if (input_file != null) {
       try (FileReader fr = new FileReader(input_file)) {
-         processFile(fr,false);
+         if (input_file.getName().endsWith(".xml")) {
+            processXmlFile(fr);
+          }
+         else {
+            processFile(fr,false);
+          }
        }
       catch (IOException e) {
          IvyLog.logE("LIMBA","Problem reading input file " + input_file,e);
@@ -368,6 +378,51 @@ private void processFile(Reader r,boolean prompt)
    catch (IOException e) {
       IvyLog.logE("LIMBA","Problem reading commands",e);
     }
+}
+
+
+private void processXmlFile(FileReader fr)
+{
+   try (IvyXmlReader xr = new IvyXmlReader(fr)) {
+      for ( ; ; ) {
+         String xmlstr = xr.readXml();
+         if (xmlstr == null) break;
+         Element xml = IvyXml.convertStringToXml(xmlstr);
+         try {
+            LimbaCommand cmd = setupLimbaCommand(xml);
+            try (IvyXmlWriter xw = new IvyXmlWriter()) {
+               cmd.process(xw);
+               IvyLog.logD("LIMBA","Command " + cmd.getCommandName() + ":\n");
+               IvyLog.logD("LIMBA",xw.toString());
+             }
+            catch (Throwable t) {
+               IvyLog.logE("LIMBA",
+                   "Problem prcessing command " + cmd.getCommandName(),t);
+             }
+          }
+         catch (LimbaException e) {
+            IvyLog.logE("LIMBA","Bad command",e);
+          }
+       }
+    }
+   catch (IOException e) {}
+}
+
+
+LimbaCommand setupLimbaCommand(Element xml) throws LimbaException
+{
+   String cmd = IvyXml.getAttrString(xml,"DO");
+   LimbaCommand lcmd = createCommand(cmd);
+   if (lcmd == null) {
+      throw new LimbaException("Invalid command " + cmd);
+    }
+   String opts = IvyXml.getAttrString(xml,"OPTIONS");
+   lcmd.setOptions(opts);
+   String body = IvyXml.getTextElement(xml,"BODY");
+   lcmd.setupCommand(body,false);
+   lcmd.setupCommand(xml); 
+   
+   return lcmd;
 }
 
 

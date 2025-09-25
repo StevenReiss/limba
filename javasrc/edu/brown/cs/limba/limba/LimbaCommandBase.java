@@ -321,6 +321,10 @@ private abstract class CommandBase implements LimbaCommand {
       command_text = text.toString();
     }
    
+   @Override public void setupCommand(Element xml) {
+      // handle command setup from xml for limbabb and debugging
+    }
+   
    @Override public void process(IvyXmlWriter rslt) { 
       boolean retry = true;
       for (int i = 0; retry && i < 10; ++i) {
