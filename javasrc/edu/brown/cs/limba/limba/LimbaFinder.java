@@ -22,8 +22,13 @@
 
 package edu.brown.cs.limba.limba;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.w3c.dom.Element;
 
@@ -48,6 +53,9 @@ private String          find_signature;
 private String          find_name;
 private boolean         use_context;
 private String          find_file;
+private File            context_jar;
+
+static AtomicInteger    test_counter = new AtomicInteger(0);
 
 
 
@@ -79,7 +87,31 @@ LimbaFinder(LimbaMain lm,String prompt,Element xml)
          IvyLog.logE("LIMBA","Problem reading test case",e);
        }
     }
+   context_jar = null;
+   Element ctxfile = IvyXml.getChild(xml,"CONTEXTFILE");
+   if (ctxfile != null) {
+      try {
+         context_jar = setupContextFile(ctxfile);
+       }
+      catch (LimbaException e) {
+         IvyLog.logE("LIMBA","Problem reading jar file for context",e);
+       }
+    }
 }
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+LimbaMain getLimbaMain()                { return limba_main; }
+File getContextJar()                    { return context_jar; }
+String getResultName()                  { return find_name; }
+String getResultFile()                  { return find_file; }
+
+
 
 /********************************************************************************/
 /*                                                                              */
@@ -100,7 +132,9 @@ void process() throws Exception
    pbuf.append("\n");
    pbuf.append("Generate 3 alternative versions of the code.\n");
    pbuf.append("Include explicit import statements in the code as needed.\n");
-   pbuf.append("Include any auxilliary code that is needed.");
+   pbuf.append("Include any auxilliary code that is needed.\n");
+   pbuf.append("This code will be used as method " + find_name + ".\n");
+   // might want to extract package and class and inner classes and pass separately
    
    IvyLog.logD("LIMBA","Find " + pbuf.toString());
 
@@ -111,7 +145,7 @@ void process() throws Exception
    for (String s : code) {
       try {
          // pass user context to solution so it can be used to resolve things
-         LimbaSolution sol = new LimbaSolution(s);
+         LimbaSolution sol = new LimbaSolution(this,s); 
          tocheck.add(sol);
        }
       catch (Throwable t) {
@@ -121,7 +155,18 @@ void process() throws Exception
    
    IvyLog.logD("LIMBA","Found possible solutions: " + tocheck.size() + " " +
          code);
-   
+   for (LimbaSolution sol : tocheck) {
+      if (test_cases.isEmpty()) {
+         sol.setTestsPassed(true); 
+       }
+      else {
+         TestRunner tr = new TestRunner(sol);
+         tr.start();
+       } 
+    }
+   for (LimbaSolution sol : tocheck) {
+      sol.waitForTesting();
+    }
    // Then check the test cases
    // if a test passes, just return it
    // otherwise determine what is wrong and issue a new generate with the
@@ -129,6 +174,67 @@ void process() throws Exception
    // iterate this process up to k times
 }
 
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      File access methods                                                     */
+/*                                                                              */
+/********************************************************************************/
+
+private File setupContextFile(Element xml) throws LimbaException
+{
+   int len = IvyXml.getAttrInt(xml,"LENGTH");
+   File tdir = new File(System.getProperty("java.io.tmpdir"));
+   String cnts = IvyXml.getTextElement(xml,"CONTENTS");
+   String ext = IvyXml.getAttrString(xml,"EXTENSION");
+   cnts = cnts.replace("\n","");
+   cnts = cnts.replace("\r","");
+   int pos = 0;
+   try {
+      File tmp = File.createTempFile("limbadata",ext,tdir);
+      tmp.deleteOnExit();
+      try (BufferedOutputStream ots = new BufferedOutputStream(new FileOutputStream(tmp))) {
+         for ( ; pos < len; ++pos) {
+            int c0 = Character.digit(cnts.charAt(2*pos),16);
+            int c1 = Character.digit(cnts.charAt(2*pos+1),16);
+            byte b = (byte) (((c0 & 0xf) << 4) + (c1 & 0xf));
+            ots.write(b);
+          }
+       }
+      return tmp;
+    }
+   catch (IOException e) {
+      throw new LimbaException("Problem creating user file",e);
+    }    
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Test Runner                                                             */
+/*                                                                              */
+/********************************************************************************/
+
+private class TestRunner extends Thread {
+  
+   private LimbaSolution for_solution;
+   
+   TestRunner(LimbaSolution sol) {
+      super("TestRunner_" + test_counter.getAndIncrement());
+      for_solution = sol;
+    }
+   
+   @Override public void run() {
+      LimbaTester tester = new LimbaTester(LimbaFinder.this,for_solution);
+      LimbaTestReport rpt = tester.runTester();
+      // check if tests passed or not, save result for later queries
+      for_solution.setTestsPassed(true);
+    }
+   
+}       // end of inner class TestRunner
 
 
 }       // end of class LimbaFinder

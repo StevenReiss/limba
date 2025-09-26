@@ -97,7 +97,7 @@ public String getName() 			{ return test_name; }
 
 public boolean isOptional()			{ return is_optional; }
 
-abstract public LimbaTestType getTestType();
+public abstract LimbaTestType getTestType();
 
 public String getUserCode()			{ return null; }
 

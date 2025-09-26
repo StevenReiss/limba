@@ -22,7 +22,10 @@
 
 package edu.brown.cs.limba.limba;
 
+import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.jcomp.JcompAst;
+import edu.brown.cs.ivy.jcomp.JcompControl;
+import edu.brown.cs.ivy.jcomp.JcompProject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,8 +45,9 @@ class LimbaSolution implements LimbaConstants
 /*                                                                              */
 /********************************************************************************/
 
-private String          start_text;
+private LimbaFinder     limba_finder;
 private CompilationUnit java_ast;
+private Boolean         tests_passed;
 
 
 /********************************************************************************/
@@ -52,9 +56,10 @@ private CompilationUnit java_ast;
 /*                                                                              */
 /********************************************************************************/
 
-LimbaSolution(String text)
+LimbaSolution(LimbaFinder lf,String text) throws LimbaException
 {
-   start_text = text;
+   limba_finder = lf;
+   tests_passed = null;
    if (text.contains("class")) {
       java_ast = JcompAst.parseSourceFile(text);
     }
@@ -64,14 +69,25 @@ LimbaSolution(String text)
       // alternatively, extract import statements and parse the rest using
       //   JcompAst.parseDeclarations() and then build a compilation unit
       ASTNode decls = JcompAst.parseDeclarations(text); 
+      IvyLog.logD("LIMBA","Scanned declarations, not compilation unit " + decls);
+      throw new LimbaException("Not a compilation unit");
     }
    
-   // identify the primary method
+   JcompControl jcomp = limba_finder.getLimbaMain().getJcompControl(); 
+   List<String> jars = null;
+   if (limba_finder.getContextJar() != null) {
+      jars = new ArrayList<>();
+      jars.add(limba_finder.getContextJar().getPath());
+    }
    
-   // probably want to compile as well -- context should be passed in as jar file.
-   // jcomp_main = new JcompControl in limbaMain.
-   // JcompProject jp = jcomp_main.getProject(contextjar,JcompSource for text,,false);
-   //  then jp.resolve() and jcomp_main.freeProject()
+   JcompProject jp = JcompAst.getResolvedAst(jcomp,java_ast,jars);
+   if (jp == null) {
+      throw new LimbaException("Unable to resolve AST");
+    }
+ 
+   // then we might want to clean it up -- isolate imports, remove class,
+   //   isolate tests (and add to our test suite), identify primary method and
+   //   ordered helpers
 }
 
 
@@ -104,6 +120,26 @@ boolean getUseConstructor()
    // if method is static, return false
    return true;
 }
+
+synchronized void setTestsPassed(boolean fg) 
+{
+   tests_passed = fg; 
+   notifyAll();
+}
+
+synchronized boolean waitForTesting()
+{
+   while (tests_passed == null) {
+      try {
+         wait(3000);
+       }
+      catch (InterruptedException e) { }
+    }
+   
+   return tests_passed;
+}
+
+
 
 }       // end of class LimbaSolution
 
