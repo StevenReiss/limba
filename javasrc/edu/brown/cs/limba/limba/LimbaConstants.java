@@ -80,6 +80,13 @@ String JUNIT_CLASSPATH = IvyFile.expandName("$(ROOT)/ivy/lib/junit.jar");
 String IVY_CLASSPATH = IvyFile.expandName("$(ROOT)/ivy/lib/ivy.jar");
 String JUNIT_RUNNER = "junit.textui.TestRunner";
 String JUNIT_OUT = "test.out.xml";
+String LIMBA_TEST_DIR = "limbatest";
+
+enum LimbaUserFileType {
+   READ,
+   WRITE,
+   DIRECTORY,
+}
 
 
 

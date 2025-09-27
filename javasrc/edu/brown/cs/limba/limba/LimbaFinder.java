@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -53,7 +54,7 @@ private String          find_signature;
 private String          find_name;
 private boolean         use_context;
 private String          find_file;
-private File            context_jar;
+private LimbaTestContext test_context;
 
 static AtomicInteger    test_counter = new AtomicInteger(0);
 
@@ -87,15 +88,11 @@ LimbaFinder(LimbaMain lm,String prompt,Element xml)
          IvyLog.logE("LIMBA","Problem reading test case",e);
        }
     }
-   context_jar = null;
-   Element ctxfile = IvyXml.getChild(xml,"CONTEXTFILE");
-   if (ctxfile != null) {
-      try {
-         context_jar = setupContextFile(ctxfile);
-       }
-      catch (LimbaException e) {
-         IvyLog.logE("LIMBA","Problem reading jar file for context",e);
-       }
+   test_context = null;
+   
+   Element ctxxml = IvyXml.getChild(xml,"CONTEXT");
+   if (ctxxml != null) {
+      test_context = new LimbaTestContext(this,ctxxml);
     }
 }
 
@@ -107,9 +104,19 @@ LimbaFinder(LimbaMain lm,String prompt,Element xml)
 /********************************************************************************/
 
 LimbaMain getLimbaMain()                { return limba_main; }
-File getContextJar()                    { return context_jar; }
+LimbaTestContext getTestContext()       { return test_context; }
 String getResultName()                  { return find_name; }
 String getResultFile()                  { return find_file; }
+
+Collection<LimbaTestCase> getTestCases() 
+{
+   return test_cases;
+}
+Collection<String> getContextImports()  
+{ 
+   return null;
+}
+String getPackageName()                 { return null; }
 
 
 

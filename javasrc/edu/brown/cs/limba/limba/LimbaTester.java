@@ -22,8 +22,16 @@
 
 package edu.brown.cs.limba.limba;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 import edu.brown.cs.ivy.file.IvyLog;
 
@@ -107,38 +115,35 @@ private void setupJunitTest(Map<String,String> idmap)
    setupUserContext(idmap);
    
    String clsname = idmap.get("TESTCLASS");
-   String pkgfix = null;
    idmap.put("PREFIX",clsname);
    
    setupTestPackage(idmap);
    
-   StringBuffer imports = new StringBuffer();
+   Set<String> imports = new HashSet<>();
    for (String jt : for_solution.getImportTypes()) {
-      imports.append("import " + jt + ";\n");
+      imports.add(jt);
     }
-   for (String s : limba_finder.getTests().getImportTypes()) {
-      imports.append("import " + s + ";\n");
-    }
-   if (user_context != null) {
-      for (String s : user_context.getContextImports()) {
-	 imports.append("import " + s + ";\n");
+   for (LimbaTestCase tc : limba_finder.getTestCases()) { 
+      Collection<String> imps = tc.getImports();
+      if (imps != null) {
+         for (String im : imps) {
+            imports.add(im);
+          }
        }
     }
-   idmap.put("IMPORTS",imports.toString());
+   Collection<String> cimps = limba_finder.getContextImports(); 
+   if (cimps != null) {
+      for (String im : cimps) {
+         imports.add(im);
+       }
+    }
+   StringBuffer importstr = new StringBuffer();
+   for (String s : imports) {
+      importstr.append("Import " + s + ";\n");
+    }
+   idmap.put("IMPORTS",importstr.toString());
    
    setupTests(idmap);
-   
-   JavaAstClassName cn = null;
-   if (pkgfix != null) {
-      JavaAst.mapPackageNames(java_fragment.getAstNode(),pkgfix,idmap.get("PACKAGE"));
-    }
-   else {
-      cn = for_solution.getClassNamer();
-      if (cn != null) {
-	 String cnm = idmap.get("PACKAGEDOT") + clsname;
-	 cn.setClassName(cnm,clsname);
-       }
-    }
    
    setupCode(idmap);
    
@@ -147,16 +152,17 @@ private void setupJunitTest(Map<String,String> idmap)
 
 
 
-private void setupUserContext(Map<String,String> idmap) throws S6Exception
+private void setupUserContext(Map<String,String> idmap) throws LimbaException
 {
-   if (user_context == null) return;
+   LimbaTestContext ctx = limba_finder.getTestContext();
+   if (ctx == null) return;
    
-   String s = for_request.getPackage();
-   if (s == null) s = user_context.getContextPackage();
+   String s = limba_finder.getPackageName();
+   if (s == null) s = ctx.getPackage(); 
    if (s != null) idmap.put("PACKAGE",s);
    else idmap.put("PACKAGE","");
    
-   String cls = user_context.getContextClass();
+   String cls = ctx.getClassName(); 
    if (cls != null) {
       String fcls;
       fcls = cls;
@@ -164,45 +170,45 @@ private void setupUserContext(Map<String,String> idmap) throws S6Exception
       idmap.put("PREFIX",fcls);
     }
    
-   String jnm = user_context.getJarFileName();
-   if (jnm != null) idmap.put("S6CTX",jnm);
+   String jnm = ctx.getJarFileName();
+   if (jnm != null) idmap.put("LIMBACTX",jnm);
    
-   File cdir = user_context.getContextDirectory();
-   if (cdir == null) return;
+   File cdir = ctx.getContextDirectory();
+   if (cdir == null) return; 
    
    StringBuffer buf = new StringBuffer();
    StringBuffer ebuf = new StringBuffer();
-   for (S6Context.UserFile uf : user_context.getUserFiles()) {
+   for (LimbaTestContext.UserFile uf : ctx.getUserFiles()) {  
       String nm = uf.getLocalName();
       File cfl = new File(cdir,nm);
       String unm = uf.getUserName();
-      ebuf.append(nm);
+      ebuf.append(nm); 
       ebuf.append(">");
       ebuf.append(unm);
       ebuf.append(">");
       switch (uf.getFileType()) {
-	 case READ :
-	    ebuf.append("R");
-	    buf.append("<exec executable='ln'><arg value='-s' /><arg value='");
-	    buf.append(cfl.getPath());
-	    buf.append("' /></exec>\n");
-	    break;
-	 case WRITE :
-	    ebuf.append("W");
-	    if (cfl.exists()) {
-	       buf.append("<copy file='");
-	       buf.append(cfl.getPath());
-	       buf.append("' todir='.' />");
-	     }
-	    break;
-	 case DIRECTORY :
-	    ebuf.append("D");
-	    break;
+ 	 case READ :
+ 	    ebuf.append("R");
+ 	    buf.append("<exec executable='ln'><arg value='-s' /><arg value='");
+ 	    buf.append(cfl.getPath());
+ 	    buf.append("' /></exec>\n");
+ 	    break;
+ 	 case WRITE :
+ 	    ebuf.append("W");
+ 	    if (cfl.exists()) {
+ 	       buf.append("<copy file='");
+ 	       buf.append(cfl.getPath());
+ 	       buf.append("' todir='.' />");
+ 	     }
+ 	    break;
+ 	 case DIRECTORY :
+ 	    ebuf.append("D");
+ 	    break;
        }
       ebuf.append("&");
     }
    idmap.put("CONTEXT_ANT",buf.toString());
-   idmap.put("S6_CONTEXT_MAP",ebuf.toString());
+   idmap.put("LIMBA_CONTEXT_MAP",ebuf.toString());
    // System.err.println("CONTEXT SETUP: ANT = " + buf.toString());
    // System.err.println("CONTEXT SETUP: S6 = " + ebuf.toString());
 }
@@ -210,59 +216,48 @@ private void setupUserContext(Map<String,String> idmap) throws S6Exception
 
 
 
-private void setupTestPackage(Map<String,String> idmap) throws S6Exception
+private void setupTestPackage(Map<String,String> idmap) throws LimbaException
 {
-   File root = new File(System.getProperty("java.io.tmpdir") + File.separator + S6_TEST_DIR);
+   File root = new File(System.getProperty("java.io.tmpdir") + File.separator + LIMBA_TEST_DIR);
    if (!root.exists() && !root.mkdir())
-      throw new S6Exception("Can't create S6 test directory: " + root);
-   idmap.put("ROOT",root.getPath());
+      throw new LimbaException("Can't create S6 test directory: " + root);
+   idmap.put("ROOT",root.getPath()); 
    
    String pkg = null;
    Random r = new Random();
    File dir = null;
    for (int i = 0; i < 1000; ++i) {
-      pkg = S6_PACKAGE_PREFIX + r.nextInt(131256);
+      pkg = LIMBA_PACKAGE_PREFIX + r.nextInt(131256);
       dir = new File(root.getPath() + File.separator + pkg);
       if (dir.exists()) continue;
       if (dir.mkdir()) break;
       dir = null;
     }
    
-   if (dir == null) throw new S6Exception("S6 test directory not created");
+   if (dir == null) throw new LimbaException("S6 test directory not created");
    
    idmap.put("DIRECTORY",dir.getPath());
    if (idmap.get("PACKAGE") == null) idmap.put("PACKAGE",pkg);
    idmap.put("SRCDIR",dir.getPath());
    idmap.put("PROJECTNAME",pkg);
    
-   File sf1 = new File(dir,"S6SOURCE");
+   File sf1 = new File(dir,"LIMBASOURCE");
    try {
       PrintWriter fw = new PrintWriter(new FileWriter(sf1));
       try {
-	 fw.println(for_source.getDisplayName());
-	 fw.println(for_source.getName());
-	 fw.println(for_source.getProjectId());
+// 	 fw.println(src.getDisplayName());
+// 	 fw.println(src.getUserName());
+// 	 fw.println(src.getProjectId()); 
        }
       catch (Throwable t) { }
       fw.close();
     }
    catch (IOException e) { }
    
-   File bin = new File(dir,S6_BINARY_DIR);
-   if (for_request.getSearchType() == S6SearchType.ANDROIDUI) {
-      File f1 = new File(dir,"src");
-      File f2 = new File(f1,"s6");
-      File f3 = new File(f2,pkg);
-      idmap.put("SRCDIR",f3.getPath());
-      if (!f3.mkdirs()) {
-	 System.err.println("Problem creating source subdirectory: " + f3);
-       }
-      idmap.put("PACKAGE","s6." + pkg);
-      bin = new File(bin,"classes");
-    }
+   File bin = new File(dir,LIMBA_BINARY_DIR);
    
    if (!bin.mkdirs()) {
-      System.err.println("Problem creating binary subdirectory: " + bin);
+      throw new LimbaException("Problem creating binary subdirectory: " + bin);
     }
    idmap.put("BIN",bin.getPath());
    
@@ -283,23 +278,8 @@ private void setupTestPackage(Map<String,String> idmap) throws S6Exception
 
 private void setupCode(Map<String,String> idmap)
 {	
-   JavaContracts jc = new JavaContracts(for_request.getContracts(),java_fragment);
-   if (jc.insertContracts()) idmap.put("ANTRUN","jmltest");
-   
    String gencode = "";
-   switch (for_request.getSearchType()) {
-      case METHOD :
-      case CLASS :
-      case FULLCLASS :
-      case TESTCASES :
-	 gencode = java_fragment.getText();
-	 break;
-      case PACKAGE :
-      case APPLICATION :
-      case UIFRAMEWORK :
-      case ANDROIDUI :
-	 break;
-    }
+   gencode = java_fragment.getText();
    
    if (java_fragment.getFragmentType() == CoseResultType.METHOD) {
       gencode = "private static class " + idmap.get("TESTCLASS") + " {\n\n" + gencode;
@@ -314,94 +294,13 @@ private void setupCode(Map<String,String> idmap)
 }
 
 
-
-
-/********************************************************************************/
-/*										*/
-/*	Methods to generate static initializers 				*/
-/*										*/
-/********************************************************************************/
-
-private void setupUIHierarchy(Map<String,String> idmap)
-{
-   S6Request.UISignature usg = (S6Request.UISignature) for_request.getSignature();
-   
-   StringBuffer buf = new StringBuffer();
-   buf.append("private edu.brown.cs.s6.runner.RunnerS6HierData [] s6_hier_data = new edu.brown.cs.s6.runner.RunnerS6HierData[] {\n");
-   addUIComponent(buf,usg.getHierarchy());
-   buf.append("};\n");
-   
-   idmap.put("STATICS",buf.toString());
-}
-
-
-private void addUIComponent(StringBuffer buf,S6Request.UIComponent c)
-{
-   buf.append("new edu.brown.cs.s6.runner.RunnerS6HierData(");
-   addString(buf,c.getId());
-   buf.append(",");
-   buf.append(c.getXposition());
-   buf.append(",");
-   buf.append(c.getYposition());
-   buf.append(",");
-   buf.append(c.getWidth());
-   buf.append(",");
-   buf.append(c.getHeight());
-   buf.append(",\"");
-   for (String s : c.getTypes()) {
-      buf.append(s);
-      buf.append(",");
-    }
-   buf.append("\",");
-   addComp(buf,c.getTopAnchor());
-   buf.append(",");
-   addComp(buf,c.getBottomAnchor());
-   buf.append(",");
-   addComp(buf,c.getLeftAnchor());
-   buf.append(",");
-   addComp(buf,c.getRightAnchor());
-   buf.append(",");
-   addString(buf,c.getData());
-   buf.append(",");
-   List<S6Request.UIComponent> ch = c.getChildren();
-   if (ch == null) {
-      buf.append("0),\n");
-    }
-   else {
-      buf.append(ch.size());
-      buf.append("),\n");
-      for (S6Request.UIComponent cc : ch) addUIComponent(buf,cc);
-    }
-}
-
-
-private void addComp(StringBuffer buf,S6Request.UIComponent c)
-{
-   if (c == null) addString(buf,null);
-   else addString(buf,c.getId());
-}
-
-
-private void addString(StringBuffer buf,String s)
-{
-   if (s == null) buf.append("null");
-   else {
-      buf.append("\"");
-      buf.append(s);
-      buf.append("\"");
-    }
-}
-
-
-
-
 /********************************************************************************/
 /*										*/
 /*	Methods to actually generate test code					*/
 /*										*/
 /********************************************************************************/
 
-private void setupTests(Map<String,String> idmap) throws S6Exception
+private void setupTests(Map<String,String> idmap) throws LimbaException
 {
    StringBuffer buf = new StringBuffer();
    String create = "";
@@ -471,6 +370,87 @@ private void setupTesting(Map<String,String> idmap)
    idmap.put("ANNOTATION",buf.toString());
 }
 
+
+
+@SuppressWarnings("unchecked")
+private void setupSourceFile(Map<String,String> idmap)
+{
+   if (user_context == null) return;
+   
+   String cls = user_context.getContextClass();
+   if (cls == null) return;
+   
+   String src = user_context.getSourceFile();
+   if (src == null) return;
+   
+   CompilationUnit cu = JavaAst.parseSourceFile(src);
+   if (cu == null) return;
+   
+   for (JcompType jt : java_fragment.getImportTypes()) {
+      while (jt.isParameterizedType()) jt = jt.getBaseType();
+      boolean fnd = false;
+      for (Object o : cu.imports()) {
+	 ImportDeclaration id = (ImportDeclaration) o;
+	 if (id.isOnDemand()) continue;
+	 String nm = id.getName().getFullyQualifiedName();
+	 if (nm.equals(jt.getName())) fnd = true;
+       }
+      if (!fnd) {
+	 AST ast = cu.getAST();
+	 ImportDeclaration id = ast.newImportDeclaration();
+	 id.setName(JavaAst.getQualifiedName(ast,jt.getName()));
+	 cu.imports().add(id);
+       }
+    }
+   
+   AbstractTypeDeclaration typ = null;
+   for (Iterator<?> it = cu.types().iterator(); it.hasNext() && typ == null; ) {
+      AbstractTypeDeclaration atd = (AbstractTypeDeclaration) it.next();
+      String tnm = atd.getName().getIdentifier();
+      if (tnm.equals(cls)) typ = atd;
+    }
+   if (typ == null) return;
+   
+   S6Request.MethodSignature msg = null;
+   switch (for_request.getSearchType()) {
+      case METHOD :
+	 msg = (S6Request.MethodSignature) for_request.getSignature();
+	 break;
+      default :
+	 break;
+    }
+   
+   List<ASTNode> decls = typ.bodyDeclarations();
+   for (Iterator<ASTNode> it = decls.iterator(); it.hasNext(); ) {
+      ASTNode hn = it.next();
+      if (hn.getNodeType() == ASTNode.METHOD_DECLARATION && msg !=  null) {
+	 MethodDeclaration md = (MethodDeclaration) hn;
+	 String nm = md.getName().getIdentifier();
+	 if (nm.equals(msg.getName())) {
+	    it.remove();
+          }
+       }
+    }
+   
+   for (ASTNode hn : java_fragment.getHelpers()) {
+      ASTNode nhn = ASTNode.copySubtree(cu.getAST(),hn);
+      decls.add(nhn);
+    }
+   ASTNode bn = java_fragment.getAstNode();
+   ASTNode nbn = ASTNode.copySubtree(cu.getAST(),bn);
+   
+   decls.add(nbn);
+   
+   // TODO: Add imports here
+   // TODO: handle jml here
+   
+   String rsrc = cu.toString();
+   
+   idmap.remove("CODE");
+   
+   idmap.put("SOURCECODE",rsrc);
+   idmap.put("SOURCECLASS",cls);
+}
 
 
 

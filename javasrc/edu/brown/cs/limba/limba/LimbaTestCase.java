@@ -23,6 +23,7 @@
 package edu.brown.cs.limba.limba;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.w3c.dom.Element;
@@ -93,21 +94,22 @@ protected LimbaTestCase(Element xml) throws LimbaException
 /*										*/
 /********************************************************************************/
 
-public String getName() 			{ return test_name; }
+String getName() 			{ return test_name; }
 
-public boolean isOptional()			{ return is_optional; }
+boolean isOptional()			{ return is_optional; }
 
-public abstract LimbaTestType getTestType();
+abstract LimbaTestType getTestType();
 
-public String getUserCode()			{ return null; }
+String getUserCode()			{ return null; }
 
-public List<CallTest> getCalls()		{ return null; }
+List<CallTest> getCalls()		{ return null; }
 
-public String getJunitClass()                   { return null; }
-public String getJunitName()                    { return null; }
+String getJunitClass()                   { return null; }
+String getJunitName()                    { return null; }
 
-public boolean getNeedsUserInput()		{ return user_input; }
+boolean getNeedsUserInput()		{ return user_input; }
 
+Collection<String> getImports()         { return null; }
 
 
 /********************************************************************************/
@@ -125,9 +127,9 @@ private static class UserCodeTest extends LimbaTestCase {
       user_code = IvyXml.getTextElement(xml,"CODE");
     }
    
-   public LimbaTestType getTestType()		{ return LimbaTestType.USERCODE; } 
+    LimbaTestType getTestType()		{ return LimbaTestType.USERCODE; } 
    
-   public String getUserCode()			{ return user_code; }
+    String getUserCode()			{ return user_code; }
    
 }	// end of subclass UserCodeTest
 
@@ -152,12 +154,12 @@ private static class UserJunitTest extends LimbaTestCase {
       junit_name = IvyXml.getTextElement(xml,"TESTNAME");
     }
    
-   public LimbaTestType getTestType()           { return LimbaTestType.JUNIT; }
+    LimbaTestType getTestType()           { return LimbaTestType.JUNIT; }
    
-   public String getJunitClass()                { return junit_class; }
-   public String getJunitName()                 { return junit_name; }
+    String getJunitClass()                { return junit_class; }
+    String getJunitName()                 { return junit_name; }
    
-   public String getUserCode() {
+    String getUserCode() {
       return "// " + junit_name + " " + junit_class + "." + junit_method + "\n";
     }
    
@@ -187,10 +189,10 @@ private static class CallSetTest extends LimbaTestCase {
       setup_code = IvyXml.getTextElement(xml,"CODE");
     }
    
-   public LimbaTestType getTestType()		{ return LimbaTestType.CALLS; }
-   public String getUserCode()		{ return setup_code; }
+    LimbaTestType getTestType()		{ return LimbaTestType.CALLS; }
+    String getUserCode()		{ return setup_code; }
    
-   public List<CallTest> getCalls()		{ return call_set; }
+    List<CallTest> getCalls()		{ return call_set; }
    
 }	// end of subclass CallSetTest
 
