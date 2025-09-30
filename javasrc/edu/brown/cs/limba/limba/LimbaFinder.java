@@ -53,10 +53,11 @@ private String          find_description;
 private String          find_signature;
 private String          find_name;
 private boolean         use_context;
+private boolean         is_remote;
 private String          find_file;
-private LimbaTestContext test_context;
+private LimbaFindContext find_context;
 
-static AtomicInteger    test_counter = new AtomicInteger(0);
+private static AtomicInteger    test_counter = new AtomicInteger(0);
 
 
 
@@ -77,6 +78,7 @@ LimbaFinder(LimbaMain lm,String prompt,Element xml)
    find_name = IvyXml.getAttrString(xml,"NAME");
    find_file = IvyXml.getAttrString(xml,"FILE");
    use_context = IvyXml.getAttrBool(xml,"USECONTEXT");
+   is_remote = IvyXml.getAttrBool(xml,"REMOTE");
    test_cases = new ArrayList<>();
    Element testsxml = IvyXml.getChild(xml,"TESTS");  
    for (Element test : IvyXml.children(testsxml,"TESTCASE")) {
@@ -88,11 +90,11 @@ LimbaFinder(LimbaMain lm,String prompt,Element xml)
          IvyLog.logE("LIMBA","Problem reading test case",e);
        }
     }
-   test_context = null;
+   find_context = null;
    
    Element ctxxml = IvyXml.getChild(xml,"CONTEXT");
    if (ctxxml != null) {
-      test_context = new LimbaTestContext(this,ctxxml);
+      find_context = new LimbaFindContext(this,ctxxml);
     }
 }
 
@@ -104,7 +106,7 @@ LimbaFinder(LimbaMain lm,String prompt,Element xml)
 /********************************************************************************/
 
 LimbaMain getLimbaMain()                { return limba_main; }
-LimbaTestContext getTestContext()       { return test_context; }
+LimbaFindContext getFindContext()       { return find_context; }
 String getResultName()                  { return find_name; }
 String getResultFile()                  { return find_file; }
 
@@ -117,6 +119,8 @@ Collection<String> getContextImports()
    return null;
 }
 String getPackageName()                 { return null; }
+String getSignatureClassName()          { return null; }
+String getSignatureName()               { return null; }
 
 
 
@@ -236,7 +240,7 @@ private class TestRunner extends Thread {
    
    @Override public void run() {
       LimbaTester tester = new LimbaTester(LimbaFinder.this,for_solution);
-      LimbaTestReport rpt = tester.runTester();
+      LimbaSuiteReport rpt = tester.runTester();
       // check if tests passed or not, save result for later queries
       for_solution.setTestsPassed(true);
     }

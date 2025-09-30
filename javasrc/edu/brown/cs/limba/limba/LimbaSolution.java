@@ -75,11 +75,11 @@ LimbaSolution(LimbaFinder lf,String text) throws LimbaException
    
    JcompControl jcomp = limba_finder.getLimbaMain().getJcompControl(); 
    List<String> jars = null;
-   if (limba_finder.getContextJar() != null) {
-      jars = new ArrayList<>();
-      jars.add(limba_finder.getContextJar().getPath());
-    }
-   
+// if (limba_finder.getContextJar() != null) {
+//    jars = new ArrayList<>();
+//    jars.add(limba_finder.getContextJar().getPath());
+//  }
+
    JcompProject jp = JcompAst.getResolvedAst(jcomp,java_ast,jars);
    if (jp == null) {
       throw new LimbaException("Unable to resolve AST");
@@ -121,6 +121,10 @@ boolean getUseConstructor()
    return true;
 }
 
+String getText()                        { return null; }
+
+LimbaFindType getFindType()             { return LimbaFindType.METHOD; } 
+
 synchronized void setTestsPassed(boolean fg) 
 {
    tests_passed = fg; 
@@ -137,6 +141,12 @@ synchronized boolean waitForTesting()
     }
    
    return tests_passed;
+}
+
+
+void clearResolve()
+{
+   
 }
 
 

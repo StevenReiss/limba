@@ -119,7 +119,7 @@ LimbaCommand createCommand(String line)
 
 private String getPrompt(String cmd)
 {
-   InputStream ins = getClass().getClassLoader().getResourceAsStream("prompts.xml");
+   InputStream ins = getClass().getClassLoader().getResourceAsStream("resources/`prompts.xml");
    if (ins == null) return null;
    Element xml = IvyXml.loadXmlFromStream(ins);
    if (xml == null) return null;

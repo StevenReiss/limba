@@ -396,6 +396,7 @@ private void processXmlFile(FileReader fr)
       for ( ; ; ) {
          String xmlstr = xr.readXml();
          if (xmlstr == null) break;
+         IvyLog.logD("LIMBA","Process XML command: " + xmlstr);
          Element xml = IvyXml.convertStringToXml(xmlstr);
          try {
             LimbaCommand cmd = setupLimbaCommand(xml);

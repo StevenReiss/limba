@@ -51,6 +51,11 @@ enum LimbaTestArgType {
    SAVE 		// store value in variable, no checking
 }
 
+enum LimbaFindType {
+   METHOD,
+   CLASS,
+}
+
 interface LimbaCommand {
    String getCommandName();
    boolean getEndOnBlank();
@@ -61,6 +66,13 @@ interface LimbaCommand {
    void setOptions(String options);
    void process(IvyXmlWriter rslt);
 }
+
+
+enum LimbaSolutionFlag {
+   FAIL,		// the solution failed tests
+   PASS,		// the solution passed tests
+   NONE 		// dummy flag
+};
 
 
 /********************************************************************************/
@@ -74,13 +86,15 @@ String LIMBA_TEST_CLASS = "LimbaTestClass";
 String LIMBA_USER_CLASS = "LimbaUserClass";
 String ANT_FILE = "build.xml";
 String LIMBA_BINARY_DIR = "bin";
-String JAVA_TEST_PROTO = "resources/JavaMethodTest.proto";
-String JAVA_ANT_PROTO = "resources/build.xml.proto";
+String JAVA_TEST_PROTO = "JavaMethodTest.proto";
+String JAVA_ANT_PROTO = "build.xml.proto";
 String JUNIT_CLASSPATH = IvyFile.expandName("$(ROOT)/ivy/lib/junit.jar");
 String IVY_CLASSPATH = IvyFile.expandName("$(ROOT)/ivy/lib/ivy.jar");
 String JUNIT_RUNNER = "junit.textui.TestRunner";
 String JUNIT_OUT = "test.out.xml";
 String LIMBA_TEST_DIR = "limbatest";
+String ANT_COMMAND = "ant";
+      
 
 enum LimbaUserFileType {
    READ,
