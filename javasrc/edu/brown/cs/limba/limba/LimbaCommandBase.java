@@ -102,6 +102,8 @@ LimbaCommand createCommand(String line)
          return new CommandProperty(line);
       case "FIND" :
          return new CommandFind(prompt,line);
+      case "FINDJDOC" :
+         return new CommandJdoc(prompt,line);
       case "EXIT" :
          System.exit(0);
     }
@@ -119,7 +121,10 @@ LimbaCommand createCommand(String line)
 
 private String getPrompt(String cmd)
 {
-   InputStream ins = getClass().getClassLoader().getResourceAsStream("resources/`prompts.xml");
+   InputStream ins = getClass().getClassLoader().getResourceAsStream("resources/prompts.xml");
+   if (ins == null) {
+      ins = getClass().getClassLoader().getResourceAsStream("prompts.xml");
+    }
    if (ins == null) return null;
    Element xml = IvyXml.loadXmlFromStream(ins);
    if (xml == null) return null;
@@ -509,6 +514,37 @@ private class CommandFind extends CommandBase {
    
    @Override public void localProcess(IvyXmlWriter xw) throws Exception {
       limba_finder.process(xw);   
+    }
+   
+}       // end of inner class CommandFind
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      FINDJDOC command to find JavaDoc                                        */
+/*                                                                              */
+/********************************************************************************/
+
+private class CommandJdoc extends CommandBase {
+
+   private String use_prompt;
+   private LimbaJdocer limba_jdocer;
+   
+   CommandJdoc(String prompt,String line) {
+      super(line);
+      use_prompt = prompt;
+    }
+   
+   @Override public String getCommandName()             { return "FIND"; }
+   
+   @Override public void setupCommand(Element xml) {
+      super.setupCommand(xml);          // handle options
+      limba_jdocer = new LimbaJdocer(limba_main,use_prompt,xml);  
+    }
+   
+   @Override public void localProcess(IvyXmlWriter xw) throws Exception {
+      limba_jdocer.process(xw);   
     }
    
 }       // end of inner class CommandFind

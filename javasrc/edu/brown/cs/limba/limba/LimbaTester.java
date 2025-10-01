@@ -211,8 +211,7 @@ private void setupTestPackage(Map<String,String> idmap) throws LimbaException
 {
    File f1 = new File(System.getProperty("java.io.tmpdir"));
    File root = new File(f1,LIMBA_TEST_DIR);
-   if (!root.exists() && !root.mkdir())
-      throw new LimbaException("Can't create Limba test directory: " + root);
+   root.mkdir();                // can fail if it already exists
    idmap.put("ROOT",root.getPath()); 
    
    String pkg = null;

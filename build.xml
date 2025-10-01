@@ -54,7 +54,6 @@
 	<fileset dir='${LIMBA}/java' includes='**/*.class' />
 	<fileset dir='${LIMBA}/resources' includes='*.xml' />
 	<fileset dir='${LIMBA}/resources' includes='*.proto' />
-	<fileset dir='${PRO}/ivy/java' includes='**/*.class' />
 	<zipfileset src='${LIMBALIB}/ollama4j.jar' excludes='META-INF/*' />
 	<zipfileset src='${LIMBALIB}/langchain-http-client.jar' excludes='META-INF/*' />
 	<zipfileset src='${LIMBALIB}/langchain4j-chroma.jar' excludes='META-INF/*' />
@@ -80,7 +79,7 @@
 	 <fileset dir='${PRO}/limbabb/java' includes='**/*.class' />
 	 <fileset dir='${LIMBA}/resources' includes='*.xml' />
 	 <fileset dir='${LIMBA}/resources' includes='*.proto' />
-	 <fileset dir='${PRO}/ivy/java' includes='**/*.class' />
+<!--	 <fileset dir='${PRO}/ivy/java' includes='**/*.class' />                        -->
 	 <zipfileset src='${LIMBALIB}/ollama4j.jar' excludes='META-INF/*' />
 	 <zipfileset src='${LIMBALIB}/langchain-http-client.jar' excludes='META-INF/*' />
 	 <zipfileset src='${LIMBALIB}/langchain4j-chroma.jar' excludes='META-INF/*' />

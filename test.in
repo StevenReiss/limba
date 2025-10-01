@@ -1,5 +1,16 @@
 ASK -- Who are you?
 
+GENERATE EOL
+Create a Java Application that acts as a socket relay.	It should create a server socket
+on port 11234 and let clients attach to this.  It should forward all writes to this socket
+to machine HOST on the same port and forward all response from HOST on that socket back
+to the original client.  Do not use anonymous classes.	Do not use on-demand imports.
+The host and port should be definable as command line options (-h <host> and -p <port>).
+
+EOL
+
+EXIT
+
 QUERY EOL
 Tell me the most efficient way of clearing a Java StringBuffer so it can be reused.
 Just return the code needed.
@@ -171,5 +182,99 @@ to go from one block to another (the signal setting for each signal).
 
 EOL
 
+QUERY EOL
+Explain how the following code works and what it does:
+
+private void scanMethod()
+{
+   File f = bump_location.getFile();
+   String proj = bump_location.getProject();
+   BaleConstants.BaleFileOverview bfo = BaleFactory.getFactory().
+	 getFileOverview(proj,f);
+   String code = null;
+   try {
+      code = bfo.getText(bump_location.getDefinitionOffset(),
+	    bump_location.getDefinitionEndOffset() - bump_location.getDefinitionOffset());
+    }
+   catch (BadLocationException e) {
+      BoardLog.logE("BAIT","Problem getting text for method",e);
+      return;
+    }
+
+   int x1 = -1;
+   StringBuffer buf = new StringBuffer();
+   StringBuffer jdoc = null;
+   boolean inlinecmmt = false;
+   boolean inareacmmt = false;
+   char lastchar = 0;
+   int havetext = 0;
+
+   for (int i = 0; i < code.length(); ++i) {
+      char ch = code.charAt(i);
+      if (inlinecmmt) { 			// check for end of comment
+	 if (ch == '\n') {
+	    inlinecmmt = false;
+	  }
+       }
+      else if (inareacmmt) {
+	 if (jdoc != null) {
+	    jdoc.append(ch);
+	    if (Character.isLetterOrDigit(ch)) ++havetext;
+	  }
+	 if (lastchar == '*' && ch == '/') {
+	    inareacmmt = false;
+	    if (jdoc != null) {
+	       if (havetext > 10) {
+		  buf.append(jdoc);
+		  buf.append("\n");
+		  prior_end = bump_location.getDefinitionOffset() + i + 1;
+		}
+	       else if (buf.isEmpty()) {
+		  prior_start = -1;
+		}
+	       jdoc = null;
+	       havetext = 0;
+	    }
+	  }
+       }
+
+      if (inareacmmt || inlinecmmt) ;
+      else if (Character.isLetterOrDigit(ch)) {
+	 if (x1 < 0) x1 = i;
+	 break;
+       }
+      else if (lastchar == '/') {
+	 if (ch == '/') {
+	    inlinecmmt = true;
+	  }
+	 else if (ch == '*') {
+	    if (i+1 < code.length() && code.charAt(i+1) == '*') {
+	       havetext = 0;
+	       if (prior_start < 0) {
+		  prior_start = bump_location.getDefinitionOffset() + i - 1;
+		}
+	       jdoc = new StringBuffer();
+	       jdoc.append("/*");
+	     }
+	    inareacmmt = true;
+	  }
+       }
+      lastchar = ch;
+    }
+   if (!buf.isEmpty()) prior_javadoc = buf.toString();
+   if (x1 < 0) x1 = 0;
+   method_contents = code.substring(x1);
+   IvyLog.logD("LIMBA","Found prior " + prior_start + " " + prior_end);
+}
+
+EOL
+
+GENERATE EOL
+Create a Java Application that acts as a socket relay.	It should create a server socket
+on port 11234 and let clients attach to this.  It should forward all writes to this socket
+to machine HOST on the same port and forward all response from HOST on that socket back
+to the original client.  Do not use anonymous classes.	Make all imports explicit.
+
+EOL
 
 EXIT

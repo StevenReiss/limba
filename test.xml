@@ -1,6 +1,38 @@
 <LIMBA DO='PING' />
 <LIMBA DO='LIST' />
 
+<LIMBA DO='FINDJDOC' TYPE='METHOD' USECONTEXT='true'>
+<JAVADOC>
+  <PRIOR><![CDATA[/** Calculate the force of gravity on the pendulum using the formula from the assignment.
+@return a Force object
+*/
+]]></PRIOR>
+  <CODE><![CDATA[public static Force calculateForce(Pendulum p)
+{
+   // Calculate magnitude
+   double magnitude = -Pendulum.getMass() * g * p.getAngle().sine();
+
+   // Error checking - remove me later
+   if (Double.isNaN(magnitude)) {
+      System.err.println("Got NaN from mass: " + Pendulum.getMass() + ", g: " + g
+	       + ", angle: " + p.getAngle() + ", sine(angle): " + p.getAngle().sine());
+      System.exit(-1);
+   }
+
+   // Calculate angles
+   Position pos = p.getPosition();
+   // use a pvec to get the angles
+   PhysicsVector vec = new PhysicsVector(pos.getX(),pos.getY(),pos.getZ());
+   Force gForce = new Force(magnitude,vec.getTheta(),vec.getPhi());
+   /*
+   System.err.println("  Gravity: " );
+   System.err.println(magnitude + ", " + vec.getTheta() + ", " + vec.getPhi());
+   System.err.println(gForce);
+   */
+   return gForce;
+}]]></CODE>
+</JAVADOC>
+</LIMBA>
 
 <LIMBA DO='FIND' TYPE='METHOD'>
 <SEARCH WHAT='METHOD' NAME='edu.brown.cs.bubbles.tutorial.romp.Angle.reduce' USECONTEXT='false'
