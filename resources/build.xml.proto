@@ -1,0 +1,56 @@
+<project name="$(PROJECTNAME)" default="$(ANTRUN)" >
+   <target name="compile">
+      <javac srcdir="." destdir="$(BIN)" includeantruntime='false' debug='true'>
+	 <classpath>
+	    <pathelement location="$(BIN)" />
+	    <pathelement location="$(JUNITCP)" />
+	    <pathelement location="$(LIMBACLS)" />
+	    <pathelement location="$(IVY)" />
+	    $(CTXPATH)
+	 </classpath>
+      </javac>
+   </target>
+
+   <target name='setupcontext'>
+      $(CONTEXT_ANT)
+   </target>
+
+   <target name="test" depends="compile,setupcontext">
+      <junit printsummary='true' haltonerror='true' fork='true' >
+	 <assertions><enable/></assertions>
+	 <formatter type="xml" usefile="true" />
+	 <test name="$(PACKAGEDOT)$(CLASS)" outfile="test.out" />
+	 <classpath>
+	    <pathelement location="$(BIN)" />
+	    <pathelement location="$(JUNITCP)" />
+	    <pathelement location="$(LIMBACLS)" />
+	    <pathelement location="$(IVY)" />
+	    $(CTXPATH)
+	 </classpath>
+      </junit>
+   </target>
+
+   <target name="jar">
+      <jar destfile='$(UIJAR)'>
+	 <manifest>
+	    <attribute name='Main-Class' value='$(PACKAGEDOT)$(CLASS)' />
+	 </manifest>
+	 <fileset dir='$(LIMBACLS)' includes='**/runner/Runner*.class' />
+	 <fileset dir='./bin' includes='**/*.class' />
+	 <zipfileset src='$(JUNITCP)' excludes='META-INF/*' />
+      </jar>
+   </target>
+
+   <target name="run">
+      <java classname="$(PACKAGEDOT)$(CLASS)" fork='true'>
+	 <classpath>
+	    <pathelement location="$(BIN)" />
+	    <pathelement location="$(JUNITCP)" />
+	    <pathelement location="$(LIMBACLS)" />
+	    <pathelement location="$(IVY)" />
+	    $(CTXPATH)
+	 </classpath>
+      </java>
+   </target>
+
+</project>

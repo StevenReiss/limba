@@ -1,0 +1,122 @@
+$(PACKAGESTMT)
+
+import org.junit.*;
+
+$(IMPORTS)
+
+
+$(ANNOTATION)
+public class $(CLASS) extends edu.brown.cs.limba.runner.RunnerTestCase {
+
+$(CODE)
+
+$(TESTS)
+
+
+private static String [] LIMBA_TEST_CLASS_NAMES = new String [] { $(TESTCLASSES) };
+private static String [] LIMBA_TEST_CASES = new String [] { $(TESTCASES) };
+private static Class [] LIMBA_TEST_CLASSES;
+static {
+   LIMBA_TEST_CLASSES = new Class[LIMBA_TEST_CLASS_NAMES.length];
+   for (int i = 0; i < LIMBA_TEST_CLASS_NAMES.length; ++i) {
+      try {
+	 LIMBA_TEST_CLASSES[i] = Class.forName(LIMBA_TEST_CLASS_NAMES[i]);
+       }
+      catch (Throwable t) {
+	 System.out.println("Problem getting Class");
+       }
+    }
+}
+
+
+
+
+public static class LIMBATestSelectRunner extends org.junit.runners.Suite {
+
+   private static boolean test_run = $(HAVETEST);
+
+   public LIMBATestSelectRunner(Class<?> clz) throws org.junit.runners.model.InitializationError {
+      super(clz,LIMBA_TEST_CLASSES);
+      try {
+	 filter(new LIMBATestFilter());
+       }
+      catch (Exception e) { }
+    }
+
+   @Override protected void runChild(org.junit.runner.Runner r,org.junit.runner.notification.RunNotifier n) {
+      try {
+	 if (test_run) {
+	    test_run = false;
+	    org.junit.runners.BlockJUnit4ClassRunner cr = new org.junit.runners.BlockJUnit4ClassRunner($(CLASS).class);
+	    super.runChild(cr,n);
+	  }
+       }
+      catch (org.junit.runners.model.InitializationError e) { }
+      catch (Throwable t) {
+	 Assert.fail(t.getMessage());
+       }
+
+      super.runChild(r,n);
+    }
+
+}	// end of inner class LIMBATestSelectRunner
+
+
+public static class LIMBATestFilter extends org.junit.runner.manipulation.Filter {
+
+   @Override public String describe() {
+      return "SelectUserTests";
+    }
+
+   @Override public boolean shouldRun(org.junit.runner.Description d) {
+      if (d.isSuite()) return true;
+
+      String ds = d.getDisplayName();
+      for (String s : LIMBA_TEST_CASES) {
+	 if (ds.equals(s)) return true;
+       }
+
+      return false;
+    }
+
+}	// end of inner class LIMBATestFilter
+
+
+
+private void disableTimer()
+{
+   if (limba_timertask != null) {
+      limba_timertask.cancel();
+      limba_timertask = null;
+    }
+}
+
+
+// @org.junit.Rule public org.junit.rules.Timeout limba_global_timeout = new Timeout((int) $(MAXTIME));
+private static java.util.Timer limba_timer;
+private static java.util.TimerTask limba_timertask;
+
+static {
+   limba_timer = new java.util.Timer(true);
+   limba_timertask = new java.util.TimerTask() { public void run() { System.exit(1); } };
+   limba_timer.schedule(limba_timertask,$(MAXTIME));
+}
+
+
+public static void main(String [] args)
+{
+   $(CLASS) tc = new $(CLASS)();
+   try {
+      tc.disableTimer();
+      org.junit.runner.Runner r = new org.junit.runners.JUnit4($(CLASS).class);
+      r.run(new org.junit.runner.notification.RunNotifier());
+    }
+   catch (Throwable t) {
+      System.exit(1);
+    }
+   System.exit(0);
+}
+
+
+
+}	// end of $(CLASS)
