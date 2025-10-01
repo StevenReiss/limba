@@ -508,7 +508,7 @@ private class CommandFind extends CommandBase {
     }
    
    @Override public void localProcess(IvyXmlWriter xw) throws Exception {
-      limba_finder.process(); 
+      limba_finder.process(xw);   
     }
    
 }       // end of inner class CommandFind

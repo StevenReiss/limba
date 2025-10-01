@@ -24,7 +24,6 @@ package edu.brown.cs.limba.limba;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -99,7 +98,7 @@ LimbaSuiteReport runTester()
    Map<String,String> idmap = new HashMap<>();
    
    try {
-      setupJunitTest(idmap);
+      setupForTesting(idmap);
       return runJunitTest(idmap);
     }
    catch (LimbaException e) {
@@ -117,7 +116,7 @@ LimbaSuiteReport runTester()
 /*                                                                              */
 /********************************************************************************/
 
-private void setupJunitTest(Map<String,String> idmap)
+private void setupForTesting(Map<String,String> idmap)
    throws LimbaException
 {
    idmap.put("CLASS",LIMBA_TEST_CLASS);
@@ -127,6 +126,7 @@ private void setupJunitTest(Map<String,String> idmap)
    idmap.put("JUNITOUT",JUNIT_OUT);
    idmap.put("TESTCLASS",LIMBA_USER_CLASS);
    idmap.put("IVY",IVY_CLASSPATH); 
+   idmap.put("LIMBACLS",LIMBA_CLASSPATH); 
    
    idmap.put("ANTRUN","test");
    idmap.put("MAXTIME","10000L");
@@ -163,7 +163,7 @@ private void setupJunitTest(Map<String,String> idmap)
     }
    StringBuffer importstr = new StringBuffer();
    for (String s : imports) {
-      importstr.append("Import " + s + ";\n");
+      importstr.append("import " + s + ";\n");
     }
    idmap.put("IMPORTS",importstr.toString());
    
@@ -195,7 +195,10 @@ private void setupUserContext(Map<String,String> idmap) throws LimbaException
     }
    
    String jnm = ctx.getJarFileName();
-   if (jnm != null) idmap.put("LIMBACTX",jnm);
+   if (jnm != null) {
+      idmap.put("LIMBACTX",jnm);
+      idmap.put("CTXPATH","<pathelement location='" + jnm + "' />");
+    }
    
    File cdir = ctx.getContextDirectory();
    if (cdir == null) return; 
@@ -206,7 +209,8 @@ private void setupUserContext(Map<String,String> idmap) throws LimbaException
 
 private void setupTestPackage(Map<String,String> idmap) throws LimbaException
 {
-   File root = new File(System.getProperty("java.io.tmpdir") + File.separator + LIMBA_TEST_DIR);
+   File f1 = new File(System.getProperty("java.io.tmpdir"));
+   File root = new File(f1,LIMBA_TEST_DIR);
    if (!root.exists() && !root.mkdir())
       throw new LimbaException("Can't create Limba test directory: " + root);
    idmap.put("ROOT",root.getPath()); 
@@ -306,10 +310,7 @@ private void setupTests(Map<String,String> idmap) throws LimbaException
       if (!fnm.startsWith("test_")) fnm = "test_" + fnm;
       
       buf.append("\n\n");
-      buf.append("@org.junit.Test public void " + fnm + "() throws Exception\n");
-      buf.append("{\n");
-      if (idmap.get("SEC_PREFIX") != null) buf.append(idmap.get("SEC_PREFIX"));
-      
+      buf.append("@org.junit.Test public void " + fnm + "() throws Exception {\n");
       buf.append(create);
       
       switch (tc.getTestType()) {
@@ -323,11 +324,6 @@ private void setupTests(Map<String,String> idmap) throws LimbaException
 	    // shouldn't get here
 	    break;
        }
-      
-      if (idmap.get("SEC_SUFFIX") != null)
-	 buf.append(idmap.get("SEC_SUFFIX"));
-      if (idmap.get("TEST_FINISHER") != null)
-	 buf.append(idmap.get("TEST_FINISHER"));
       
       buf.append("}\n");
     }
@@ -477,26 +473,6 @@ private void generateCallsTest(LimbaTestCase tc,Map<String,String> idmap,StringB
 	 case THROW :
 	    buf.append("try {\n");
 	    break;
-	 case SHOW :
-	    buf.append("try {\n");
-	    buf.append("assertShow(");
-	    break;
-	 case INTERACT :
-	    if (idmap.get("UITEST") == null) idmap.put("UITEST",tc.getName());
-	    buf.append("try {\n");
-	    buf.append("disableTimer();\n");
-            buf.append("assertInteract(");
-	    break;
-	 case HIERARCHY :
-	    buf.append("assertMatchHierarchy(");
-	    break;
-	 case SCOREHIER :
-	    if (cr != null) {
-	       buf.append(cr.getArgValue());
-	       buf.append(" = ");
-	     }
-	    buf.append("scoreMatchHierarchy(");
-	    break;
        }
       
       String mthd = ct.getMethod();
@@ -540,17 +516,6 @@ private void generateCallsTest(LimbaTestCase tc,Map<String,String> idmap,StringB
 	 case SAME :
 	 case DIFF :
 	    buf.append(");\n");
-	    break;
-	 case INTERACT :
-	 case SHOW :
-	    buf.append(");\n");
-	    buf.append("}\n");
-	    buf.append("catch (junit.framework.AssertionFailedError __e) { throw __e; }\n");
-	    buf.append("catch (java.lang.Throwable __t) { assertShowThrow(__t); }\n");
-	    break;
-	 case HIERARCHY :
-	 case SCOREHIER :
-	    buf.append(",s6_hier_data);\n");
 	    break;
 	 case THROW :
 	    String ex = ct.getThrows();
@@ -666,7 +631,8 @@ private LimbaSuiteReport runJunitTest(Map<String,String> idmap)
 private void produceTestFile(Map<String,String> idmap) throws LimbaException
 {
    String dir = idmap.get("SRCDIR");
-   File f = new File(dir + File.separator + LIMBA_TEST_CLASS + ".java");
+   File f1 = new File(dir);
+   File f = new File(f1,LIMBA_TEST_CLASS + ".java");
    
    try (InputStream ins = this.getClass().getClassLoader().getResourceAsStream(JAVA_TEST_PROTO)) {
       try (BufferedReader br = new BufferedReader(new InputStreamReader(ins))) {

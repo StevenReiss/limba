@@ -32,6 +32,7 @@
      <pathelement location='${LIMBA}/javasrc' />
      <fileset dir='${LIMBALIB}' includes='*.jar' />
      <fileset dir='${IVYLIB}' includes='ivy.jar' />
+     <fileset dir='${IVYLIB}' includes='junit.jar' />
      <fileset dir='${PRO}/ivy/lib/eclipsejar' includes='*.jar' />
   </path>
 

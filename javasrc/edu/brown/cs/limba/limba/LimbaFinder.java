@@ -28,6 +28,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -35,6 +36,7 @@ import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.xml.IvyXml;
+import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 class LimbaFinder implements LimbaConstants
 {
@@ -56,6 +58,7 @@ private boolean         use_context;
 private boolean         is_remote;
 private String          find_file;
 private LimbaFindContext find_context;
+private LimbaFindType   find_type;
 
 private static AtomicInteger    test_counter = new AtomicInteger(0);
 
@@ -79,6 +82,7 @@ LimbaFinder(LimbaMain lm,String prompt,Element xml)
    find_file = IvyXml.getAttrString(xml,"FILE");
    use_context = IvyXml.getAttrBool(xml,"USECONTEXT");
    is_remote = IvyXml.getAttrBool(xml,"REMOTE");
+   find_type = IvyXml.getAttrEnum(xml,"WHAT",LimbaFindType.METHOD);
    test_cases = new ArrayList<>();
    Element testsxml = IvyXml.getChild(xml,"TESTS");  
    for (Element test : IvyXml.children(testsxml,"TESTCASE")) {
@@ -109,6 +113,7 @@ LimbaMain getLimbaMain()                { return limba_main; }
 LimbaFindContext getFindContext()       { return find_context; }
 String getResultName()                  { return find_name; }
 String getResultFile()                  { return find_file; }
+LimbaFindType getFindType()             { return find_type; }
 
 Collection<LimbaTestCase> getTestCases() 
 {
@@ -130,7 +135,7 @@ String getSignatureName()               { return null; }
 /*                                                                              */
 /********************************************************************************/
 
-void process() throws Exception
+void process(IvyXmlWriter xw) throws Exception
 {
    // create a JcompContext based on user context
    
@@ -166,9 +171,14 @@ void process() throws Exception
    
    IvyLog.logD("LIMBA","Found possible solutions: " + tocheck.size() + " " +
          code);
-   for (LimbaSolution sol : tocheck) {
+   
+   List<LimbaSolution> rslt = new ArrayList<>();
+   for (Iterator<LimbaSolution> it = tocheck.iterator(); it.hasNext(); ) {
+      LimbaSolution sol = it.next();
       if (test_cases.isEmpty()) {
-         sol.setTestsPassed(true); 
+         sol.setTestsPassed(true);
+         rslt.add(sol);
+         it.remove();
        }
       else {
          TestRunner tr = new TestRunner(sol);
@@ -178,6 +188,27 @@ void process() throws Exception
    for (LimbaSolution sol : tocheck) {
       sol.waitForTesting();
     }
+   
+   for (Iterator<LimbaSolution> it = tocheck.iterator(); it.hasNext(); ) {
+      LimbaSolution sol = it.next();
+      if (sol.getTestsPassed()) {
+         rslt.add(sol);
+         it.remove();
+       }
+    }
+   
+   if (rslt.isEmpty()) {
+      IvyLog.logD("No solution passed the tests -- need to retry with more information");
+    }
+   
+   xw.begin("SOLUTIONS");
+   xw.field("COUNT",rslt.size());
+   
+   for (LimbaSolution sol : rslt) {
+      sol.output(xw); 
+    }
+   
+   xw.end("SOLUTIONS");
    // Then check the test cases
    // if a test passes, just return it
    // otherwise determine what is wrong and issue a new generate with the

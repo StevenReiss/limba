@@ -24,6 +24,7 @@ package edu.brown.cs.limba.limba;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.w3c.dom.Element;
@@ -102,14 +103,13 @@ abstract LimbaTestType getTestType();
 
 String getUserCode()			{ return null; }
 
-List<CallTest> getCalls()		{ return null; }
+List<CallTest> getCalls()		{ return Collections.emptyList(); }
 
-String getJunitClass()                   { return null; }
-String getJunitName()                    { return null; }
-
-boolean getNeedsUserInput()		{ return user_input; }
+String getJunitClass()                  { return null; }
+String getJunitName()                   { return null; }
 
 Collection<String> getImports()         { return null; }
+
 
 
 /********************************************************************************/
@@ -127,9 +127,9 @@ private static class UserCodeTest extends LimbaTestCase {
       user_code = IvyXml.getTextElement(xml,"CODE");
     }
    
-    LimbaTestType getTestType()		{ return LimbaTestType.USERCODE; } 
+   @Override LimbaTestType getTestType()	{ return LimbaTestType.USERCODE; } 
    
-    String getUserCode()			{ return user_code; }
+   @Override String getUserCode()		{ return user_code; }
    
 }	// end of subclass UserCodeTest
 
@@ -154,12 +154,12 @@ private static class UserJunitTest extends LimbaTestCase {
       junit_name = IvyXml.getTextElement(xml,"TESTNAME");
     }
    
-    LimbaTestType getTestType()           { return LimbaTestType.JUNIT; }
+    @Override LimbaTestType getTestType() { return LimbaTestType.JUNIT; }
    
-    String getJunitClass()                { return junit_class; }
-    String getJunitName()                 { return junit_name; }
+    @Override String getJunitClass()      { return junit_class; }
+    @Override String getJunitName()       { return junit_name; }
    
-    String getUserCode() {
+    @Override String getUserCode() {
       return "// " + junit_name + " " + junit_class + "." + junit_method + "\n";
     }
    
@@ -184,15 +184,14 @@ private static class CallSetTest extends LimbaTestCase {
          if (!isValidCallTest(e)) continue;
          CallTest cti = new CallTest(e);
          call_set.add(cti);
-         if (cti.getNeedsUserInput()) user_input = true;
        }
       setup_code = IvyXml.getTextElement(xml,"CODE");
     }
    
-    LimbaTestType getTestType()		{ return LimbaTestType.CALLS; }
-    String getUserCode()		{ return setup_code; }
+    @Override LimbaTestType getTestType()	{ return LimbaTestType.CALLS; }
+    @Override String getUserCode()		{ return setup_code; }
    
-    List<CallTest> getCalls()		{ return call_set; }
+    @Override List<CallTest> getCalls()	{ return call_set; }
    
 }	// end of subclass CallSetTest
 
@@ -216,19 +215,14 @@ static class CallTest {
    private boolean	is_new;
    private LimbaTestOp	test_op; 
    private String	throw_type;
-   private boolean	user_input;
    private boolean	is_access;
    
    CallTest(Element xml) throws LimbaException {
       result_code = null;
-      user_input = false;
       is_new = IvyXml.getAttrBool(xml,"NEW");
       call_name = IvyXml.getTextElement(xml,"METHOD");
       test_op = IvyXml.getAttrEnum(xml,"OP",LimbaTestOp.NONE);
-      if (test_op == LimbaTestOp.SHOW || test_op == LimbaTestOp.HIERARCHY ||
-            test_op == LimbaTestOp.SCOREHIER || test_op == LimbaTestOp.INTERACT) {
-         user_input = true;
-       }
+      is_access = false;
       String cthis = IvyXml.getTextElement(xml,"THIS");
       if (call_name == null) {
          is_access = true;
@@ -236,7 +230,7 @@ static class CallTest {
        }
       else if (cthis != null) call_name = cthis + "." + call_name;
       
-      call_args = new ArrayList<CallArg>();
+      call_args = new ArrayList<>();
       for (Element e : IvyXml.elementsByTag(xml,"INPUT")) {
          call_args.add(new CallArg(e));
        }
@@ -255,10 +249,9 @@ static class CallTest {
    String getMethod()			        { return call_name; }
    List<CallArg> getArguments()		{ return call_args; }
    CallArg getReturnValue()		        { return result_code; }
-   boolean isConstructor()	        	{ return is_new; }
+   boolean isConstructor()	          	{ return is_new; }
    LimbaTestOp getOperator()		        { return test_op; }
    String getThrows()			        { return throw_type; }
-   boolean getNeedsUserInput()		{ return user_input; }
    boolean isAccess()		        	{ return is_access; }
    
 }	// end of subclass CallTest

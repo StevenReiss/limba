@@ -37,10 +37,7 @@ enum LimbaTestOp {
    THROW,
    SAME,
    DIFF,
-   SHOW,
-   INTERACT,
-   HIERARCHY,
-   SCOREHIER
+   
 }
 
 
@@ -90,6 +87,7 @@ String JAVA_TEST_PROTO = "JavaMethodTest.proto";
 String JAVA_ANT_PROTO = "build.xml.proto";
 String JUNIT_CLASSPATH = IvyFile.expandName("$(ROOT)/ivy/lib/junit.jar");
 String IVY_CLASSPATH = IvyFile.expandName("$(ROOT)/ivy/lib/ivy.jar");
+String LIMBA_CLASSPATH = IvyFile.expandName("$(ROOT)/limba/limba.jar");
 String JUNIT_RUNNER = "junit.textui.TestRunner";
 String JUNIT_OUT = "test.out.xml";
 String LIMBA_TEST_DIR = "limbatest";

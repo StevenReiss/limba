@@ -10,7 +10,7 @@
 to something between 0 and 2PI. ]]></DESCRIPTION>
   <TESTS>
     <TESTCASE NAME='TEST_1' TYPE='CALLS'>
-      <CALL METHOD='edu.brown.cs.bubbles.tutorial.romp.Angle.reduce' OP='EQL'>
+      <CALL METHOD='reduce' OP='EQL'>
 	<INPUT>
 	  <VALUE><![CDATA[3]]></VALUE>
 	</INPUT>
@@ -20,17 +20,17 @@ to something between 0 and 2PI. ]]></DESCRIPTION>
       </CALL>
     </TESTCASE>
     <TESTCASE NAME='TEST_2' TYPE='CALLS'>
-      <CALL METHOD='edu.brown.cs.bubbles.tutorial.romp.Angle.reduce' OP='NEQ'>
+      <CALL METHOD='reduce' OP='NEQ'>
 	<INPUT>
-	  <VALUE><![CDATA[6]]></VALUE>
+	  <VALUE><![CDATA[9]]></VALUE>
 	</INPUT>
 	<OUTPUT>
-	  <VALUE><![CDATA[6]]></VALUE>
+	  <VALUE><![CDATA[9]]></VALUE>
 	</OUTPUT>
       </CALL>
     </TESTCASE>
     <TESTCASE NAME='TEST_3' TYPE='CALLS'>
-      <CALL METHOD='edu.brown.cs.bubbles.tutorial.romp.Angle.reduce' OP='NEQ'>
+      <CALL METHOD='reduce' OP='NEQ'>
 	<INPUT>
 	  <VALUE><![CDATA[-1]]></VALUE>
 	</INPUT>
@@ -44,12 +44,5 @@ to something between 0 and 2PI. ]]></DESCRIPTION>
 </LIMBA>
 
 
-
-
-
-
-
-
-
-
+<LIMBA DO='EXIT' />
 
