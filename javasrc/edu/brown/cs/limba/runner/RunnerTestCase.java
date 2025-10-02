@@ -116,11 +116,11 @@ private static void failNotEquals(String msg,Object e,Object a)
 /*	Additional equals assertions for handling arrays			*/
 /*										*/
 /********************************************************************************/
-
-public static void assertEquals(String msg,Object [] exp,Object [] act)
-{
-   assertArrayEquals(msg,exp,act);
-}
+// 
+// public static void assertEquals(String msg,Object [] exp,Object [] act)
+// {
+// assertArrayEquals(msg,exp,act);
+// }
 
 
 

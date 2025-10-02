@@ -76,7 +76,16 @@ LimbaRag(LimbaMain lm,File base)
    
    IvyLog.logD("LIMBA","Loading project files for " + base);
    
-   findProjectFiles(base);
+   if (base != null) findProjectFiles(base);
+}
+
+
+LimbaRag(LimbaMain lm,List<File> files)
+{
+   this(lm,(File) null);
+   if (files != null) {
+      project_files.addAll(files);
+    }
 }
 
 
@@ -171,7 +180,8 @@ private EmbeddingStoreContentRetriever setupRAG()
 
 private void findProjectFiles(File base)
 {
-   if (isEclipseWorkspace(base)) {
+   if (base == null) return;
+   else if (isEclipseWorkspace(base)) {
       addEclipseFiles(base);
     }
    else if (base.isDirectory()) {

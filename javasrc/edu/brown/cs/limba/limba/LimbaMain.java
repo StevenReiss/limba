@@ -88,6 +88,8 @@ private File log_file;
 private IvyLog.LogLevel log_level;
 private boolean log_stderr;
 private JcompControl jcomp_main;
+private LimbaMsg msg_server;
+private String user_style;
 
 
 
@@ -121,6 +123,7 @@ private LimbaMain(String [] args)
    log_file = new File(f1,"limba.log");
    log_stderr = false;
    jcomp_main = new JcompControl();
+   user_style = "";
    
    scanArgs(args);
 }
@@ -143,8 +146,6 @@ boolean getThinkFlag()                  { return think_flag; }
 
 Options getOllamaOptions()              { return generate_options; }
 
-LimbaRag getRagModel()                  { return rag_model; }
-
 String getUrl()
 {
    return "http://" + ollama_host + ":" + ollama_port;
@@ -165,8 +166,10 @@ void setKeyMap(String key,String val)
 
 boolean getRemoteFileAccess()           { return remote_files; }
 
-JcompControl getJcompControl()          { return jcomp_main; 
-}
+JcompControl getJcompControl()          { return jcomp_main; }
+
+String getUserStyle()                   { return user_style; }
+void setUserStyle(String s)             { user_style = s; }
 
 
 /********************************************************************************/
@@ -261,7 +264,7 @@ private void badArgs()
 
 private void process()
 {
-   LimbaMsg msg = null;
+   msg_server = null;
    
    IvyLog.setupLogging("LIMBA",true);
    IvyLog.setLogLevel(log_level);
@@ -272,15 +275,12 @@ private void process()
    
    startOllama();
    
-   if (project_file != null) {
-      rag_model = new LimbaRag(this,project_file);
-      rag_model.getChain();             // FOR DEBUGGING ONLY
-    }
+   setupRag(project_file);
     
    command_factory = new LimbaCommandFactory(this);
    
    if (server_mode && mint_id != null) {
-      msg = new LimbaMsg(this,mint_id);
+      msg_server = new LimbaMsg(this,mint_id);
     }
    
    if (input_file != null) {
@@ -306,7 +306,7 @@ private void process()
        }
     }
    else if (server_mode) {
-      boolean haveping = msg.sendPing();
+      boolean haveping = msg_server.sendPing();
       synchronized (this) {
          for ( ; ; ) {
             // wait for explicit exit command
@@ -314,13 +314,14 @@ private void process()
                wait(10000);
              }
             catch (InterruptedException e) { }
-            boolean chk = msg.sendPing();
+            boolean chk = msg_server.sendPing();
             if (haveping && !chk) break;
             else if (!haveping && chk) haveping = true;
           }
        }
     }
 }
+
 
 
 
@@ -448,12 +449,50 @@ private void handleCommand(LimbaCommand cmd,String cmdtxt)
 
 /********************************************************************************/
 /*                                                                              */
+/*      RAG processing                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+LimbaRag getRagModel()                  { return rag_model; }
+
+void setupRag(File f)
+{
+   if (f != null) {
+      rag_model = new LimbaRag(this,f);
+      rag_model.getChain();             // FOR DEBUGGING ONLY
+    }
+   else {
+      rag_model = null;
+    }
+}
+
+void setupRag() 
+{
+   if (msg_server == null) {
+      rag_model = null;
+    }
+   else { 
+      List<File> sources = msg_server.getSources();
+      if (sources != null && !sources.isEmpty()) {
+         rag_model = new LimbaRag(this,sources);  
+       }
+      else {
+         rag_model = null;
+       }
+    }
+}
+
+
+/********************************************************************************/
+/*                                                                              */
 /*      Issue long ollama query                                                 */
 /*                                                                              */
 /********************************************************************************/
 
-String askOllama(String cmd) throws Exception
+String askOllama(String cmd0,boolean usectx) throws Exception
 {
+   String cmd = cmd0.replace("$STYLE",user_style);
+   
    IvyLog.logD("LIMBA","Query: " + cmd);
    StreamHandler hdlr = new StreamHandler();
    OllamaResult rslt = null;

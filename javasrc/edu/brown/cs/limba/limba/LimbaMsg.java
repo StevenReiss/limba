@@ -22,10 +22,16 @@
 
 package edu.brown.cs.limba.limba;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import org.w3c.dom.Element;
 
+import edu.brown.cs.ivy.file.IvyFile;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.mint.MintArguments;
 import edu.brown.cs.ivy.mint.MintConstants;
@@ -112,9 +118,6 @@ private String processCommand(String cmd,Element xml) throws LimbaException
 
 
 
-
-
-
 /********************************************************************************/
 /*                                                                              */
 /*      Load project infromation from BUBBLES                                   */
@@ -123,10 +126,56 @@ private String processCommand(String cmd,Element xml) throws LimbaException
 
 private void loadProjectData()
 {
-   
+   limba_main.setupRag();
 }
 
 
+List<File> getSources()
+{
+   List<File> srcs = new ArrayList<>();
+   
+   MintDefaultReply rply = new MintDefaultReply();
+   
+   String msg = "<BUBBLES DO='PROJECTS' />";
+   mint_control.send(msg,rply,MintControl.MINT_MSG_FIRST_NON_NULL);
+   
+   Element r = rply.waitForXml();
+   
+   if (!IvyXml.isElement(r,"RESULT")) {
+      System.err.println("BATT: Problem getting project information: " +
+            IvyXml.convertXmlToString(r));
+      System.exit(2);
+    }
+   
+   for (Element pe : IvyXml.children(r,"PROJECT")) {
+      String pnm = IvyXml.getAttrString(pe,"NAME");
+      MintDefaultReply prply = new MintDefaultReply();
+      String pmsg = "<BUBBLES DO='OPENPROJECT' PROJECT='" + pnm +
+            "' CLASSES='false' FILES='true' PATHS='false' OPTIONS='false' />";
+      mint_control.send(pmsg,prply,MintControl.MINT_MSG_FIRST_NON_NULL);
+      Element pr = prply.waitForXml();
+      if (!IvyXml.isElement(pr,"RESULT")) {
+	 IvyLog.logI("LIMBA","Problem opening project " + pnm + ": " +
+               IvyXml.convertXmlToString(pr));
+	 continue;
+       }
+      Element ppr = IvyXml.getChild(pr,"PROJECT");
+      Element files = IvyXml.getChild(ppr,"FILES");
+      Set<File> done = new HashSet<>();
+      for (Element finfo : IvyXml.children(files,"FILE")) {
+         if (!IvyXml.getAttrBool(finfo,"SOURCE")) continue;
+         String fpath = IvyXml.getAttrString(finfo,"PATH");
+         File f1 = new File(fpath);
+         f1 = IvyFile.getCanonical(f1);
+         if (!done.add(f1)) continue;
+         if (f1.getName().endsWith(".java")) {
+            srcs.add(f1);
+          }
+       }
+    }
+   
+   return srcs;
+}
 
 /********************************************************************************/
 /*                                                                              */

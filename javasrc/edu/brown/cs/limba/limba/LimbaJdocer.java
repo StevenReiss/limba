@@ -86,7 +86,7 @@ void process(IvyXmlWriter xw) throws Exception
    
    IvyLog.logD("LIMBA","Find " + pbuf.toString());
    
-   String resp = limba_main.askOllama(pbuf.toString());
+   String resp = limba_main.askOllama(pbuf.toString(),use_context);
    String jdoc = LimbaMain.getJavaDoc(resp);
    if (jdoc != null) {
       xw.cdataElement("JDOC",jdoc);

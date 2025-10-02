@@ -38,7 +38,9 @@ class LimbaFindContext implements LimbaConstants
 /*                                                                              */
 /********************************************************************************/
 
+@SuppressWarnings("unused")
 private LimbaFinder     limba_finder;
+@SuppressWarnings("unused")
 private Element         context_xml;
 
 

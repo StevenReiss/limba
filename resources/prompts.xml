@@ -12,10 +12,10 @@
      simpler.  Please clean and reformat the following, returning just the resultant code.
   </PROMPT>
   <PROMPT COMMAND='GENERATE'>
-     You are an expert Java programmer.  Return only the resultant code.
+     You are an expert Java programmer.  Return only the resultant code. $STYLE
   </PROMPT>
   <PROMPT COMMAND='FIND'>
-     You are an expert Java programmer.  Return only the resultant code.
+     You are an expert Java programmer.  Return only the resultant code. $STYLE
   </PROMPT>
   <PROMPT COMMAND='FINDJDOC'>
      You are an expert Java programmer.  Return only the JavaDoc, not the code.
@@ -37,6 +37,20 @@
      the following code does.
   </PROMPT>
 </PROMPTS>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -116,6 +116,7 @@ private void badArgs()
 /*                                                                              */
 /********************************************************************************/
 
+@SuppressWarnings("resource")
 private void process()
 {
    ServerSocket server = null;
@@ -147,6 +148,7 @@ private void process()
          System.err.println("LIMBARELAY: Problem setting up client: " + e);
        }
     }
+   
 }
 
 

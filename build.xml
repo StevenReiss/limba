@@ -33,6 +33,7 @@
      <fileset dir='${LIMBALIB}' includes='*.jar' />
      <fileset dir='${IVYLIB}' includes='ivy.jar' />
      <fileset dir='${IVYLIB}' includes='junit.jar' />
+     <fileset dir='${IVYLIB}' includes='asm.jar' />
      <fileset dir='${PRO}/ivy/lib/eclipsejar' includes='*.jar' />
   </path>
 
@@ -95,6 +96,36 @@
       <copy file='limba.jar' tofile='${PRO}/bubbles/dropins/limba.jar' verbose='true' />
       <copy file='limba.jar' tofile='${PRO}/bubbles/dropins.export/limba.jar' verbose='true' />
    </target>
+
+   <target name='test' depends='compile'>
+      <java classname='edu.brown.cs.limba.limba.LimbaMain' fork='true'>
+	 <classpath refid='spr.classpath' />
+	 <arg value='-f' />
+	 <arg value='${PRO}/limba/test.in' />
+	 <arg value='-d' />
+	 <arg value='${PRO}/limba' />
+	 <arg value='-l' />
+	 <arg value='llama4:scout' />
+	 <assertions><enable/></assertions>
+      </java>
+   </target>
+
+   <target name='testxml' depends='compile'>
+      <java classname='edu.brown.cs.limba.limba.LimbaMain' fork='true'>
+	 <classpath refid='spr.classpath' />
+	 <arg value='-f' />
+	 <arg value='${PRO}/limba/test.xml' />
+	 <arg value='-l' />
+	 <arg value='llama4:scout' />
+	 <arg value='-L' />
+	 <arg value='/home/spr/limbaxml.log' />
+	 <assertions><enable/></assertions>
+      </java>
+   </target>
+
+
+
+
 
 </project>
 

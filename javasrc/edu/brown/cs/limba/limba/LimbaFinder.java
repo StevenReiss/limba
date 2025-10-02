@@ -22,10 +22,6 @@
 
 package edu.brown.cs.limba.limba;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -55,7 +51,7 @@ private String          find_description;
 private String          find_signature;
 private String          find_name;
 private boolean         use_context;
-private boolean         is_remote;
+// private boolean         is_remote;
 private String          find_file;
 private LimbaFindContext find_context;
 private LimbaFindType   find_type;
@@ -81,7 +77,7 @@ LimbaFinder(LimbaMain lm,String prompt,Element xml)
    find_name = IvyXml.getAttrString(xml,"NAME");
    find_file = IvyXml.getAttrString(xml,"FILE");
    use_context = IvyXml.getAttrBool(xml,"USECONTEXT");
-   is_remote = IvyXml.getAttrBool(xml,"REMOTE");
+// is_remote = IvyXml.getAttrBool(xml,"REMOTE");
    find_type = IvyXml.getAttrEnum(xml,"WHAT",LimbaFindType.METHOD);
    test_cases = new ArrayList<>();
    Element testsxml = IvyXml.getChild(xml,"TESTS");  
@@ -154,7 +150,7 @@ void process(IvyXmlWriter xw) throws Exception
    
    IvyLog.logD("LIMBA","Find " + pbuf.toString());
 
-   String resp = limba_main.askOllama(pbuf.toString());
+   String resp = limba_main.askOllama(pbuf.toString(),use_context);
    List<String> code = LimbaMain.getJavaCode(resp);
    
    List<LimbaSolution> tocheck = new ArrayList<>();
@@ -162,6 +158,10 @@ void process(IvyXmlWriter xw) throws Exception
       try {
          // pass user context to solution so it can be used to resolve things
          LimbaSolution sol = new LimbaSolution(this,s); 
+         if (sol.getAstNode() == null) {
+            // invalid solution 
+            continue;
+          }
          tocheck.add(sol);
        }
       catch (Throwable t) {
@@ -225,32 +225,32 @@ void process(IvyXmlWriter xw) throws Exception
 /*                                                                              */
 /********************************************************************************/
 
-private File setupContextFile(Element xml) throws LimbaException
-{
-   int len = IvyXml.getAttrInt(xml,"LENGTH");
-   File tdir = new File(System.getProperty("java.io.tmpdir"));
-   String cnts = IvyXml.getTextElement(xml,"CONTENTS");
-   String ext = IvyXml.getAttrString(xml,"EXTENSION");
-   cnts = cnts.replace("\n","");
-   cnts = cnts.replace("\r","");
-   int pos = 0;
-   try {
-      File tmp = File.createTempFile("limbadata",ext,tdir);
-      tmp.deleteOnExit();
-      try (BufferedOutputStream ots = new BufferedOutputStream(new FileOutputStream(tmp))) {
-         for ( ; pos < len; ++pos) {
-            int c0 = Character.digit(cnts.charAt(2*pos),16);
-            int c1 = Character.digit(cnts.charAt(2*pos+1),16);
-            byte b = (byte) (((c0 & 0xf) << 4) + (c1 & 0xf));
-            ots.write(b);
-          }
-       }
-      return tmp;
-    }
-   catch (IOException e) {
-      throw new LimbaException("Problem creating user file",e);
-    }    
-}
+// private File setupContextFile(Element xml) throws LimbaException
+// {
+// int len = IvyXml.getAttrInt(xml,"LENGTH");
+// File tdir = new File(System.getProperty("java.io.tmpdir"));
+// String cnts = IvyXml.getTextElement(xml,"CONTENTS");
+// String ext = IvyXml.getAttrString(xml,"EXTENSION");
+// cnts = cnts.replace("\n","");
+// cnts = cnts.replace("\r","");
+// int pos = 0;
+// try {
+//    File tmp = File.createTempFile("limbadata",ext,tdir);
+//    tmp.deleteOnExit();
+//    try (BufferedOutputStream ots = new BufferedOutputStream(new FileOutputStream(tmp))) {
+//          for ( ; pos < len; ++pos) {
+//             int c0 = Character.digit(cnts.charAt(2*pos),16);
+//             int c1 = Character.digit(cnts.charAt(2*pos+1),16);
+//             byte b = (byte) (((c0 & 0xf) << 4) + (c1 & 0xf));
+//             ots.write(b);
+//           }
+//        }
+//    return tmp;
+//  }
+// catch (IOException e) {
+//       throw new LimbaException("Problem creating user file",e);
+//     }    
+// }
 
 
 
@@ -272,6 +272,7 @@ private class TestRunner extends Thread {
    @Override public void run() {
       LimbaTester tester = new LimbaTester(LimbaFinder.this,for_solution);
       LimbaSuiteReport rpt = tester.runTester();
+      IvyLog.logD("LIMBA","Check test result in " + rpt);
       // check if tests passed or not, save result for later queries
       for_solution.setTestsPassed(true);
     }

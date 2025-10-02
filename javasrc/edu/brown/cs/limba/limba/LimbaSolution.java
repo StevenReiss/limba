@@ -130,6 +130,8 @@ boolean getUseConstructor()
 
 String getText()	
 {
+   if (main_node == null) return null;
+   
    StringBuffer buf = new StringBuffer();
 
    for (ASTNode hn : helper_nodes) {

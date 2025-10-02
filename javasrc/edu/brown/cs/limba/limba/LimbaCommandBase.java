@@ -22,6 +22,7 @@
 
 package edu.brown.cs.limba.limba;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpTimeoutException;
@@ -79,6 +80,8 @@ LimbaCommand createCommand(String line)
          return new CommandPing(line);
       case "LIST" :
          return new CommandList(line);
+      case "STYLE" :
+         return new CommandStyle(line);
       case "DETAIL" :
       case "DETAILS" :
          return new CommandDetails(line);
@@ -353,8 +356,6 @@ CommandList(String line) {
 
 
 
-
-
 /********************************************************************************/
 /*                                                                              */
 /*      DETAILS command                                                         */
@@ -380,7 +381,30 @@ private class CommandDetails extends CommandBase {
        }
     }
 
-}       // end of inner class CommandList
+}       // end of inner class CommandDetails
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      DETAILS command                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+private class CommandStyle extends CommandBase {
+   
+   CommandStyle(String line) { 
+      super(line);
+    }
+   
+   @Override public String getCommandName()             { return "STYLE"; }
+   
+   @Override public void localProcess(IvyXmlWriter xw) throws Exception {
+      limba_main.setUserStyle(command_text);
+    }
+   
+}       // end of inner class CommandStyle
+
+
 
 
 
@@ -404,10 +428,12 @@ private class CommandQuery extends CommandBase {
    
    @Override public void localProcess(IvyXmlWriter xw) throws Exception {
       String cmd = command_text;
+      boolean usectx = false;
       if (programmer_prompt != null) {
          cmd = programmer_prompt + "\n" + command_text;
+         usectx = true;
        }
-      String resp = limba_main.askOllama(cmd); 
+      String resp = limba_main.askOllama(cmd,usectx); 
       if (xw != null) {
          xw.cdataElement("RESPONSE",resp);
          List<String> jcodes = LimbaMain.getJavaCode(resp);
@@ -481,8 +507,16 @@ private class CommandProject extends LocalCommand {
    @Override public String getCommandName()             { return "PROPERTY"; }
    
    @Override public void localProcess(IvyXmlWriter xw) {
-      // PROJECT <file> or PROJECT QUERY
-      // or loadProjecrtData() if have MSG
+      String fnm = null;
+      if (command_text == null) command_text = "";
+      fnm = command_text.trim();
+      if (fnm.equals("QUERY")) {
+         limba_main.setupRag(); 
+       }
+      else {
+         File f = new File(fnm);
+         if (f.exists()) limba_main.setupRag(f);
+       }
     }
    
 }       // end of inner class CommandProject
