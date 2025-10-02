@@ -1,5 +1,10 @@
 ASK -- Who are you?
 
+STYLE EOL
+Do not use on-demand imports.  Do not use anonymous classes.
+Do not use lambdas.
+
+
 GENERATE EOL
 Create a Java Application that acts as a socket relay.	It should create a server socket
 on port 11234 and let clients attach to this.  It should forward all writes to this socket
@@ -217,7 +222,7 @@ private void scanMethod()
 	  }
        }
       else if (inareacmmt) {
-	 if (jdoc != null) {
+b	 if (jdoc != null) {
 	    jdoc.append(ch);
 	    if (Character.isLetterOrDigit(ch)) ++havetext;
 	  }
@@ -273,7 +278,7 @@ GENERATE EOL
 Create a Java Application that acts as a socket relay.	It should create a server socket
 on port 11234 and let clients attach to this.  It should forward all writes to this socket
 to machine HOST on the same port and forward all response from HOST on that socket back
-to the original client.  Do not use anonymous classes.	Make all imports explicit.
+to the original client.
 
 EOL
 
