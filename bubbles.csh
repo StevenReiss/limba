@@ -1,6 +1,6 @@
 #! /bin/csh -f
 
-pushd /pro/limbabb
+pushd ../limbabb
 ant
 popd
 
