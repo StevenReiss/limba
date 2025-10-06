@@ -131,7 +131,8 @@ private void process()
    for ( ; ; ) {
       try {
          Socket client = server.accept();
-         System.err.println("LIMBARELAY: new client connection");
+         System.err.println("LIMBARELAY: new client connection " +
+               client.getRemoteSocketAddress());
          Socket relay = new Socket(host_name,host_port);
          System.err.println("LIMBARELAY: Connected to relay host " + host_name + 
                " " + host_port);
@@ -175,8 +176,10 @@ private static class RelayThread extends Thread {
          int read = 0;
          for ( ; ; ) {
             read = in_stream.read(buffer);
+            System.err.println("LIMBARELAY: Read " + read + " bytes");
             if (read < 0) break;
             out_stream.write(buffer,0,read);
+            System.err.println("LIMBAREALY: Relayed " + read + " btyes");
           }
        }
       catch (IOException e) {
