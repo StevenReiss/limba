@@ -110,6 +110,19 @@
       </java>
    </target>
 
+   <target name='testfred4' depends='compile'>
+      <java classname='edu.brown.cs.limba.limba.LimbaMain' fork='true'>
+	 <classpath refid='spr.classpath' />
+	 <arg value='-f' />
+	 <arg value='${PRO}/limba/test.in' />
+	 <arg value='-l' />
+	 <arg value='llama4:scout' />
+	 <arg value='-h' />
+	 <arg value='llmserver.cs.brown.edu' />
+	 <assertions><enable/></assertions>
+      </java>
+   </target>
+
    <target name='testxml' depends='compile'>
       <java classname='edu.brown.cs.limba.limba.LimbaMain' fork='true'>
 	 <classpath refid='spr.classpath' />
