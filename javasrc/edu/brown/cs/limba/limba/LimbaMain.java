@@ -169,7 +169,11 @@ boolean getRemoteFileAccess()           { return remote_files; }
 JcompControl getJcompControl()          { return jcomp_main; }
 
 String getUserStyle()                   { return user_style; }
-void setUserStyle(String s)             { user_style = s; }
+void setUserStyle(String s)             
+{ 
+   if (!s.startsWith("\n")) s = "\n" + s;
+   user_style = s; 
+}
 
 
 /********************************************************************************/

@@ -676,7 +676,6 @@ private void produceAntFile(Map<String,String> idmap) throws LimbaException
 {
    String dir = idmap.get("DIRECTORY");
    File f = new File(dir + File.separator + ANT_FILE);
-   String proto = JAVA_ANT_PROTO;
    try (InputStream ins = getClass().getClassLoader().getResourceAsStream(JAVA_ANT_PROTO)) {
       try (BufferedReader fr = new BufferedReader(new InputStreamReader(ins));
          PrintWriter pw = new PrintWriter(new FileWriter(f))) {

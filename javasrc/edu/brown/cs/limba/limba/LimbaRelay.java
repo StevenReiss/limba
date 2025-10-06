@@ -149,7 +149,6 @@ private void process()
          System.err.println("LIMBARELAY: Problem setting up client: " + e);
        }
     }
-   
 }
 
 
