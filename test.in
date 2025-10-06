@@ -2,19 +2,9 @@ ASK -- Who are you?
 
 STYLE EOL
 Do not use on-demand imports.  Do not use anonymous classes.
-Do not use lambdas.
-
-
-GENERATE EOL
-Create a Java Application that acts as a socket relay.	It should create a server socket
-on port 11234 and let clients attach to this.  It should forward all writes to this socket
-to machine HOST on the same port and forward all response from HOST on that socket back
-to the original client.  Do not use anonymous classes.	Do not use on-demand imports.
-The host and port should be definable as command line options (-h <host> and -p <port>).
+Do not use lambdas.  Place right braces on a separate line.
 
 EOL
-
-EXIT
 
 QUERY EOL
 Tell me the most efficient way of clearing a Java StringBuffer so it can be reused.
@@ -278,7 +268,8 @@ GENERATE EOL
 Create a Java Application that acts as a socket relay.	It should create a server socket
 on port 11234 and let clients attach to this.  It should forward all writes to this socket
 to machine HOST on the same port and forward all response from HOST on that socket back
-to the original client.
+to the original client.  Do not use anonymous classes.	Do not use on-demand imports.
+The host and port should be definable as command line options (-h <host> and -p <port>).
 
 EOL
 

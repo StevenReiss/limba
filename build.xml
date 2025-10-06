@@ -73,7 +73,7 @@
 	<manifest>
 	   <attribute name='Main-Class' value='edu.brown.cs.limba.limba.LimbaRelay' />
 	</manifest>
-	<fileset dir='${LIMBA}/java' includes='**/*Relay.class' />
+	<fileset dir='${LIMBA}/java' includes='**/*Relay*.class' />
      </jar>
    </target>
 

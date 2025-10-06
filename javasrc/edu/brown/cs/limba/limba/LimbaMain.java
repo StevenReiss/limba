@@ -604,7 +604,7 @@ private final class ThinkHandler implements OllamaStreamHandler {
 }       // end of inner class StreamHandler
 
 
-/********************************************************************************/
+ /********************************************************************************/
 /*                                                                              */
 /*      Start the ollama server if needed                                       */
 /*                                                                              */
