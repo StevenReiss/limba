@@ -146,6 +146,7 @@ private void process()
        }
       catch (IOException e) {
          System.err.println("LIMBARELAY: Problem setting up client: " + e);
+         e.printStackTrace();
        }
     }
 }

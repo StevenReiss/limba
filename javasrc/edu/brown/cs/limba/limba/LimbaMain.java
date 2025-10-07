@@ -303,6 +303,10 @@ private void process()
    if (!fg) {
       if (alt_host != null && alt_port != 0) {
          fg = startOllama(alt_host,alt_port);
+         if (fg) {
+            ollama_host = alt_host;
+            ollama_port = alt_port;
+          }
        }
     }
    if (!fg) {
