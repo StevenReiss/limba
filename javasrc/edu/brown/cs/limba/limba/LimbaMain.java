@@ -71,6 +71,8 @@ public static void main(String [] args)
 private String mint_id;
 private String ollama_host;
 private int ollama_port;
+private String alt_host;
+private int alt_port;
 private String ollama_model;
 private boolean interactive_mode;
 private boolean server_mode;
@@ -104,6 +106,8 @@ private LimbaMain(String [] args)
    mint_id = null;
    ollama_host = "localhost";
    ollama_port = 11434;
+   alt_host = "localhost";
+   alt_port = 11434;
    interactive_mode = false;
    server_mode = false;
    ollama_model = "codellama:latest";
@@ -205,6 +209,19 @@ private void scanArgs(String [] args)
                 }
                continue;
              }
+            else if (args[i].startsWith("-alth")) {             // -althost <ollama host>
+               alt_host = args[++i];
+               continue;
+             }
+            else if (args[i].startsWith("-altp")) {             // -altport <ollama port>
+               try {
+                  alt_port = Integer.parseInt(args[++i]);
+                }
+               catch (NumberFormatException e) {
+                  badArgs();
+                }
+               continue;
+             }
             else if (args[i].startsWith("-l")) {                // -l <llama model>
                ollama_model = args[++i];
                continue;
@@ -245,6 +262,11 @@ private void scanArgs(String [] args)
           }
        }
     }
+   
+   if (alt_host != null && alt_host.equals(ollama_host) && alt_port == ollama_port) {
+      alt_host = null;
+      alt_port = 0;
+    }
 }
 
 
@@ -277,7 +299,16 @@ private void process()
    
    IvyLog.logD("LIMBA","Running with " + getUrl() + " " + getModel());
    
-   startOllama();
+   boolean fg = startOllama(ollama_host,ollama_port);
+   if (!fg) {
+      if (alt_host != null && alt_port != 0) {
+         fg = startOllama(alt_host,alt_port);
+       }
+    }
+   if (!fg) {
+      System.err.println("OLLAMA server not running");
+      System.exit(1);
+    }
    
    setupRag(project_file);
     
@@ -614,9 +645,9 @@ private final class ThinkHandler implements OllamaStreamHandler {
 /*                                                                              */
 /********************************************************************************/
 
-private void startOllama()
+private boolean startOllama(String hostname,int port)
 {
-   String host = "http://" + ollama_host + ":" + ollama_port + "/";
+   String host = "http://" + hostname + ":" + port + "/";
    IvyLog.logD("LIMBA","Starting OLLAMA at " + host);
    try {
       ollama_api = new OllamaAPI(host);
@@ -624,16 +655,14 @@ private void startOllama()
       boolean ping = ollama_api.ping();
       if (ping) {
          IvyLog.logD("LIMBA","OLLAMA started successfully");
-         return;
+         return true;
        }
     }
    catch (Throwable t) {
       IvyLog.logE("LIMBA","Problem with ollama",t);
     }
    
-   // start ollama server if needed:  command: ollama serve
-   System.err.println("OLLAMA server not running");
-   System.exit(1);
+   return false;
 }
 
 

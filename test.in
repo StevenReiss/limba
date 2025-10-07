@@ -1,8 +1,10 @@
 ASK -- Who are you?
 
 STYLE EOL
-Do not use on-demand imports.  Do not use anonymous classes.
-Do not use lambdas.  Place right braces on a separate line.
+Do not use on-demand imports.
+Do not use anonymous classes.
+Do not use lambdas.
+Place right brace on a separate line.
 
 EOL
 
@@ -109,7 +111,8 @@ where the user can enter text and do a send.  It should also have a scrolling
 region that displays the user's messages right justified and the responses left
 justified.  There should be a abstract method that is called with the user's
 message. There should be a method that is called with the non-user text that inserts
-that text into the output stream.  Input should be displayed in a yellow box that
+that text into the output stream.  Input from the user should be displayed once
+sent should be displayed in the output region in a yellow box that
 occupies the right 2/3 of the scrolling region.  Output should be displayed
 in a green box that occupes the full scrolling region.	The class
 should be implemented using Java Swing.  The class should not use annonymous
@@ -137,8 +140,7 @@ nested inner classes.
 EOL
 
 QUERY EOL
-We want to
-write a function with the signature "String convert(int num)" that converts a number into its
+Assume we have a Java method with the signature "String convert(int num)" that converts a number into its
 lowercase roman numeral representation.  For example convert(17) = "xvii".  It should handle
 all integers including 0, negative numbers and numbers larger that 5000 as arabic numerals.
 Generate a full set of Junit test cases.
@@ -152,15 +154,16 @@ as curves.  For a complex layout there can be multiple abstract displays with co
 from one to another.
 
 The layout consists of a set of points defining the layout and representing the location
-of the tracks.	The points are connected to one another appropriately to represent the layout.
-The track layout
-is separated into separate blocks. Collisions between trains are prevented by only allowing
+of the tracks as x,y locations.  The points are connected to one another appropriately
+to represent the layout. The track layout
+is separated into separate blocks which are connected segments of track.
+Collisions between trains are prevented by only allowing
 one train into a block at one time. Some of the points
 represent sensors which can tell if the train is over that particular point.  Some of the
 sensors are associated with signal which controls whether the train can move from the
 current block to a particular subsequent block.  Signals can be red or green.
-There is a point on the track representing
-the gap between two blocks.  All points other than gap points are associated with a given
+Connected blocks have a gap point between them that is not associated with any block.
+All points other than gap points are associated with a given
 block.	The track only branches at switches.  Switches have an pivot point and two exit
 points labeled N and R. At any time they are in a mode connecting the entry to N or the
 entry to R.  They also have sensors associated with the N and R branches that
@@ -172,8 +175,8 @@ are connected.
 Operations will eventually be needed to track a trains current forward location and
 the blocks it is currently occupying based on the sensors.  One also will want to know
 the next block the train will get to.  One needs to know whether it is safe for a train
-to go from one block to another (the signal setting for each signal).
-
+to go from one block to another (the signal setting for each signal).  These should be
+represeted as abstract methods for now.
 
 EOL
 
@@ -274,3 +277,7 @@ The host and port should be definable as command line options (-h <host> and -p 
 EOL
 
 EXIT
+
+
+
+

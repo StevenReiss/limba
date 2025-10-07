@@ -129,8 +129,7 @@ private void process()
     }
    
    for ( ; ; ) {
-      try {
-         Socket client = server.accept();
+      try (Socket client = server.accept()) {
          System.err.println("LIMBARELAY: new client connection " +
                client.getRemoteSocketAddress());
          Socket relay = new Socket(host_name,host_port);
