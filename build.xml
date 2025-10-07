@@ -128,6 +128,8 @@
 	 <arg value='llama4:scout' />
 	 <arg value='-h' />
 	 <arg value='llmserver.cs.brown.edu' />
+	 <arg value='-p' />
+	 <arg value='11435' />
 	 <assertions><enable/></assertions>
       </java>
    </target>

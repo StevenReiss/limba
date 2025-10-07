@@ -139,11 +139,10 @@ form, i.e., it uses dot to spearate inner classes, not dollar sign.  There can b
 nested inner classes.
 EOL
 
-QUERY EOL
+TESTS EOL
 Assume we have a Java method with the signature "String convert(int num)" that converts a number into its
 lowercase roman numeral representation.  For example convert(17) = "xvii".  It should handle
 all integers including 0, negative numbers and numbers larger that 5000 as arabic numerals.
-Generate a full set of Junit test cases.
 EOL
 
 GENERATE EOL

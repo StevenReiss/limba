@@ -107,6 +107,8 @@ LimbaCommand createCommand(String line)
          return new CommandFind(prompt,line);
       case "FINDJDOC" :
          return new CommandJdoc(prompt,line);
+      case "TESTS" :
+         return new CommandQuery(prompt,line);
       case "EXIT" :
          System.exit(0);
     }

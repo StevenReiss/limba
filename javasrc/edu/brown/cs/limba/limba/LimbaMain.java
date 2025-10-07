@@ -663,7 +663,7 @@ private boolean startOllama(String hostname,int port)
        }
     }
    catch (Throwable t) {
-      IvyLog.logE("LIMBA","Problem with ollama",t);
+      IvyLog.logE("LIMBA","Problem with ollama: " + t);
     }
    
    return false;
