@@ -29,8 +29,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import dev.langchain4j.chain.ConversationalRetrievalChain;
+import dev.langchain4j.community.store.embedding.redis.RedisEmbeddingStore;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.loader.FileSystemDocumentLoader;
@@ -41,11 +43,14 @@ import dev.langchain4j.model.ollama.OllamaEmbeddingModel;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
+import dev.langchain4j.store.embedding.chroma.ChromaEmbeddingStore;
 // import dev.langchain4j.store.embedding.chroma.ChromaEmbeddingStore;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
+import edu.brown.cs.ivy.exec.IvyExecQuery;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.project.IvyProject;
 import edu.brown.cs.ivy.project.IvyProjectManager;
+import redis.clients.jedis.JedisPooled;
 
 class LimbaRag implements LimbaConstants
 {
@@ -138,20 +143,40 @@ private EmbeddingStoreContentRetriever setupRAG()
    
    OllamaEmbeddingModel embed = OllamaEmbeddingModel.builder()
          .baseUrl(limba_main.getUrl()) 
-//       .modelName(limba_main.getModel())
          .modelName("nomic-embed-text")
          .timeout(Duration.ofMinutes(2))
          .maxRetries(10)
          .logRequests(true)
          .logResponses(true)
          .build();
-   EmbeddingStore<TextSegment> store;
-   store = new InMemoryEmbeddingStore<>();
+   
+   EmbeddingStore<TextSegment> store = null;
+   try {
+      store = ChromaEmbeddingStore.builder()
+         .collectionName("LIMBA-" + IvyExecQuery.getProcessId())
+         .baseUrl("http://localhost:8000")
+         .build();
+    }
+   catch (Throwable t) {
+      IvyLog.logI("LIMBA","Can't create chroma store: " + t);
+    }
+   if (store == null) {
+      try {
+         store = RedisEmbeddingStore.builder()
+            .indexName("LIMBA" + IvyExecQuery.getProcessId()) 
+            .metadataKeys(Set.of("file_name"))
+            .build();
+       }
+      catch (Throwable t) {
+         IvyLog.logI("LIMBA","Can't create redis store: " + t);
+       }
+    }
+  
+   if (store == null) {
+      store = new InMemoryEmbeddingStore<>();
+    }
+   
 // need class okhttp3/Interceptor -- if this fails, defer to immemboery model
-// store = ChromaEmbeddingStore.builder()
-//       .collectionName("LIMBA-" + IvyExecQuery.getProcessId())
-//       .baseUrl("http://localhost:8000")
-//       .build();
    EmbeddingStoreIngestor ingest = EmbeddingStoreIngestor.builder()
          .documentSplitter(spliter)
          .embeddingModel(embed)
