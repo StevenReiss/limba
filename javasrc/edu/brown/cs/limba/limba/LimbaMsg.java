@@ -88,9 +88,6 @@ private String processCommand(String cmd,Element xml) throws LimbaException
    try (IvyXmlWriter xw = new IvyXmlWriter()) {
       xw.begin("RESULT");
       switch (cmd) {
-         case "PROJECT" :
-            loadProjectData();
-            break;
          case "LIST" :
          case "DETAILS" :
          case "PING" :
