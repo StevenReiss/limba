@@ -99,6 +99,10 @@
 	 <zipfileset src='${LIMBALIB}/langchain4j.jar' excludes='META-INF/*' />
 	 <zipfileset src='${LIMBALIB}/okhttp.jar' excludes='META-INF/*' />
 	 <zipfileset src='${LIMBALIB}/openlp-tools.jar' excludes='META-INF/*' />
+	 <zipfileset src='${LIMBALIB}/jedis.jar' excludes='META-INF/*' />
+	 <zipfileset src='${LIMBALIB}/langchain4j-redis.jar' excludes='META-INF/*' />
+	 <zipfileset src='${LIMBALIB}/openlp-tools.jar' excludes='META-INF/*' />
+	 <zipfileset src='${LIMBALIB}/openlp-tools.jar' excludes='META-INF/*' />
 	 <fileset dir='${PRO}/limbabb' includes='Bait.props' />
 	 <fileset dir='${PRO}/limbabb' includes='limbabb.palette' />
       </jar>

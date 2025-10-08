@@ -50,6 +50,7 @@ private List<LimbaTestCase> test_cases;
 private String          find_description;
 private String          find_signature;
 private String          find_name;
+private String          find_prefix;
 private boolean         use_context;
 // private boolean         is_remote;
 private String          find_file;
@@ -75,6 +76,7 @@ LimbaFinder(LimbaMain lm,String prompt,Element xml)
    find_description = IvyXml.getTextElement(xml,"DESCRIPTION");
    find_signature = IvyXml.getTextElement(xml,"SIGNATURE");
    find_name = IvyXml.getAttrString(xml,"NAME");
+   find_prefix = IvyXml.getAttrString(xml,"PREFIX");
    find_file = IvyXml.getAttrString(xml,"FILE");
    use_context = IvyXml.getAttrBool(xml,"USECONTEXT");
 // is_remote = IvyXml.getAttrBool(xml,"REMOTE");
@@ -145,6 +147,22 @@ void process(IvyXmlWriter xw) throws Exception
    pbuf.append("Generate 3 alternative versions of the code.\n");
    pbuf.append("Include explicit import statements in the code as needed.\n");
    pbuf.append("Include any auxilliary code that is needed.\n");
+   switch (find_type) {
+      case METHOD :
+         pbuf.append("This code will be used as method " + find_name);
+         if (find_prefix != null) {
+            pbuf.append(" in class " + find_prefix);
+          }
+         break;
+      case CLASS :
+         pbuf.append("This code will be used as class " + find_name);
+         if (find_prefix != null) {
+            pbuf.append(" in package " + find_prefix);
+          }
+         break;
+    }
+   pbuf.append(".\n");
+   
    pbuf.append("This code will be used as method " + find_name + ".\n");
    // might want to extract package and class and inner classes and pass separately
    
@@ -159,6 +177,7 @@ void process(IvyXmlWriter xw) throws Exception
          // pass user context to solution so it can be used to resolve things
          LimbaSolution sol = new LimbaSolution(this,s); 
          if (sol.getAstNode() == null) {
+            IvyLog.logD("LIMBA","Invalid solution -- target not found");
             // invalid solution 
             continue;
           }
@@ -204,8 +223,10 @@ void process(IvyXmlWriter xw) throws Exception
    xw.begin("SOLUTIONS");
    xw.field("COUNT",rslt.size());
    
+   int ct = 0;
    for (LimbaSolution sol : rslt) {
-      sol.output(xw); 
+      String nm = "SOLUTION_" + (++ct);
+      sol.output(xw,nm);  
     }
    
    xw.end("SOLUTIONS");

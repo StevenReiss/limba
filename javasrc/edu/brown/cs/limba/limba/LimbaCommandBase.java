@@ -512,6 +512,7 @@ private class CommandProject extends LocalCommand {
       String fnm = null;
       if (command_text == null) command_text = "";
       fnm = command_text.trim();
+      IvyLog.logD("LIMBA","Load project from " + fnm);
       if (fnm.equals("QUERY")) {
          limba_main.setupRag(); 
        }

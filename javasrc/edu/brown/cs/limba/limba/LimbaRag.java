@@ -50,7 +50,6 @@ import edu.brown.cs.ivy.exec.IvyExecQuery;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.project.IvyProject;
 import edu.brown.cs.ivy.project.IvyProjectManager;
-import redis.clients.jedis.JedisPooled;
 
 class LimbaRag implements LimbaConstants
 {

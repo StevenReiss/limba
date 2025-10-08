@@ -507,11 +507,14 @@ void setupRag(File f)
 
 void setupRag() 
 {
+   IvyLog.logD("LIMBA","Get sources from bubbles " + msg_server);
+   
    if (msg_server == null) {
       rag_model = null;
     }
    else { 
       List<File> sources = msg_server.getSources();
+      IvyLog.logD("LIMBA","Found " + sources.size() + " sources");
       if (sources != null && !sources.isEmpty()) {
          rag_model = new LimbaRag(this,sources);  
        }

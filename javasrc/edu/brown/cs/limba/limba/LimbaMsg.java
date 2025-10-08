@@ -137,6 +137,7 @@ List<File> getSources()
    MintDefaultReply rply = new MintDefaultReply();
    
    String msg = "<BUBBLES DO='PROJECTS' />";
+   IvyLog.logD("LIMBA","Send to bubbles: " + msg);
    mint_control.send(msg,rply,MintControl.MINT_MSG_FIRST_NON_NULL);
    
    Element r = rply.waitForXml();
@@ -152,6 +153,7 @@ List<File> getSources()
       MintDefaultReply prply = new MintDefaultReply();
       String pmsg = "<BUBBLES DO='OPENPROJECT' PROJECT='" + pnm +
             "' CLASSES='false' FILES='true' PATHS='false' OPTIONS='false' />";
+      IvyLog.logD("LIMBA","Send to bubbles: " + pmsg);
       mint_control.send(pmsg,prply,MintControl.MINT_MSG_FIRST_NON_NULL);
       Element pr = prply.waitForXml();
       if (!IvyXml.isElement(pr,"RESULT")) {
