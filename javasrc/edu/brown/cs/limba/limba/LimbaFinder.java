@@ -163,9 +163,6 @@ void process(IvyXmlWriter xw) throws Exception
     }
    pbuf.append(".\n");
    
-   pbuf.append("This code will be used as method " + find_name + ".\n");
-   // might want to extract package and class and inner classes and pass separately
-   
    IvyLog.logD("LIMBA","Find " + pbuf.toString());
 
    String resp = limba_main.askOllama(pbuf.toString(),use_context);

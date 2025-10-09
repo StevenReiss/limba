@@ -538,6 +538,19 @@ String askOllama(String cmd0,boolean usectx) throws Exception
    IvyLog.logD("LIMBA","Query: " + cmd);
    StreamHandler hdlr = new StreamHandler();
    OllamaResult rslt = null;
+   
+   if (usectx && rag_model != null) {
+      try {
+         String resp = getRagModel().getChain().execute(cmd);
+         IvyLog.logD("LIMBA","Context Response: " + resp);
+         IvyLog.logD("LIMBA","\n------------------------\n\n");
+         return resp;
+       }
+      catch (Throwable t) {
+         IvyLog.logE("LIMBA","Problem with chained response",t);
+       }
+    }
+   
    if (getThinkFlag()) {
       rslt = getOllama().generate(getModel(),cmd,
             getRawFlag(),getOllamaOptions(),hdlr,
@@ -582,8 +595,8 @@ static List<String> getJavaCode(String resp)
       if (idx1 < 0) {
          break;
        }
-      String text0 = resp.substring(idx0+3,idx1).trim();
-      if (!text0.isEmpty() && !text0.equals("java")) {
+      String type = resp.substring(idx0+3,idx1).trim();
+      if (!type.isEmpty()) {
          idx1 = idx0 + 3;
        }
       else idx1 = idx1+1;
@@ -592,7 +605,9 @@ static List<String> getJavaCode(String resp)
          break;
        }
       else {
-         rslt.add(resp.substring(idx1,idx2));
+         if (type.isEmpty() || type.equals("java")) {
+            rslt.add(resp.substring(idx1,idx2));
+          }
          start = idx2+3;
        }
     }

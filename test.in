@@ -270,7 +270,7 @@ GENERATE EOL
 Create a Java Application that acts as a socket relay.	It should create a server socket
 on port 11234 and let clients attach to this.  It should forward all writes to this socket
 to machine HOST on the same port and forward all response from HOST on that socket back
-to the original client.  Do not use anonymous classes.	Do not use on-demand imports.
+to the original client. 
 The host and port should be definable as command line options (-h <host> and -p <port>).
 
 EOL

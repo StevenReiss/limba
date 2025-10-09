@@ -450,12 +450,12 @@ private void generateCallsTest(LimbaTestCase tc,Map<String,String> idmap,StringB
 	 case IGNORE :
 	    break;
 	 case EQL :
-	    buf.append("assertEquals(\"Result of call\",");
+	    buf.append("limbaAssertEquals(\"Result of call\",");
 	    buf.append(codeString(cr));
 	    buf.append(",");
 	    break;
 	 case NEQ :
-	    buf.append("assertNotEquals(\"Result of call\",");
+	    buf.append("limbaAssertNotEquals(\"Result of call\",");
 	    buf.append(codeString(cr));
 	    buf.append(",");
 	    break;
