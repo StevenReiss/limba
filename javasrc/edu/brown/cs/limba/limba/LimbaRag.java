@@ -164,6 +164,8 @@ private EmbeddingStoreContentRetriever setupRAG()
          store = RedisEmbeddingStore.builder()
             .indexName("LIMBA" + IvyExecQuery.getProcessId()) 
             .metadataKeys(Set.of("file_name"))
+            .host("localhost")
+            .port(6379)
             .build();
        }
       catch (Throwable t) {
