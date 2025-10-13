@@ -29,10 +29,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import dev.langchain4j.chain.ConversationalRetrievalChain;
-import dev.langchain4j.community.store.embedding.redis.RedisEmbeddingStore;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.loader.FileSystemDocumentLoader;
@@ -137,7 +135,7 @@ private EmbeddingStoreContentRetriever setupRAG()
       Document d = FileSystemDocumentLoader.loadDocument(p);
       docs.add(d);
     }
-   DocumentSplitter spliter = new DocumentByLineSplitter(128,0);
+   DocumentSplitter spliter = new DocumentByLineSplitter(64,0);
 // List<TextSegment> segs = spliter.splitAll(docs);
    
    OllamaEmbeddingModel embed = OllamaEmbeddingModel.builder()
@@ -154,24 +152,26 @@ private EmbeddingStoreContentRetriever setupRAG()
       store = ChromaEmbeddingStore.builder()
          .collectionName("LIMBA-" + IvyExecQuery.getProcessId())
          .baseUrl("http://localhost:8000")
+         .logRequests(true)
+         .logResponses(true)
          .build();
     }
    catch (Throwable t) {
       IvyLog.logI("LIMBA","Can't create chroma store: " + t);
     }
-   if (store == null) {
-      try {
-         store = RedisEmbeddingStore.builder()
-            .indexName("LIMBA" + IvyExecQuery.getProcessId()) 
-            .metadataKeys(Set.of("file_name"))
-            .host("localhost")
-            .port(6379)
-            .build();
-       }
-      catch (Throwable t) {
-         IvyLog.logI("LIMBA","Can't create redis store: " + t);
-       }
-    }
+// if (store == null) {
+//    try {
+//       store = RedisEmbeddingStore.builder()
+//          .indexName("LIMBA" + IvyExecQuery.getProcessId()) 
+//          .metadataKeys(Set.of("file_name"))
+//          .host("localhost")
+//          .port(6379)
+//          .build();
+//     }
+//    catch (Throwable t) {
+//       IvyLog.logI("LIMBA","Can't create redis store: " + t);
+//     }
+//  }
   
    if (store == null) {
       store = new InMemoryEmbeddingStore<>();

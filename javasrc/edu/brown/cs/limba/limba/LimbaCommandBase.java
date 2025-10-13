@@ -82,6 +82,10 @@ LimbaCommand createCommand(String line)
          return new CommandList(line);
       case "STYLE" :
          return new CommandStyle(line);
+      case "CONTEXT" :
+         return new CommandContext(line);
+      case "SETMODEL" :
+         return new CommandSetModel(line);
       case "DETAIL" :
       case "DETAILS" :
          return new CommandDetails(line);
@@ -334,27 +338,50 @@ private class CommandPing extends CommandBase {
 /********************************************************************************/
 
 private class CommandList extends CommandBase {
-
-CommandList(String line) { 
-   super(line);
-}
-
-@Override public String getCommandName()             { return "LIST"; }
-@Override public void setupCommand(String complete,boolean user)  { }
-
-@Override public void localProcess(IvyXmlWriter xw) throws Exception {
-   List<Model> models = getOllama().listModels();
-   for (Model m : models) {
-      if (xw != null) {
-         xw.textElement("MODEL",m.getName());
-       }
-      else {
-         System.out.println(m.getName());
+   
+   CommandList(String line) { 
+      super(line);
+    }
+   
+   @Override public String getCommandName()             { return "LIST"; }
+   @Override public void setupCommand(String complete,boolean user)  { }
+   
+   @Override public void localProcess(IvyXmlWriter xw) throws Exception {
+      List<Model> models = getOllama().listModels();
+      for (Model m : models) {
+         if (xw != null) {
+            xw.textElement("MODEL",m.getName());
+          }
+         else {
+            System.out.println(m.getName());
+          }
        }
     }
-}
 
 }       // end of inner class CommandList
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      SETMODEL command                                                        */
+/*                                                                              */
+/********************************************************************************/
+
+private class CommandSetModel extends CommandBase {
+   
+   CommandSetModel(String line) {
+      super(line);
+    }
+   
+   @Override public String getCommandName()             { return "SETMODEL"; }
+   
+   @Override public void localProcess(IvyXmlWriter xw) throws Exception {
+      limba_main.setModel(command_text);
+    }
+   
+}       // end of inner class CommandSetModel
+
 
 
 
@@ -388,7 +415,7 @@ private class CommandDetails extends CommandBase {
 
 /********************************************************************************/
 /*                                                                              */
-/*      DETAILS command                                                         */
+/*      Context and style commands                                              */
 /*                                                                              */
 /********************************************************************************/
 
@@ -405,6 +432,22 @@ private class CommandStyle extends CommandBase {
     }
    
 }       // end of inner class CommandStyle
+
+
+
+private class CommandContext extends CommandBase {
+   
+   CommandContext(String line) { 
+      super(line);
+    }
+   
+   @Override public String getCommandName()             { return "CONTEXT"; }
+   
+   @Override public void localProcess(IvyXmlWriter xw) throws Exception {
+      limba_main.setUserContext(command_text); 
+    }
+   
+}       // end of inner class CommandContext
 
 
 

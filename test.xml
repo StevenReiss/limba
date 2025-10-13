@@ -76,5 +76,17 @@ to something between 0 and 2PI. ]]></DESCRIPTION>
 </LIMBA>
 
 
+<LIMBA DO='FIND' TYPE='CLASS'>
+<SEARCH WHAT='CLASS' NAME='edu.brown.cs.limba.LimbaMain.IncludeReader' USECONTEXT='false'
+      FILE='/pro/limba/limba/src/LimbaMain.java'  >
+   <SIGNATURE>private static class IncludeReader extends BufferedReader</SIGNATURE>
+   <DESCRIPTION><![CDATA[Create a Java Reader subclass that can handle includes.
+The class should be initialized with a BufferedReader.
+If it sees a line starting with a > then the remaineder of the line
+is a file name that should be included at that point.
+The class should implmeent readLine. ]]></DESCRIPTION>
+</SEARCH>
+</LIMBA>
+
 <LIMBA DO='EXIT' />
 

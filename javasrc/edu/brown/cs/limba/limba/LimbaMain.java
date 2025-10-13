@@ -27,7 +27,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +38,7 @@ import org.w3c.dom.Element;
 
 import io.github.ollama4j.OllamaAPI;
 import io.github.ollama4j.models.generate.OllamaStreamHandler;
+import io.github.ollama4j.models.response.Model;
 import io.github.ollama4j.models.response.OllamaResult;
 import io.github.ollama4j.utils.Options;
 import io.github.ollama4j.utils.OptionsBuilder;
@@ -92,6 +95,7 @@ private boolean log_stderr;
 private JcompControl jcomp_main;
 private LimbaMsg msg_server;
 private String user_style;
+private String user_context;
 
 
 
@@ -128,6 +132,7 @@ private LimbaMain(String [] args)
    log_stderr = false;
    jcomp_main = new JcompControl();
    user_style = "";
+   user_context = "";
    
    scanArgs(args);
 }
@@ -173,10 +178,46 @@ boolean getRemoteFileAccess()           { return remote_files; }
 JcompControl getJcompControl()          { return jcomp_main; }
 
 String getUserStyle()                   { return user_style; }
+
+String getUserContext()                 { return user_context; }
 void setUserStyle(String s)             
 { 
-   if (!s.startsWith("\n")) s = "\n" + s;
+   if (s == null) s = "";
+   else if (!s.isEmpty() && !s.startsWith("\n")) s = "\n" + s;
    user_style = s; 
+}
+
+
+void setUserContext(String s)             
+{ 
+   if (s == null) s = "";
+   else if (!s.isEmpty() && !s.startsWith("\n")) s = "\n" + s;
+   user_context = s;
+}
+
+
+boolean setModel(String model) 
+{
+   if (getOllama() != null) {
+      boolean fnd = false;
+      try {
+         List<Model> mdls = getOllama().listModels();
+         for (Model m : mdls) {
+            if (m.getModelName().equals(model)) {
+               fnd = true;
+               break;
+             }
+          }
+       }
+      catch (Exception e) { }
+      if (!fnd) {
+         IvyLog.logI("LIMBA","Model " + model + " not found");
+       }
+    }
+   
+   ollama_model = model;
+   
+   return true;
 }
 
 
@@ -372,7 +413,7 @@ private void process()
 
 private void processFile(Reader r,boolean prompt)
 {
-   try (BufferedReader rdr = new BufferedReader(r)) {
+   try (BufferedReader rdr = new IncludeReader(r)) {
       StringBuffer buf = new StringBuffer();
       
       String promptxt = "LIMBA> ";
@@ -486,6 +527,70 @@ private void handleCommand(LimbaCommand cmd,String cmdtxt)
 }
 
 
+
+/********************************************************************************/
+/*                                                                              */
+/*      Class for nesting inputs                                                */
+/*                                                                              */
+/********************************************************************************/
+
+private static class IncludeReader extends BufferedReader {
+   
+   private Deque<BufferedReader> reader_stack;
+   
+   IncludeReader(Reader in) {
+      super(in);
+      reader_stack = new ArrayDeque<>();
+      reader_stack.push(new BufferedReader(in));     // Push the initial reader onto the stack
+    }
+   
+   @Override
+   public String readLine() throws IOException {
+      String currentline = null;
+      while (true) {
+         if (reader_stack.isEmpty()) {
+            return null; // No more readers in the stack
+          }
+         
+         BufferedReader currentReader = reader_stack.peek();
+         currentline = currentReader.readLine();
+         
+         if (currentline == null) {
+            // End of current reader, pop it and try the next one
+            reader_stack.pop().close(); // Close the popped reader
+            continue;
+          }
+         
+         if (currentline.startsWith(">")) {
+            String fileName = currentline.substring(1).trim();
+            try {
+               BufferedReader includedReader = new BufferedReader(new FileReader(fileName));
+               reader_stack.push(includedReader);
+               // Continue to read from the new included file
+               continue;
+             }
+            catch (IOException e) {
+               // Handle file not found or other I/O errors during inclusion
+               System.err.println("Error including file: " + fileName + " - " + e.getMessage());
+               // Skip this include and continue with the current reader
+               continue;
+             }
+          }
+         return currentline; // Return a regular line
+       }
+    }
+   
+   @Override
+   public void close() throws IOException {
+      while (!reader_stack.isEmpty()) {
+         reader_stack.pop().close();
+       }
+      super.close(); // Close the initial reader passed to the constructor
+    }
+   
+}       // end of inner class IncldueHandlingReader
+
+
 /********************************************************************************/
 /*                                                                              */
 /*      RAG processing                                                          */
@@ -533,7 +638,13 @@ void setupRag()
 
 String askOllama(String cmd0,boolean usectx) throws Exception
 {
-   String cmd = cmd0.replace("$STYLE",user_style);
+   String cmd = cmd0;
+   if (user_style != null) {
+      cmd = cmd.replace("$STYLE",user_style);
+    }
+   if (user_context != null) {
+      cmd = cmd.replace("$CONTEXT",user_context);
+    }
    
    IvyLog.logD("LIMBA","Query: " + cmd);
    StreamHandler hdlr = new StreamHandler();
@@ -686,6 +797,7 @@ private boolean startOllama(String hostname,int port)
    
    return false;
 }
+
 
 
 
