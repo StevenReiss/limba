@@ -256,22 +256,7 @@ static class CallTest {
    String getThrows()			        { return throw_type; }
    boolean isAccess()		        	{ return is_access; }
    
-   Collection<String> getImports() {
-      Set<String> rslt = new HashSet<>();
-      for (CallArg ca : call_args) {
-         if (ca.getArgValue().contains("StreamTokenizer")) {
-            rslt.add("java.io.SrreamTokenizer");
-          }
-         if (ca.getArgValue().contains("StringReader")) {
-            rslt.add("java.io.StringReader");
-          }
-         if (ca.getArgValue().contains("StringTokenizer")) {
-            rslt.add("java.util.StringTokenizer");
-          }
-       }
-      if (rslt.isEmpty()) return null;
-      return rslt;
-    }
+   
 }	// end of subclass CallTest
 
 
