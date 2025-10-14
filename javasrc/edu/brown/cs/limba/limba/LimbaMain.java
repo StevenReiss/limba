@@ -707,7 +707,7 @@ static List<String> getJavaCode(String resp)
          break;
        }
       String type = resp.substring(idx0+3,idx1).trim();
-      if (!type.isEmpty()) {
+      if (type.isEmpty()) {
          idx1 = idx0 + 3;
        }
       else idx1 = idx1+1;

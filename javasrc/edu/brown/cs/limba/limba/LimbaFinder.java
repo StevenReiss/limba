@@ -24,13 +24,16 @@ package edu.brown.cs.limba.limba;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.file.IvyLog;
+import edu.brown.cs.ivy.jcomp.JcompMessage;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
@@ -135,98 +138,130 @@ String getSignatureName()               { return null; }
 
 void process(IvyXmlWriter xw) throws Exception
 {
-   // create a JcompContext based on user context
+   StringBuffer addendum = new StringBuffer();
    
-   StringBuffer pbuf = new StringBuffer();
-   if (base_prompt != null) pbuf.append(base_prompt);
-   pbuf.append("\nPlease generate a method with the signature\n");
-   pbuf.append("'" + find_signature + "'\n");
-   pbuf.append("that does the following: \n");
-   pbuf.append(find_description);
-   pbuf.append("\n");
-   pbuf.append("Generate 3 alternative versions of the code.\n");
-   pbuf.append("Include explicit import statements in the code as needed.\n");
-   pbuf.append("Include any auxilliary code that is needed.\n");
-   switch (find_type) {
-      case METHOD :
-         pbuf.append("This code will be used as method " + find_name);
-         if (find_prefix != null) {
-            pbuf.append(" in class " + find_prefix);
+   for (int i = 0; i < 10; ++i) {
+      StringBuffer pbuf = new StringBuffer();
+      if (base_prompt != null) pbuf.append(base_prompt);
+      pbuf.append("\nPlease generate a method with the signature\n");
+      pbuf.append("'" + find_signature + "'\n");
+      pbuf.append("that does the following: \n");
+      pbuf.append(find_description);
+      pbuf.append("\n");
+      pbuf.append("Generate 3 alternative versions of the code.\n");
+      pbuf.append("Include explicit import statements in the code as needed.\n");
+      pbuf.append("Include any auxilliary code that is needed.\n");
+      switch (find_type) {
+         case METHOD :
+            pbuf.append("This code will be used as method " + find_name);
+            if (find_prefix != null) {
+               pbuf.append(" in class " + find_prefix);
+             }
+            break;
+         case CLASS :
+            pbuf.append("This code will be used as class " + find_name);
+            if (find_prefix != null) {
+               pbuf.append(" in package " + find_prefix);
+             }
+            break;
+       }
+      pbuf.append(".\n");
+      if (addendum != null) {
+         pbuf.append(addendum + "\n");
+       }
+      
+      IvyLog.logD("LIMBA","Find " + pbuf.toString());
+      
+      String resp = limba_main.askOllama(pbuf.toString(),use_context);
+      List<String> code = LimbaMain.getJavaCode(resp);
+      
+      List<LimbaSolution> tocheck = new ArrayList<>();
+      for (String s : code) {
+         try {
+            // pass user context to solution so it can be used to resolve things
+            LimbaSolution sol = new LimbaSolution(this,s); 
+            if (sol.getAstNode() == null) {
+               IvyLog.logD("LIMBA","Invalid solution -- target not found");
+               // invalid solution 
+               continue;
+             }
+            tocheck.add(sol);
           }
-         break;
-      case CLASS :
-         pbuf.append("This code will be used as class " + find_name);
-         if (find_prefix != null) {
-            pbuf.append(" in package " + find_prefix);
+         catch (Throwable t) {
+            IvyLog.logE("Problem parsing solution",t);
           }
-         break;
-    }
-   pbuf.append(".\n");
-   
-   IvyLog.logD("LIMBA","Find " + pbuf.toString());
-
-   String resp = limba_main.askOllama(pbuf.toString(),use_context);
-   List<String> code = LimbaMain.getJavaCode(resp);
-   
-   List<LimbaSolution> tocheck = new ArrayList<>();
-   for (String s : code) {
-      try {
-         // pass user context to solution so it can be used to resolve things
-         LimbaSolution sol = new LimbaSolution(this,s); 
-         if (sol.getAstNode() == null) {
-            IvyLog.logD("LIMBA","Invalid solution -- target not found");
-            // invalid solution 
-            continue;
+       }
+      
+      IvyLog.logD("LIMBA","Found possible solutions: " + tocheck.size() + " " +
+            code);
+      
+      List<LimbaSolution> rslt = new ArrayList<>();
+      Set<String> allimports = new HashSet<>();
+      for (LimbaTestCase ct : test_cases) {
+         Collection<String> imps = ct.getImports();
+         if (imps != null) allimports.addAll(imps);
+       }
+      
+      boolean retry = false;
+      for (LimbaSolution sol : tocheck) {
+         List<JcompMessage> errs = sol.getCompilationErrors(); 
+         if (errs != null && errs.size() > 0) {
+            for (JcompMessage jm : errs) {
+               if (addendum.isEmpty()) {
+                  addendum.append("Please avoid the following potential problems " +
+                        " in the generated code:\n");
+                }
+               String err = jm.getText();
+               if (!err.startsWith("Undefined ")) continue;
+               if (addendum.toString().contains(jm.getText())) continue;
+               addendum.append(jm.getText() + ".\n");
+               retry = true;
+             }
           }
-         tocheck.add(sol);
        }
-      catch (Throwable t) {
-         IvyLog.logE("Problem parsing solution",t);
+      if (retry) continue;
+      
+      for (Iterator<LimbaSolution> it = tocheck.iterator(); it.hasNext(); ) {
+         LimbaSolution sol = it.next();
+         sol.getImportTypes().addAll(allimports);
+         if (test_cases.isEmpty()) {
+            sol.setTestsPassed(true);
+            rslt.add(sol);
+            it.remove();
+          }
+         else {
+            TestRunner tr = new TestRunner(sol);
+            tr.start();
+          } 
        }
-    }
-   
-   IvyLog.logD("LIMBA","Found possible solutions: " + tocheck.size() + " " +
-         code);
-   
-   List<LimbaSolution> rslt = new ArrayList<>();
-   for (Iterator<LimbaSolution> it = tocheck.iterator(); it.hasNext(); ) {
-      LimbaSolution sol = it.next();
-      if (test_cases.isEmpty()) {
-         sol.setTestsPassed(true);
-         rslt.add(sol);
-         it.remove();
+      for (LimbaSolution sol : tocheck) {
+         sol.waitForTesting();
        }
-      else {
-         TestRunner tr = new TestRunner(sol);
-         tr.start();
-       } 
-    }
-   for (LimbaSolution sol : tocheck) {
-      sol.waitForTesting();
-    }
-   
-   for (Iterator<LimbaSolution> it = tocheck.iterator(); it.hasNext(); ) {
-      LimbaSolution sol = it.next();
-      if (sol.getTestsPassed()) {
-         rslt.add(sol);
-         it.remove();
+      
+      for (Iterator<LimbaSolution> it = tocheck.iterator(); it.hasNext(); ) {
+         LimbaSolution sol = it.next();
+         if (sol.getTestsPassed()) {
+            rslt.add(sol);
+            it.remove();
+          }
        }
+      
+      if (rslt.isEmpty()) {
+         IvyLog.logD("No solution passed the tests -- need to retry with more information");
+       }
+      
+      xw.begin("SOLUTIONS");
+      xw.field("COUNT",rslt.size());
+      
+      int ct = 0;
+      for (LimbaSolution sol : rslt) {
+         String nm = "SOLUTION_" + (++ct);
+         sol.output(xw,nm);  
+       }
+      
+      xw.end("SOLUTIONS");
+      break;
     }
-   
-   if (rslt.isEmpty()) {
-      IvyLog.logD("No solution passed the tests -- need to retry with more information");
-    }
-   
-   xw.begin("SOLUTIONS");
-   xw.field("COUNT",rslt.size());
-   
-   int ct = 0;
-   for (LimbaSolution sol : rslt) {
-      String nm = "SOLUTION_" + (++ct);
-      sol.output(xw,nm);  
-    }
-   
-   xw.end("SOLUTIONS");
    // Then check the test cases
    // if a test passes, just return it
    // otherwise determine what is wrong and issue a new generate with the

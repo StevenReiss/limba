@@ -25,13 +25,14 @@ package edu.brown.cs.limba.limba;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.jcomp.JcompControl;
+import edu.brown.cs.ivy.jcomp.JcompMessage;
 import edu.brown.cs.ivy.jcomp.JcompProject;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -57,8 +58,9 @@ private CompilationUnit base_ast;
 private ASTNode 	main_node;
 private List<ASTNode>	helper_nodes;
 private boolean 	use_constructor;
-private Collection<String> import_set;
+private Set<String> import_set;
 private Boolean 	tests_passed;
+private List<JcompMessage> compilation_errors;
 
 
 /********************************************************************************/
@@ -101,6 +103,20 @@ LimbaSolution(LimbaFinder lf,String text) throws LimbaException
    if (jp == null) {
       throw new LimbaException("Unable to resolve AST");
     }
+   
+   List<JcompMessage> errs = JcompAst.getMessages(null,base_ast);
+   compilation_errors = new ArrayList<>();
+   for (JcompMessage jm : errs) {
+      switch (jm.getSeverity()) {
+         case ERROR :
+         case FATAL :
+            compilation_errors.add(jm);
+            break;
+         case NOTICE: 
+         case WARNING :
+            break;
+       }
+    }
 
    // then we might want to clean it up -- isolate imports, remove class,
    //	isolate tests (and add to our test suite), identify primary method and
@@ -115,9 +131,9 @@ LimbaSolution(LimbaFinder lf,String text) throws LimbaException
 /*										*/
 /********************************************************************************/
 
-List<String> getImportTypes()
+Set<String> getImportTypes()
 {
-   return new ArrayList<>(import_set);
+   return import_set;
 }
 
 
@@ -175,6 +191,13 @@ boolean getTestsPassed()
 {
    return tests_passed == Boolean.TRUE;
 }
+
+
+List<JcompMessage> getCompilationErrors()
+{
+   return compilation_errors;
+}
+
 
 /********************************************************************************/
 /*										*/

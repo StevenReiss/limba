@@ -25,7 +25,9 @@ package edu.brown.cs.limba.limba;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.w3c.dom.Element;
 
@@ -209,9 +211,9 @@ private static boolean isValidCallTest(Element e)
 
 static class CallTest {
    
-   private String call_name;
+   private String       call_name;
    private List<CallArg> call_args;
-   private CallArg	 result_code;
+   private CallArg	result_code;
    private boolean	is_new;
    private LimbaTestOp	test_op; 
    private String	throw_type;
@@ -254,6 +256,22 @@ static class CallTest {
    String getThrows()			        { return throw_type; }
    boolean isAccess()		        	{ return is_access; }
    
+   Collection<String> getImports() {
+      Set<String> rslt = new HashSet<>();
+      for (CallArg ca : call_args) {
+         if (ca.getArgValue().contains("StreamTokenizer")) {
+            rslt.add("java.io.SrreamTokenizer");
+          }
+         if (ca.getArgValue().contains("StringReader")) {
+            rslt.add("java.io.StringReader");
+          }
+         if (ca.getArgValue().contains("StringTokenizer")) {
+            rslt.add("java.util.StringTokenizer");
+          }
+       }
+      if (rslt.isEmpty()) return null;
+      return rslt;
+    }
 }	// end of subclass CallTest
 
 

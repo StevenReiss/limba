@@ -1,6 +1,76 @@
 <LIMBA DO='PING' />
 <LIMBA DO='LIST' />
 
+<LIMBA DO='FIND' RID='LIMBA_75221' TYPE='METHOD'>
+<SEARCH LANGUAGE='JAVA' NAME='numericConstantParser' PREFIX='edu.brown.cs.bubbles.tutorial.romp.RompTest' USECONTEXT='false' WHAT='METHOD'>
+  <SIGNATURE>String numericConstantParser(StreamTokenizer)</SIGNATURE>
+  <DESCRIPTION><![CDATA[This is a parser for constant numeric expressions.  A constant numeric expression is a valid expression
+containing onlyi numbers, known Java constants such as Math.PI, standard mathmatical operators and
+optional parenthesis. Spaces are optional.  If the expression is valid it should return a string form of that expression
+without any spaces.  If the expression is invalid, it should return null. The end of the expression is
+either the end of the input or a comma.
+]]></DESCRIPTION>						
+  <TESTS>
+    <TESTCASE NAME='TEST_1' TYPE='CALLS'>
+      <CALL METHOD='numericConstantParser' OP='EQL'>
+	<INPUT>
+	  <VALUE><![CDATA[new StreamTokenizer(new StringReader("5.3"))]]></VALUE>
+	</INPUT>
+	<OUTPUT>
+	  <VALUE><![CDATA["5.3"]]></VALUE>
+	</OUTPUT>
+      </CALL>
+    </TESTCASE>
+    <TESTCASE NAME='TEST_2' TYPE='CALLS'>
+      <CALL METHOD='numericConstantParser' OP='EQL'>
+	<INPUT>
+	  <VALUE><![CDATA[new StreamTokenizer(new StringReader("Math.PI * (3+2.2)"))]]></VALUE>
+	</INPUT>
+	<OUTPUT>
+	  <VALUE><![CDATA["Math.PI*(3+2.2)"]]></VALUE>
+	</OUTPUT>
+      </CALL>
+    </TESTCASE>
+    <TESTCASE NAME='TEST_3' TYPE='CALLS'>
+      <CALL METHOD='numericConstantParser' OP='EQL'>
+	<INPUT>
+	  <VALUE><![CDATA[new StreamTokenizer(new StringReader("abc"))]]></VALUE>
+	</INPUT>
+	<OUTPUT>
+	  <VALUE><![CDATA[null]]></VALUE>
+	</OUTPUT>
+      </CALL>
+    </TESTCASE>
+    <TESTCASE NAME='TEST_4' TYPE='CALLS'>
+      <CALL METHOD='numericConstantParser' OP='EQL'>
+	<INPUT>
+	  <VALUE><![CDATA[new StreamTokenizer(new StringReader("3+"))]]></VALUE>
+	</INPUT>
+	<OUTPUT>
+	  <VALUE><![CDATA[null]]></VALUE>
+	</OUTPUT>
+      </CALL>
+    </TESTCASE>
+    <TESTCASE NAME='TEST_5' TYPE='CALLS'>
+      <CALL METHOD='numericConstantParser' OP='EQL'>
+	<INPUT>
+	  <VALUE><![CDATA[new StreamTokenizer(new StringReader("(1.2"))]]></VALUE>
+	</INPUT>
+	<OUTPUT>
+	  <VALUE><![CDATA[null]]></VALUE>
+	</OUTPUT>
+      </CALL>
+    </TESTCASE>
+  </TESTS>
+  <CONTEXT CLASS='RompTest' LANGUAGE='JAVA' PACKAGE='edu.brown.cs.bubbles.tutorial.romp' SEPARATOR='/' USEPATH='true'>
+    <SOURCE NAME='/home/spr/Eclipse/tutorial/romp/src/edu/brown/cs/bubbles/tutorial/romp/RompTest.java' />
+    <CLASSPATH>/usr/lib/jvm/java-17-openjdk-amd64/lib/jrt-fs.jar</CLASSPATH>
+    <CLASSPATH>/home/pro/bubbles/lib/poppy.jar</CLASSPATH>
+    <CLASSPATH>/home/spr/Eclipse/tutorial/romp/bin</CLASSPATH>
+  </CONTEXT>
+</SEARCH>
+</LIMBA>
+
 <LIMBA DO='FINDJDOC' TYPE='METHOD' USECONTEXT='true'>
 <JAVADOC>
   <PRIOR><![CDATA[/** Calculate the force of gravity on the pendulum using the formula from the assignment.

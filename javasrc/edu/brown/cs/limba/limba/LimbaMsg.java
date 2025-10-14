@@ -115,16 +115,7 @@ private String processCommand(String cmd,Element xml) throws LimbaException
 
 
 
-/********************************************************************************/
-/*                                                                              */
-/*      Load project infromation from BUBBLES                                   */
-/*                                                                              */
-/********************************************************************************/
 
-private void loadProjectData()
-{
-   limba_main.setupRag();
-}
 
 
 List<File> getSources()
