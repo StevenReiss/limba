@@ -207,6 +207,7 @@ void process(IvyXmlWriter xw) throws Exception
          List<JcompMessage> errs = sol.getCompilationErrors(); 
          if (errs != null && errs.size() > 0) {
             for (JcompMessage jm : errs) {
+               IvyLog.logD("LIMBA","Handle compiler error: " + jm.getText());
                if (addendum.isEmpty()) {
                   addendum.append("Please avoid the following potential problems " +
                         " in the generated code:\n");

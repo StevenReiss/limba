@@ -42,6 +42,7 @@ import io.github.ollama4j.models.response.Model;
 import io.github.ollama4j.models.response.OllamaResult;
 import io.github.ollama4j.utils.Options;
 import io.github.ollama4j.utils.OptionsBuilder;
+import edu.brown.cs.ivy.exec.IvyExec;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.jcomp.JcompControl;
 import edu.brown.cs.ivy.xml.IvyXml;
@@ -74,8 +75,10 @@ public static void main(String [] args)
 private String mint_id;
 private String ollama_host;
 private int ollama_port;
+private String ollama_usehost;
 private String alt_host;
 private int alt_port;
+private String alt_usehost;
 private String ollama_model;
 private boolean interactive_mode;
 private boolean server_mode;
@@ -110,8 +113,10 @@ private LimbaMain(String [] args)
    mint_id = null;
    ollama_host = "localhost";
    ollama_port = 11434;
+   ollama_usehost = null;
    alt_host = "localhost";
    alt_port = 11434;
+   alt_usehost = null;
    interactive_mode = false;
    server_mode = false;
    ollama_model = "codellama:latest";
@@ -250,6 +255,10 @@ private void scanArgs(String [] args)
                 }
                continue;
              }
+            else if (args[i].startsWith("-u")) {                // -use <ollama actual host>
+               ollama_usehost = args[++i];
+               continue;
+             }
             else if (args[i].startsWith("-alth")) {             // -althost <ollama host>
                alt_host = args[++i];
                continue;
@@ -261,6 +270,10 @@ private void scanArgs(String [] args)
                catch (NumberFormatException e) {
                   badArgs();
                 }
+               continue;
+             }
+            else if (args[i].startsWith("-altu")) {             // -altuse <ollama usehost>
+               alt_usehost = args[++i];
                continue;
              }
             else if (args[i].startsWith("-l")) {                // -l <llama model>
@@ -340,10 +353,10 @@ private void process()
    
    IvyLog.logD("LIMBA","Running with " + getUrl() + " " + getModel());
    
-   boolean fg = startOllama(ollama_host,ollama_port);
+   boolean fg = startOllama(ollama_host,ollama_port,ollama_usehost);
    if (!fg) {
       if (alt_host != null && alt_port != 0) {
-         fg = startOllama(alt_host,alt_port);
+         fg = startOllama(alt_host,alt_port,alt_usehost);
          if (fg) {
             ollama_host = alt_host;
             ollama_port = alt_port;
@@ -646,7 +659,9 @@ String askOllama(String cmd0,boolean usectx) throws Exception
       cmd = cmd.replace("$CONTEXT",user_context);
     }
    
-   IvyLog.logD("LIMBA","Query: " + cmd);
+   IvyLog.logD("LIMBA","Query " + usectx + " " + getModel() + " " +
+         rag_model + ":\n" + cmd);
+   
    StreamHandler hdlr = new StreamHandler();
    OllamaResult rslt = null;
    
@@ -778,21 +793,37 @@ private final class ThinkHandler implements OllamaStreamHandler {
 /*                                                                              */
 /********************************************************************************/
 
-private boolean startOllama(String hostname,int port)
+private boolean startOllama(String hostname,int port,String usehost)
 {
    String host = "http://" + hostname + ":" + port + "/";
+   
+   try {
+      String cmd = "limballama.csh " + getModel();
+      if (usehost != null && !usehost.isEmpty()) {
+         cmd += " " + usehost + " " + hostname;
+       }
+      else {
+         cmd += " " + host;
+       }
+      IvyExec exec = new IvyExec(cmd,IvyExec.IGNORE_OUTPUT);
+      exec.waitFor();
+    }
+   catch (IOException e) {
+      IvyLog.logI("LIMBA","Problem prepping ollama: " + e);
+    }
+   
    IvyLog.logD("LIMBA","Starting OLLAMA at " + host);
    try {
       ollama_api = new OllamaAPI(host);
       ollama_api.setRequestTimeoutSeconds(300L);
       boolean ping = ollama_api.ping();
       if (ping) {
-         IvyLog.logD("LIMBA","OLLAMA started successfully");
+         IvyLog.logD("LIMBA","OLLAMA started successfully on " + host);
          return true;
        }
     }
    catch (Throwable t) {
-      IvyLog.logE("LIMBA","Problem with ollama: " + t);
+      IvyLog.logI("LIMBA","Problem with ollama on " + host + ": " + t);
     }
    
    return false;
