@@ -23,10 +23,12 @@
 package edu.brown.cs.limba.limba;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.w3c.dom.Element;
+
+import edu.brown.cs.ivy.xml.IvyXml;
 
 class LimbaFindContext implements LimbaConstants
 {
@@ -38,9 +40,6 @@ class LimbaFindContext implements LimbaConstants
 /*                                                                              */
 /********************************************************************************/
 
-@SuppressWarnings("unused")
-private LimbaFinder     limba_finder;
-@SuppressWarnings("unused")
 private Element         context_xml;
 
 
@@ -52,7 +51,6 @@ private Element         context_xml;
 
 LimbaFindContext(LimbaFinder fdr,Element xml)
 {
-   limba_finder = fdr;
    context_xml = xml;
 }
 
@@ -63,34 +61,62 @@ LimbaFindContext(LimbaFinder fdr,Element xml)
 /*                                                                              */
 /********************************************************************************/
 
-String getPackage()                     { return null; }
-String getClassName()                   { return null; }
-String getJarFileName()                 { return null; }
-File getContextDirectory()              { return null; }
-Collection<UserFile> getUserFiles()     { return new ArrayList<>(); }
-String getSourceFileName()              { return null; }
-Collection<LimbaTestCase> getTests()    { return null; }
-String getJunitClass()                  { return null; }
-String getJunitName()                   { return null; }
-
-
-/********************************************************************************/
-/*                                                                              */
-/*      User data file                                                          */
-/*                                                                              */
-/********************************************************************************/
-
-class UserFile {
-   
-   UserFile(Element xml) { }
-   
-   LimbaUserFileType getFileType()      { return LimbaUserFileType.READ; } 
-   String getLocalName()                { return "LOCAL"; }
-   String getUserName()                 { return "USER"; }
-   String getDisplayName()              { return "DISPLAY"; }
-   String getProjectId()                { return "PROJECTID"; }
-
+boolean getUsePath()
+{
+   return IvyXml.getAttrBool(context_xml,"USEPATH");
 }
+
+
+String getPackage()                     
+{
+   return IvyXml.getAttrString(context_xml,"PACKAGE");
+}
+
+String getClassName()                  
+{ 
+   return IvyXml.getAttrString(context_xml,"CLASS");
+}
+
+String getSourceFileName()   
+{ 
+  Element sxml = IvyXml.getChild(context_xml,"SOURCE"); 
+  return IvyXml.getAttrString(sxml,"NAME");
+}
+
+
+String getClassPath()
+{
+   StringBuffer rslt = new StringBuffer();
+   for (Element cpxml : IvyXml.children(context_xml,"CLASSPATH")) {
+      String cpe = IvyXml.getText(cpxml);
+      if (cpe.contains("jrt-fs.jar")) continue;
+      if (cpe.contains("poppy.jar")) continue;
+      if (!rslt.isEmpty()) rslt.append(File.pathSeparator);
+      rslt.append(cpe);
+    }
+   
+   return rslt.toString();
+}
+
+
+Set<String> getImports()
+{
+   Set<String> rslt = new HashSet<>();
+   for (Element ielt : IvyXml.children(context_xml,"IMPORTS")) {
+      String impstr = IvyXml.getText(ielt).trim();
+      if (impstr.endsWith(";")) {
+         int idx = impstr.lastIndexOf(";");
+         impstr = impstr.substring(0,idx).trim();
+       }
+      if (impstr.startsWith("import ")) {
+         impstr = impstr.substring(7).trim();
+       }
+      rslt.add(impstr);
+    }
+
+   return rslt;
+}
+
 
 
 }       // end of class LimbaTestContext

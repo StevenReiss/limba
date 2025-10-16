@@ -30,19 +30,17 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-import dev.langchain4j.chain.ConversationalRetrievalChain;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.loader.FileSystemDocumentLoader;
 import dev.langchain4j.data.document.splitter.DocumentByLineSplitter;
 import dev.langchain4j.data.segment.TextSegment;
-import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.model.ollama.OllamaEmbeddingModel;
+import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import dev.langchain4j.store.embedding.chroma.ChromaEmbeddingStore;
-// import dev.langchain4j.store.embedding.chroma.ChromaEmbeddingStore;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import edu.brown.cs.ivy.exec.IvyExecQuery;
 import edu.brown.cs.ivy.file.IvyLog;
@@ -98,27 +96,15 @@ LimbaRag(LimbaMain lm,List<File> files)
 /*                                                                              */
 /********************************************************************************/
 
-ConversationalRetrievalChain getChain()
+ContentRetriever getContentRetriever()
 {
    if (content_retriever == null && !project_files.isEmpty()) {
       content_retriever = setupRAG();
     }
    
-   if (content_retriever == null) return null;
-   
-   OllamaChatModel chat = OllamaChatModel.builder()
-         .baseUrl(limba_main.getUrl())
-         .logRequests(true)
-         .logResponses(true)
-         .modelName(limba_main.getModel())
-         .build();
-   ConversationalRetrievalChain chain = ConversationalRetrievalChain.builder()
-         .chatModel(chat)
-         .contentRetriever(content_retriever)
-         .build();
-   
-   return chain;
+   return content_retriever;
 }
+
 
 /********************************************************************************/
 /*                                                                              */

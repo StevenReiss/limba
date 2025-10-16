@@ -33,6 +33,8 @@ import java.util.StringTokenizer;
 
 import org.w3c.dom.Element;
 
+import dev.langchain4j.memory.ChatMemory;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import edu.brown.cs.ivy.file.IvyFile;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.xml.IvyXml;
@@ -53,6 +55,8 @@ class LimbaCommandFactory implements LimbaConstants
 /********************************************************************************/
 
 private LimbaMain                limba_main;
+private Map<String,ChatMemory>   memory_map;
+
       
 
 /********************************************************************************/
@@ -64,6 +68,7 @@ private LimbaMain                limba_main;
 LimbaCommandFactory(LimbaMain lm) 
 {
    limba_main = lm;
+   memory_map = new HashMap<>();
 }
 
 
@@ -86,6 +91,8 @@ LimbaCommand createCommand(String line)
          return new CommandContext(line);
       case "SETMODEL" :
          return new CommandSetModel(line);
+      case "CLEAR" :
+         return new CommandClear(line);
       case "DETAIL" :
       case "DETAILS" :
          return new CommandDetails(line);
@@ -173,6 +180,7 @@ private abstract class CommandBase implements LimbaCommand {
    private boolean end_on_blank;
    protected Map<String,String> option_set;
    protected String command_text;
+   protected String command_id;
    private String first_line;
    
    CommandBase(String line) {
@@ -180,6 +188,7 @@ private abstract class CommandBase implements LimbaCommand {
       option_set = null;
       end_on_blank = false;
       command_text = null;
+      command_id = null;
       readOptions(line);
     }
 
@@ -271,6 +280,7 @@ private abstract class CommandBase implements LimbaCommand {
    @Override public void setupCommand(Element xml) {
       String opts = IvyXml.getAttrString(xml,"OPTIONS");
       setOptions(opts);
+      command_id = IvyXml.getAttrString(xml,"ID");
       String body = IvyXml.getTextElement(xml,"BODY");
       if (body != null) setupCommand(body,false);
     }
@@ -451,6 +461,22 @@ private class CommandContext extends CommandBase {
 
 
 
+private class CommandClear extends CommandBase {
+   
+   CommandClear(String line) {
+      super(line);
+    }
+   
+   @Override public String getCommandName()             { return "CLEAR"; }
+   
+   @Override public void localProcess(IvyXmlWriter xw) throws Exception {
+      if (command_id != null) {
+        memory_map.remove(command_id);
+       }
+    }
+   
+}       // end of inner class CommandClear
+
 
 
 /********************************************************************************/
@@ -468,7 +494,6 @@ private class CommandQuery extends CommandBase {
       programmer_prompt = prompt;
     }
    
-   
    @Override public String getCommandName()             { return "QUERY"; }
    
    @Override public void localProcess(IvyXmlWriter xw) throws Exception {
@@ -478,7 +503,17 @@ private class CommandQuery extends CommandBase {
          cmd = programmer_prompt + "\n" + command_text;
          usectx = true;
        }
-      String resp = limba_main.askOllama(cmd,usectx); 
+      ChatMemory history = null;
+      if (command_id != null) {
+         history = memory_map.get(command_id);
+         if (history == null) {
+            history = MessageWindowChatMemory.builder()
+               .maxMessages(10)
+               .build();
+          }
+       } 
+       
+      String resp = limba_main.askOllama(cmd,usectx,history);  
       if (xw != null) {
          xw.cdataElement("RESPONSE",resp);
          List<String> jcodes = LimbaMain.getJavaCode(resp);

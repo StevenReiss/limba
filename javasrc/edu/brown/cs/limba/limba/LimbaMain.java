@@ -36,10 +36,14 @@ import java.util.Map;
 
 import org.w3c.dom.Element;
 
+import dev.langchain4j.chain.ConversationalRetrievalChain;
+import dev.langchain4j.memory.ChatMemory;
+import dev.langchain4j.model.ollama.OllamaChatModel;
+import dev.langchain4j.rag.content.Content;
+import dev.langchain4j.rag.content.retriever.ContentRetriever;
+import dev.langchain4j.rag.query.Query;
 import io.github.ollama4j.OllamaAPI;
-import io.github.ollama4j.models.generate.OllamaStreamHandler;
 import io.github.ollama4j.models.response.Model;
-import io.github.ollama4j.models.response.OllamaResult;
 import io.github.ollama4j.utils.Options;
 import io.github.ollama4j.utils.OptionsBuilder;
 import edu.brown.cs.ivy.exec.IvyExec;
@@ -66,6 +70,7 @@ public static void main(String [] args)
 }
 
 
+
 /********************************************************************************/
 /*                                                                              */
 /*      Private Storage                                                         */
@@ -86,7 +91,6 @@ private File project_file;
 private File input_file;
 private OllamaAPI ollama_api;
 private boolean raw_flag;
-private boolean think_flag;
 private Options generate_options;
 private LimbaCommandFactory command_factory;
 private LimbaRag rag_model;
@@ -119,11 +123,10 @@ private LimbaMain(String [] args)
    alt_usehost = null;
    interactive_mode = false;
    server_mode = false;
-   ollama_model = "codellama:latest";
+   ollama_model = "llama4:scout";
    project_file = null;
    input_file = null;
    raw_flag = false;
-   think_flag = false;
    rag_model = null;
    generate_options = new OptionsBuilder().build();
    command_factory = null;
@@ -138,6 +141,7 @@ private LimbaMain(String [] args)
    jcomp_main = new JcompControl();
    user_style = "";
    user_context = "";
+   ollama_api = null;
    
    scanArgs(args);
 }
@@ -155,8 +159,6 @@ String getModel()                       { return ollama_model; }
 OllamaAPI getOllama()                   { return ollama_api; }
 
 boolean getRawFlag()                    { return raw_flag; }
-
-boolean getThinkFlag()                  { return think_flag; }
 
 Options getOllamaOptions()              { return generate_options; }
 
@@ -296,10 +298,6 @@ private void scanArgs(String [] args)
          if (args[i].startsWith("-")) {
             if (args[i].startsWith("-i")) {                     // -interactive
                interactive_mode = true;
-             }
-            else if (args[i].startsWith("-think")) {
-               raw_flag = true;
-               think_flag = true;
              }
             else if (args[i].startsWith("-remote")) {           // -remoteFileAccess
                remote_files = true;
@@ -616,7 +614,7 @@ void setupRag(File f)
 {
    if (f != null) {
       rag_model = new LimbaRag(this,f);
-      rag_model.getChain();             // FOR DEBUGGING ONLY
+      rag_model.getContentRetriever();         // FOR DEBUGGING ONLY
     }
    else {
       rag_model = null;
@@ -649,7 +647,13 @@ void setupRag()
 /*                                                                              */
 /********************************************************************************/
 
-String askOllama(String cmd0,boolean usectx) throws Exception
+String askOllama(String cmd0,boolean usectx) throws Exception 
+{
+   return askOllama(cmd0,usectx,null);
+}
+
+
+String askOllama(String cmd0,boolean usectx,ChatMemory history) throws Exception
 {
    String cmd = cmd0;
    if (user_style != null) {
@@ -662,42 +666,53 @@ String askOllama(String cmd0,boolean usectx) throws Exception
    IvyLog.logD("LIMBA","Query " + usectx + " " + getModel() + " " +
          rag_model + ":\n" + cmd);
    
-   StreamHandler hdlr = new StreamHandler();
-   OllamaResult rslt = null;
+   try {
+      // might need to add to history
+      String resp = getChain(history,usectx).execute(cmd);
+      IvyLog.logD("LIMBA","Context Response: " + resp);
+      IvyLog.logD("LIMBA","\n------------------------\n\n");
+      return resp;
+    }
+   catch (Throwable t) {
+      IvyLog.logE("LIMBA","Problem with chained response",t);
+      throw t;
+    }
+}
+
+
+private ConversationalRetrievalChain getChain(ChatMemory mem,boolean usectx)
+{
+   OllamaChatModel chat = OllamaChatModel.builder()
+      .baseUrl(getUrl())
+      .logRequests(true)
+      .logResponses(true)
+      .modelName(getModel())
+      .build();
+   ConversationalRetrievalChain.Builder bldr = ConversationalRetrievalChain.builder();
+   bldr.chatModel(chat);
+   ContentRetriever cr = null;
+   if (rag_model != null && usectx) {
+      cr = rag_model.getContentRetriever();
+    }
+   if (cr == null) {
+      cr = new EmptyContentRetriever();
+    }
+   bldr.contentRetriever(cr);
+   if (mem != null) {
+      bldr.chatMemory(mem);
+    }
+   ConversationalRetrievalChain chain = bldr.build();
    
-   if (usectx && rag_model != null) {
-      try {
-         String resp = getRagModel().getChain().execute(cmd);
-         IvyLog.logD("LIMBA","Context Response: " + resp);
-         IvyLog.logD("LIMBA","\n------------------------\n\n");
-         return resp;
-       }
-      catch (Throwable t) {
-         IvyLog.logE("LIMBA","Problem with chained response",t);
-       }
+   return chain;
+}
+
+
+private static final class EmptyContentRetriever implements ContentRetriever {
+
+   @Override public List<Content> retrieve(Query query) { 
+      return new ArrayList<>();
     }
    
-   if (getThinkFlag()) {
-      rslt = getOllama().generate(getModel(),cmd,
-            getRawFlag(),getOllamaOptions(),hdlr,
-            new ThinkHandler());
-    }
-   else {
-      rslt = getOllama().generate(getModel(),cmd,
-            getRawFlag(),getOllamaOptions(),hdlr);
-    }
-   IvyLog.logD("LIMBA","Response: " + rslt.getResponse());
-   IvyLog.logD("LIMBA","Stats: " + rslt.getDoneReason() + " " +
-         rslt.getEvalCount() + " " + rslt.getEvalDuration() + " " +
-         rslt.getLoadDuration() + " " + rslt.getPromptEvalCount() + " " +
-         rslt.getTotalDuration());
-   if (getThinkFlag()) {
-      String thnk = rslt.getThinking();
-      IvyLog.logD("LIMBA","Thinging: " + thnk);
-    }
-   IvyLog.logD("LIMBA","\n------------------------\n\n");
-   
-   return rslt.getResponse();
 }
 
 
@@ -761,33 +776,7 @@ static String getJavaDoc(String resp)
 
 
 
-
 /********************************************************************************/
-/*                                                                              */
-/*      Stream handler for async processing                                     */
-/*                                                                              */
-/********************************************************************************/
-
-private final class StreamHandler implements OllamaStreamHandler {
-   
-   @Override public void accept(String message) {
-//    System.out.println(message);
-//    IvyLog.logD("LIMBA","Received: " + message);
-    }
-   
-}       // end of inner class StreamHandler
-
-
-private final class ThinkHandler implements OllamaStreamHandler {
-   
-   @Override public void accept(String message) {
-      System.out.print(message);
-    }
-   
-}       // end of inner class StreamHandler
-
-
- /********************************************************************************/
 /*                                                                              */
 /*      Start the ollama server if needed                                       */
 /*                                                                              */
@@ -815,10 +804,11 @@ private boolean startOllama(String hostname,int port,String usehost)
    IvyLog.logD("LIMBA","Starting OLLAMA at " + host);
    try {
       ollama_api = new OllamaAPI(host);
-      ollama_api.setRequestTimeoutSeconds(300L);
+      ollama_api.setRequestTimeoutSeconds(600L);
       boolean ping = ollama_api.ping();
       if (ping) {
          IvyLog.logD("LIMBA","OLLAMA started successfully on " + host);
+               
          return true;
        }
     }

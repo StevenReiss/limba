@@ -123,6 +123,7 @@ private void process()
    try {
       server = new ServerSocket(host_port);
       System.err.println("LIMBARELAY: Relay created on port " + host_port);
+      server.setSoTimeout(0);
     }
    catch (IOException e) {
       System.err.println("LIMBARELAY: Failed to create server socket: " + e);
@@ -134,6 +135,7 @@ private void process()
          System.err.println("LIMBARELAY: new client connection " +
                client.getRemoteSocketAddress());
          Socket relay = new Socket(host_name,host_port);
+         relay.setSoTimeout(0);
          System.err.println("LIMBARELAY: Connected to relay host " + host_name + 
                " " + host_port);
          InputStream clientin = client.getInputStream();

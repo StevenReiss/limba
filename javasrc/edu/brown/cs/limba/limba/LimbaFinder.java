@@ -98,9 +98,7 @@ LimbaFinder(LimbaMain lm,String prompt,Element xml)
    find_context = null;
    
    Element ctxxml = IvyXml.getChild(xml,"CONTEXT");
-   if (ctxxml != null) {
-      find_context = new LimbaFindContext(this,ctxxml);
-    }
+   find_context = new LimbaFindContext(this,ctxxml);
 }
 
 

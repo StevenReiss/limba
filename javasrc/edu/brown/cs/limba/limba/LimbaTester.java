@@ -193,15 +193,15 @@ private void setupUserContext(Map<String,String> idmap) throws LimbaException
       idmap.put("TESTCLASS",fcls);
       idmap.put("PREFIX",fcls);
     }
-   
-   String jnm = ctx.getJarFileName();
-   if (jnm != null) {
-      idmap.put("LIMBACTX",jnm);
-      idmap.put("CTXPATH","<pathelement location='" + jnm + "' />");
-    }
-   
-   File cdir = ctx.getContextDirectory();
-   if (cdir == null) return; 
+  
+   // Handle complex contexts with jar and user files
+// String jnm = ctx.getJarFileName();
+// if (jnm != null) {
+//    idmap.put("LIMBACTX",jnm);
+//  }
+// 
+// File cdir = ctx.getContextDirectory();
+// if (cdir == null) return; 
 }
 
 
