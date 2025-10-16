@@ -9,7 +9,7 @@ containing onlyi numbers, known Java constants such as Math.PI, standard mathmat
 optional parenthesis. Spaces are optional.  If the expression is valid it should return a string form of that expression
 without any spaces.  If the expression is invalid, it should return null. The end of the expression is
 either the end of the input or a comma.
-]]></DESCRIPTION>	
+]]></DESCRIPTION>
   <TESTS>
     <TESTCASE NAME='TEST_1' TYPE='CALLS'>
       <CALL METHOD='numericConstantParser' OP='EQL'>
@@ -94,7 +94,7 @@ either the end of the input or a comma.
    // Calculate angles
    Position pos = p.getPosition();
    // use a pvec to get the angles
-   PhysicsVector vec = new PhysicsVector(pos.getX(),pos.getY(),pos.getZ());
+\  PhysicsVector vec = new PhysicsVector(pos.getX(),pos.getY(),pos.getZ());
    Force gForce = new Force(magnitude,vec.getTheta(),vec.getPhi());
    /*
    System.err.println("  Gravity: " );
