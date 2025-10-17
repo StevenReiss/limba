@@ -353,6 +353,7 @@ private void process()
    
    boolean fg = startOllama(ollama_host,ollama_port,ollama_usehost);
    if (!fg) {
+      IvyLog.logD("LIMBA","Try alternate host " + alt_host + ":" + alt_port);
       if (alt_host != null && alt_port != 0) {
          fg = startOllama(alt_host,alt_port,alt_usehost);
          if (fg) {

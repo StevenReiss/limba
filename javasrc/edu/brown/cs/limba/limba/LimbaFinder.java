@@ -32,6 +32,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.w3c.dom.Element;
 
+import dev.langchain4j.memory.ChatMemory;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.jcomp.JcompMessage;
 import edu.brown.cs.ivy.xml.IvyXml;
@@ -136,11 +138,28 @@ String getSignatureName()               { return null; }
 
 void process(IvyXmlWriter xw) throws Exception
 {
-   StringBuffer addendum = new StringBuffer();
+   ChatMemory history = MessageWindowChatMemory.builder()
+      .maxMessages(10)
+      .build();
    
+   Set<String> undefs = new HashSet<>();
+   String addendum = null;
+   boolean again = false;
    for (int i = 0; i < 10; ++i) {
       StringBuffer pbuf = new StringBuffer();
       if (base_prompt != null) pbuf.append(base_prompt);
+      if (!undefs.isEmpty()) {
+         pbuf.append("\nNote the following are not defined in Java:\n");
+         for (String s : undefs) {
+            pbuf.append(" ");
+            pbuf.append(s);
+          }
+         pbuf.append("\n");
+         if (again) {
+            pbuf.append("Your last solution included these undefined symbols; " +
+                  "please avoid using them this time\n");
+          }
+       }
       pbuf.append("\nPlease generate a method with the signature\n");
       pbuf.append("'" + find_signature + "'\n");
       pbuf.append("that does the following: \n");
@@ -149,6 +168,7 @@ void process(IvyXmlWriter xw) throws Exception
       pbuf.append("Generate 3 alternative versions of the code.\n");
       pbuf.append("Include explicit import statements in the code as needed.\n");
       pbuf.append("Include any auxilliary code that is needed.\n");
+      pbuf.append("Be sure to handle exceptions correctly. Avoid unreachable statements.\n");
       switch (find_type) {
          case METHOD :
             pbuf.append("This code will be used as method " + find_name);
@@ -164,31 +184,16 @@ void process(IvyXmlWriter xw) throws Exception
             break;
        }
       pbuf.append(".\n");
-      if (addendum != null) {
-         pbuf.append(addendum + "\n");
+      if (addendum != null) { 
+         pbuf.append(addendum + ".\n");
        }
       
       IvyLog.logD("LIMBA","Find " + pbuf.toString());
       
-      String resp = limba_main.askOllama(pbuf.toString(),use_context);
+      String resp = limba_main.askOllama(pbuf.toString(),use_context,history);
       List<String> code = LimbaMain.getJavaCode(resp);
       
-      List<LimbaSolution> tocheck = new ArrayList<>();
-      for (String s : code) {
-         try {
-            // pass user context to solution so it can be used to resolve things
-            LimbaSolution sol = new LimbaSolution(this,s); 
-            if (sol.getAstNode() == null) {
-               IvyLog.logD("LIMBA","Invalid solution -- target not found");
-               // invalid solution 
-               continue;
-             }
-            tocheck.add(sol);
-          }
-         catch (Throwable t) {
-            IvyLog.logE("Problem parsing solution",t);
-          }
-       }
+      List<LimbaSolution> tocheck = getSolutions(code);
       
       IvyLog.logD("LIMBA","Found possible solutions: " + tocheck.size() + " " +
             code);
@@ -201,20 +206,31 @@ void process(IvyXmlWriter xw) throws Exception
        }
       
       boolean retry = false;
+      again = false;
+      Set<String> priorundef = new HashSet<>(undefs);
       for (LimbaSolution sol : tocheck) {
          List<JcompMessage> errs = sol.getCompilationErrors(); 
          if (errs != null && errs.size() > 0) {
             for (JcompMessage jm : errs) {
                IvyLog.logD("LIMBA","Handle compiler error: " + jm.getText());
-               if (addendum.isEmpty()) {
-                  addendum.append("Please avoid the following potential problems " +
-                        " in the generated code:\n");
-                }
                String err = jm.getText();
-               if (!err.startsWith("Undefined ")) continue;
-               if (addendum.toString().contains(jm.getText())) continue;
-               addendum.append(jm.getText() + ".\n");
-               retry = true;
+               if (err.startsWith("Undefined ")) {
+                  int idx = err.lastIndexOf(" ");
+                  String undef = err.substring(idx+1).trim();
+                  if (undefs.add(undef)) {
+                     retry = true;
+                   }
+                  else if (priorundef.contains(undef) && i < 4) {
+                     again = true;
+                     retry = true;
+                   }
+                }
+               else {
+                  if (addendum == null) {
+                     addendum = "Please avoid syntax errors.";
+                     retry = true;
+                   }
+                }
              }
           }
        }
@@ -266,6 +282,29 @@ void process(IvyXmlWriter xw) throws Exception
    // otherwise determine what is wrong and issue a new generate with the
    //           additional inforamtion
    // iterate this process up to k times
+}
+
+
+private List<LimbaSolution> getSolutions(List<String> code)
+{
+   List<LimbaSolution> tocheck = new ArrayList<>();
+   for (String s : code) {
+      try {
+         // pass user context to solution so it can be used to resolve things
+         LimbaSolution sol = new LimbaSolution(this,s); 
+         if (sol.getAstNode() == null) {
+            IvyLog.logD("LIMBA","Invalid solution -- target not found");
+            // invalid solution 
+            continue;
+          }
+         tocheck.add(sol);
+       }
+      catch (Throwable t) {
+         IvyLog.logE("Problem parsing solution",t);
+       }
+    }
+   
+   return tocheck;
 }
 
 
@@ -326,7 +365,11 @@ private class TestRunner extends Thread {
       LimbaSuiteReport rpt = tester.runTester();
       IvyLog.logD("LIMBA","Check test result in " + rpt);
       // check if tests passed or not, save result for later queries
-      for_solution.setTestsPassed(true);
+      if (rpt.allPassed()) {
+         for_solution.setTestsPassed(true);
+       }
+      // add text to the solution indicating what test(s) failed so we can
+      // ask the LLM another time.
     }
    
 }       // end of inner class TestRunner

@@ -94,7 +94,7 @@ either the end of the input or a comma.
    // Calculate angles
    Position pos = p.getPosition();
    // use a pvec to get the angles
-\  PhysicsVector vec = new PhysicsVector(pos.getX(),pos.getY(),pos.getZ());
+   PhysicsVector vec = new PhysicsVector(pos.getX(),pos.getY(),pos.getZ());
    Force gForce = new Force(magnitude,vec.getTheta(),vec.getPhi());
    /*
    System.err.println("  Gravity: " );

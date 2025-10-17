@@ -232,19 +232,19 @@ private void setupTestPackage(Map<String,String> idmap) throws LimbaException
    idmap.put("SRCDIR",dir.getPath());
    idmap.put("PROJECTNAME",pkg);
    
-   File sf1 = new File(dir,"LIMBASOURCE");
-   try {
-      PrintWriter fw = new PrintWriter(new FileWriter(sf1));
-      try {
+// File sf1 = new File(dir,"LIMBASOURCE");
+// try {
+//    PrintWriter fw = new PrintWriter(new FileWriter(sf1));
+//    try {
 // 	 fw.println(src.getDisplayName());
 // 	 fw.println(src.getUserName());
 // 	 fw.println(src.getProjectId()); 
-       }
-      catch (Throwable t) { }
-      fw.close();
-    }
-   catch (IOException e) { }
-   
+//     }
+//    catch (Throwable t) { }
+//    fw.close();
+//  }
+// catch (IOException e) { }
+
    File bin = new File(dir,LIMBA_BINARY_DIR);
    
    if (!bin.mkdirs()) {
@@ -703,13 +703,13 @@ private void compileAndRunTestFile(Map<String,String> idmap) throws LimbaExcepti
 {
    String [] env = null;
    try {
-      String cmd = ANT_COMMAND + " $(DIRECTORY)";
+      String cmd = ANT_COMMAND;
       cmd = IvyFile.expandName(cmd,idmap);
-      
+      File wd = new File(idmap.get("DIRECTORY"));
       int fgs = IvyExec.IGNORE_OUTPUT;
-      IvyLog.logD("LIMBA","RUN ANT: " + cmd);
+      IvyLog.logD("LIMBA","RUN ANT in " + wd + ": " + cmd);
       
-      IvyExec ex = new IvyExec(cmd,env,fgs);
+      IvyExec ex = new IvyExec(cmd,env,wd,fgs);
       
       ex.waitFor();
       
@@ -728,7 +728,6 @@ private LimbaSuiteReport readTestStatus(Map<String,String> idmap) throws LimbaEx
    String onm = IvyFile.expandName("$(DIRECTORY)/$(JUNITOUT)",idmap);
    File f = new File(onm);
    if (!f.exists()) throw new LimbaException("Junit failed: " + f);
-   File jarf = IvyFile.expandFile("$(DIRECTORY)/$(UIJAR)",idmap);
    
    Element e = IvyXml.loadXmlFromFile(onm);
    if (e == null) throw new LimbaException("No junit output found in " + onm);
@@ -751,7 +750,7 @@ private LimbaSuiteReport readTestStatus(Map<String,String> idmap) throws LimbaEx
        }
       ++tct;
       
-      sr.addReport(nm,cnm,tm,msg,iserr,jarf);
+      sr.addReport(nm,cnm,tm,msg,iserr); 
     }
    
    if (tct == 0) throw new LimbaException("No test case output found in " + onm);

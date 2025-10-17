@@ -22,7 +22,6 @@
 
 package edu.brown.cs.limba.limba;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,7 +36,6 @@ class LimbaSuiteReport implements LimbaConstants
 /********************************************************************************/
 
 private Map<String,TestReport> test_cases;
-private String base_directory;
 
 
 /********************************************************************************/
@@ -48,7 +46,6 @@ private String base_directory;
 
 LimbaSuiteReport(LimbaFinder lf,Map<String,String> idmap)
 { 
-   base_directory = idmap.get("DIRECTORY");
    test_cases = new HashMap<>();
    for (LimbaTestCase tc : lf.getTestCases()) {
       test_cases.put(tc.getName(),new TestReport(tc));
@@ -56,6 +53,60 @@ LimbaSuiteReport(LimbaFinder lf,Map<String,String> idmap)
 }
 
  
+/********************************************************************************/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+boolean allPassed()
+{
+   for (TestReport tr : test_cases.values()) {
+      if (!tr.getPassed()) return false;
+    }
+   return true;
+}
+
+
+public double getTime(String test)
+{
+   TestReport tr = test_cases.get(test);
+   if (tr == null) return 0;
+   return tr.getTime();
+}
+
+
+public boolean getPassed(String test)
+{
+   TestReport tr = test_cases.get(test);
+   if (tr == null) return false;
+   return tr.getPassed();
+}
+
+
+public boolean getFailed(String test)
+{
+   TestReport tr = test_cases.get(test);
+   if (tr == null) return true;
+   return tr.getFailed();
+}
+
+
+public boolean getError(String test) 
+{
+   TestReport tr = test_cases.get(test);
+   if (tr == null) return true;
+   return tr.getError();
+}
+
+
+public String getErrorMessage(String test) 
+{
+   TestReport tr = test_cases.get(test);
+   if (tr == null) return null;
+   return tr.getErrorMessage();
+}
+
 
 
 /********************************************************************************/
@@ -64,78 +115,44 @@ LimbaSuiteReport(LimbaFinder lf,Map<String,String> idmap)
 /*                                                                              */
 /********************************************************************************/
 
-void addReport(String nm,String cnm,double time,String errmsg,boolean iserr,File jarf) 
+void addReport(String nm,String cnm,double time,String errmsg,boolean iserr) 
 {
    TestReport tr = test_cases.get(nm);
    if (tr == null && nm.startsWith("test") && nm.length() > 4)
       tr = test_cases.get(nm.substring(5));
    if (tr == null && cnm != null)
       tr = test_cases.get(nm + "(" + cnm + ")");
-   if (tr != null) tr.setReport(time,errmsg,iserr,jarf);
-   else if (iserr) {
-      tr = test_cases.get("S6testFinisher");
-      if (tr != null) tr.addError();
-    }
+   if (tr != null) tr.setReport(time,errmsg,iserr);
 }
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Information for a single test                                           */
+/*                                                                              */
+/********************************************************************************/
 
 private static class TestReport {
    
    private boolean test_passed;
-   private boolean is_optional;
    private boolean is_error;
    private String error_message;
    private double test_time;
-   private String user_value;
-   private String user_type;
-   private byte [] jar_file;
-   private int num_error;
    
    TestReport(LimbaTestCase tc) {
-      this(tc.isOptional());
-    }
-   
-   TestReport(boolean opt) {
       test_passed = false;
-      is_optional = opt;
       error_message = null;
       is_error = false;
       test_time = 0;
-      user_value = null;
-      jar_file = null;
-      num_error = 0;
     }
    
    double getTime()			{ return test_time; }
    boolean getPassed()			{ return test_passed; }
-   boolean isOptional() 		{ return is_optional; }
    boolean getFailed()			{ return !test_passed; }
    boolean getError()			{ return !test_passed && is_error; }
    String getErrorMessage()		{ return error_message; }
    
-   String getUserType() 		{ return user_type; }
-   String getUserValue()		{ return user_value; }
-   byte [] getJarFile() 		{ return jar_file; }
-   void addError()			{ ++num_error; }
-   
-   void setTestStatus(LimbaSolutionFlag sts) {
-      switch (sts) {
-         case FAIL :
-            test_passed = false;
-            is_error = true;
-            error_message = "User Decision";
-            break;
-         case PASS :
-            user_value = null;
-            user_type = null;
-            break;
-         default :
-            break;
-       }
-    }
-   
-   void setReport(double time,String errmsg,boolean iserr,File jarf) {
+   void setReport(double time,String errmsg,boolean iserr) {
       test_time = time;
       
       if (errmsg != null && errmsg.startsWith("Throws java.lang.AssertionError: ")) {

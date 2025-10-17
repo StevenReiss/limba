@@ -530,14 +530,14 @@ private class CommandQuery extends CommandBase {
          List<String> jcodes = LimbaMain.getJavaCode(resp);
          if (jcodes != null) {
             for (String jcode : jcodes) {
-               IvyLog.logD("LIMBA","JAVA CODE" + jcode);
-               System.out.println("\n\nJAVA CODE:\n" + jcode + "\n\n");
+               IvyLog.logD("LIMBA","JAVA CODE:\n" + jcode);
+   //          System.out.println("\n\nJAVA CODE:\n" + jcode + "\n\n");
              }
           }
          String jdoc = LimbaMain.getJavaDoc(resp);
          if (jdoc != null) {
-            IvyLog.logD("LIMBA","JAVADOC" + jdoc);
-            System.out.println("\n\nJAVA DOC:\n" + jdoc + "\n\n");
+            IvyLog.logD("LIMBA","JAVADOC:\n" + jdoc);
+   //       System.out.println("\n\nJAVA DOC:\n" + jdoc + "\n\n");
           }
        }
       return;
