@@ -128,6 +128,19 @@ String getPackageName()                 { return null; }
 String getSignatureClassName()          { return null; }
 String getSignatureName()               { return null; }
 
+LimbaTestCase findTestCase(String nm)
+{
+   if (nm == null) return null;
+   
+   for (LimbaTestCase ltc : test_cases) {
+      if (nm.equals(ltc.getName()) ||
+            nm.equals(ltc.getJunitName()) ||
+            nm.equals("test_" + ltc.getName())) {
+         return ltc;
+       }
+    }
+   return null;
+}
 
 
 /********************************************************************************/
@@ -364,9 +377,17 @@ private class TestRunner extends Thread {
       LimbaTester tester = new LimbaTester(LimbaFinder.this,for_solution);
       LimbaSuiteReport rpt = tester.runTester();
       IvyLog.logD("LIMBA","Check test result in " + rpt);
+      if (rpt == null) {
+         for_solution.setTestsPassed(false);
+         // add problem indication here
+         return;
+       }
       // check if tests passed or not, save result for later queries
       if (rpt.allPassed()) {
          for_solution.setTestsPassed(true);
+       }
+      else {
+         for_solution.setTestsPassed(false);
        }
       // add text to the solution indicating what test(s) failed so we can
       // ask the LLM another time.

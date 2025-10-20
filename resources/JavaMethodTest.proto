@@ -8,7 +8,9 @@ $(IMPORTS)
 $(ANNOTATION)
 public class $(CLASS) extends edu.brown.cs.limba.runner.RunnerTestCase {
 
+/*** START OF CODE ***/
 $(CODE)
+/*** END OF CODE ***/
 
 $(TESTS)
 

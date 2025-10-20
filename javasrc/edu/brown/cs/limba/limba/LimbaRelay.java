@@ -27,6 +27,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Date;
+
 
 
 public final class LimbaRelay
@@ -66,7 +68,7 @@ private int     host_port;
 
 private LimbaRelay(String [] args)
 {
-   host_name = "fred4.cs.brown.edu";
+   host_name = "llmserver.cs.brown.edu";
    host_port = 11434;
    
    scanArgs(args);
@@ -133,7 +135,7 @@ private void process()
       try {
          Socket client = server.accept();
          System.err.println("LIMBARELAY: new client connection " +
-               client.getRemoteSocketAddress());
+               client.getRemoteSocketAddress() + " " + (new Date()));
          Socket relay = new Socket(host_name,host_port);
          relay.setSoTimeout(0);
          System.err.println("LIMBARELAY: Connected to relay host " + host_name + 

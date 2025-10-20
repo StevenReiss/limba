@@ -68,6 +68,7 @@ static LimbaTestCase createTestCase(Element xml) throws LimbaException
 private String		test_name;
 private boolean 	is_optional;
 protected boolean	user_input;
+private String          test_description;
 
 
 
@@ -81,6 +82,7 @@ protected LimbaTestCase(Element xml) throws LimbaException
 {
    test_name = IvyXml.getAttrString(xml,"NAME");
    is_optional = IvyXml.getAttrBool(xml,"OPTIONAL",false);
+   test_description = IvyXml.getTextElement(xml,"DESCRIPTION");
    user_input = false;
    
    if (test_name == null) throw new LimbaException("TESTCASE must be named");
@@ -96,6 +98,8 @@ protected LimbaTestCase(Element xml) throws LimbaException
 /********************************************************************************/
 
 String getName() 			{ return test_name; }
+
+String getDescription()                 { return test_description; }
 
 boolean isOptional()			{ return is_optional; }
 

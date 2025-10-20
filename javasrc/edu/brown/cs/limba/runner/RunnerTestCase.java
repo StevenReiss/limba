@@ -529,7 +529,7 @@ public static void limbaAssertNotEquals(String msg,float [][] exp,float [][] act
 private static void limbaFailEquals(String message, Object expected, Object actual)
 {
    String formatted= "";
-   if (message != null) formatted= message+" ";
+   if (message != null) formatted = message + " ";
    fail(formatted+"expected:<"+expected+"> but was:<"+actual+">");
 }
 

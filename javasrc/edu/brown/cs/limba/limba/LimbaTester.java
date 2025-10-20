@@ -24,6 +24,7 @@ package edu.brown.cs.limba.limba;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -126,7 +127,7 @@ private void setupForTesting(Map<String,String> idmap)
    idmap.put("JUNITOUT",JUNIT_OUT);
    idmap.put("TESTCLASS",LIMBA_USER_CLASS);
    idmap.put("IVY",IVY_CLASSPATH); 
-   idmap.put("LIMBACLS",LIMBA_CLASSPATH); 
+   idmap.put("LIMBACLS",LIMBA_CLASSPATH);  
    
    idmap.put("ANTRUN","test");
    idmap.put("MAXTIME","10000L");
@@ -609,6 +610,7 @@ private LimbaSuiteReport runJunitTest(Map<String,String> idmap)
       produceAntFile(idmap);		// should be last
       compileAndRunTestFile(idmap);
       LimbaSuiteReport sr = readTestStatus(idmap);
+      sr.addMessages(for_solution); 
       // test passes -- set final class name
       // should use name in request
 //    if (cn != null) cn.setClassName(idmap.get("PACKAGEDOT") + Limba_TEST_CLASS,clsname);
@@ -647,6 +649,24 @@ private void produceTestFile(Map<String,String> idmap) throws LimbaException
     }
    catch (IOException e) {
       throw new LimbaException("Problem creating test file: " + e);
+    }
+   
+   int slno = -1;
+   try (BufferedReader br = new BufferedReader(new FileReader(f))) {
+      int lct = 1;
+      for ( ; ; ) {
+         String ln = br.readLine();
+         if (ln == null) break;
+         if (ln.equals(CODE_START)) slno = lct;
+         else if (ln.equals(CODE_END) && slno > 0) {
+            for_solution.setLineOffset(slno,lct);
+            break; 
+          }
+         ++lct;
+       }
+    }
+   catch (IOException e) {
+      
     }
 }
 
@@ -734,23 +754,28 @@ private LimbaSuiteReport readTestStatus(Map<String,String> idmap) throws LimbaEx
    
    int tct = 0;
    for (Element te : IvyXml.elementsByTag(e,"testcase")) {
-      boolean iserr = false;
       String cnm = IvyXml.getAttrString(te,"classname");
       String nm = IvyXml.getAttrString(te,"name");
-      String msg = null;
-      double tm = IvyXml.getAttrDouble(te,"time");
-      Element ee = IvyXml.getElementByTag(te,"error");
-      if (ee != null) iserr = true;
-      else ee = IvyXml.getElementByTag(te,"failure");
-      
-      if (ee != null) {
-	 msg = IvyXml.getAttrString(ee,"message");
-	 if (msg == null) msg = IvyXml.getText(ee);
-	 if (msg == null) msg = "UNKNOWN ERROR";
+      LimbaTestCase ltc = limba_finder.findTestCase(nm);
+      if (ltc != null) {
+         sr.addReport(for_solution,ltc,te); 
+       }
+      else {
+         boolean iserr = false;
+         String msg = null;
+         double tm = IvyXml.getAttrDouble(te,"time");
+         Element ee = IvyXml.getElementByTag(te,"error");
+         if (ee != null) iserr = true;
+         else ee = IvyXml.getElementByTag(te,"failure");
+         
+         if (ee != null) {
+            msg = IvyXml.getAttrString(ee,"message");
+            if (msg == null) msg = IvyXml.getText(ee);
+            if (msg == null) msg = "UNKNOWN ERROR";
+          }
+         sr.addReport(nm,cnm,tm,msg,iserr); 
        }
       ++tct;
-      
-      sr.addReport(nm,cnm,tm,msg,iserr); 
     }
    
    if (tct == 0) throw new LimbaException("No test case output found in " + onm);

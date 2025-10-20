@@ -92,7 +92,9 @@ String JUNIT_RUNNER = "junit.textui.TestRunner";
 String JUNIT_OUT = "test.out.xml";
 String LIMBA_TEST_DIR = "limbatest";
 String ANT_COMMAND = "ant";
-      
+String CODE_START = "/*** START OF CODE ***/";
+String CODE_END = "/*** END OF CODE ***/";
+
 
 enum LimbaUserFileType {
    READ,

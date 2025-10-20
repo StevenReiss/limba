@@ -24,6 +24,12 @@ package edu.brown.cs.limba.limba;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.w3c.dom.Element;
+
+import edu.brown.cs.ivy.xml.IvyXml;
 
 class LimbaSuiteReport implements LimbaConstants
 {
@@ -35,9 +41,17 @@ class LimbaSuiteReport implements LimbaConstants
 /*                                                                              */
 /********************************************************************************/
 
+private LimbaFinder limba_finder;
 private Map<String,TestReport> test_cases;
 
+private static final Pattern AT_PATTERN;
 
+static {
+   String pat = "at .*\\." + LIMBA_TEST_CLASS + ".*\\(" + LIMBA_TEST_CLASS + ".java:" +
+        "([0-9]+)\\)";
+   AT_PATTERN = Pattern.compile(pat);
+}
+ 
 /********************************************************************************/
 /*                                                                              */
 /*      Constructors                                                            */
@@ -46,6 +60,7 @@ private Map<String,TestReport> test_cases;
 
 LimbaSuiteReport(LimbaFinder lf,Map<String,String> idmap)
 { 
+   limba_finder = lf;
    test_cases = new HashMap<>();
    for (LimbaTestCase tc : lf.getTestCases()) {
       test_cases.put(tc.getName(),new TestReport(tc));
@@ -68,46 +83,14 @@ boolean allPassed()
 }
 
 
-public double getTime(String test)
+void addMessages(LimbaSolution sol)
 {
-   TestReport tr = test_cases.get(test);
-   if (tr == null) return 0;
-   return tr.getTime();
+   for (LimbaTestCase ltc : limba_finder.getTestCases()) {
+      TestReport tr = test_cases.get(ltc.getName());
+      if (tr.getPassed()) continue;
+      
+    }
 }
-
-
-public boolean getPassed(String test)
-{
-   TestReport tr = test_cases.get(test);
-   if (tr == null) return false;
-   return tr.getPassed();
-}
-
-
-public boolean getFailed(String test)
-{
-   TestReport tr = test_cases.get(test);
-   if (tr == null) return true;
-   return tr.getFailed();
-}
-
-
-public boolean getError(String test) 
-{
-   TestReport tr = test_cases.get(test);
-   if (tr == null) return true;
-   return tr.getError();
-}
-
-
-public String getErrorMessage(String test) 
-{
-   TestReport tr = test_cases.get(test);
-   if (tr == null) return null;
-   return tr.getErrorMessage();
-}
-
-
 
 /********************************************************************************/
 /*                                                                              */
@@ -126,6 +109,50 @@ void addReport(String nm,String cnm,double time,String errmsg,boolean iserr)
 }
 
 
+void addReport(LimbaSolution sol,LimbaTestCase ltc,Element te) 
+{
+   boolean iserr = false;
+   String nm = IvyXml.getAttrString(te,"name");
+   if (nm == null) return;
+   String cnm = IvyXml.getAttrString(te,"classname");
+   String msg = null;
+   double tm = IvyXml.getAttrDouble(te,"time");
+   Element ee = IvyXml.getElementByTag(te,"error");
+   Element fail = IvyXml.getElementByTag(te,"failure");
+   
+   if (ee != null) {
+      iserr = true;
+      int lno = 0;
+      msg = IvyXml.getAttrString(ee,"message");
+      String exc = IvyXml.getAttrString(ee,"type");
+      if (exc != null) {
+         String tb = IvyXml.getText(ee);
+         Matcher m = AT_PATTERN.matcher(tb);
+         while (m.find()) {
+            lno = Integer.parseInt(m.group(1));
+            lno = sol.getSolutionLine(lno);
+            if (lno > 0) break;
+          }
+        String nmsg = "Test " + ltc.getDescription() + 
+                " failed with the exception " + exc;
+        if (lno > 0) nmsg += " at line " + lno;
+        if (msg != null) nmsg += " due to " + msg;
+        msg = nmsg;
+       }
+      else if (msg == null) msg = IvyXml.getText(ee);
+      
+    }
+   else if (fail != null) {
+      msg = IvyXml.getAttrString(fail,"message");
+      if (msg == null) msg = IvyXml.getText(fail);
+      String nmsg = "Test " + ltc.getDescription() + 
+            " produced the wrong result: " + msg;
+      msg = nmsg;
+    }
+   addReport(nm,cnm,tm,msg,iserr);
+}
+
+
 /********************************************************************************/
 /*                                                                              */
 /*      Information for a single test                                           */
@@ -137,24 +164,18 @@ private static class TestReport {
    private boolean test_passed;
    private boolean is_error;
    private String error_message;
-   private double test_time;
    
    TestReport(LimbaTestCase tc) {
       test_passed = false;
       error_message = null;
       is_error = false;
-      test_time = 0;
     }
    
-   double getTime()			{ return test_time; }
    boolean getPassed()			{ return test_passed; }
-   boolean getFailed()			{ return !test_passed; }
    boolean getError()			{ return !test_passed && is_error; }
    String getErrorMessage()		{ return error_message; }
    
    void setReport(double time,String errmsg,boolean iserr) {
-      test_time = time;
-      
       if (errmsg != null && errmsg.startsWith("Throws java.lang.AssertionError: ")) {
          int idx0 = errmsg.indexOf(":");
          errmsg = errmsg.substring(idx0+2);

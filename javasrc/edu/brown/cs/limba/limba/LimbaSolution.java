@@ -61,6 +61,9 @@ private boolean 	use_constructor;
 private Set<String> import_set;
 private Boolean 	tests_passed;
 private List<JcompMessage> compilation_errors;
+private List<String>    fail_messages;
+private int             line_offset;
+private int             end_offset;
 
 
 /********************************************************************************/
@@ -77,6 +80,9 @@ LimbaSolution(LimbaFinder lf,String text) throws LimbaException
    helper_nodes = new ArrayList<>();
    use_constructor = false;
    import_set = new HashSet<>();
+   fail_messages = new ArrayList<>();
+   line_offset = -1;
+   end_offset = -1;
 
    if (text.contains("class")) {
       base_ast = JcompAst.parseSourceFile(text);
@@ -196,6 +202,40 @@ boolean getTestsPassed()
 List<JcompMessage> getCompilationErrors()
 {
    return compilation_errors;
+}
+
+
+void clearFailures()
+{
+   fail_messages.clear();
+}
+
+
+List<String> getFailures()
+{
+   return fail_messages;
+} 
+
+
+void addFailure(String msg) 
+{
+   fail_messages.add(msg);
+}
+
+
+void setLineOffset(int offset,int end)
+{
+   line_offset = offset;
+   end_offset = end;
+}
+
+
+int getSolutionLine(int line)
+{
+   if (line_offset <= 0) return 0;
+   if (line < line_offset) return 0;
+   if (line >= end_offset) return 0;
+   return line - line_offset;
 }
 
 
