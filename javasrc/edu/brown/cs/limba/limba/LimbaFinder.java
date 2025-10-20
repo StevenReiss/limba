@@ -157,6 +157,7 @@ void process(IvyXmlWriter xw) throws Exception
    
    Set<String> undefs = new HashSet<>();
    String addendum = null;
+   String testerrs = null;
    boolean again = false;
    for (int i = 0; i < 10; ++i) {
       StringBuffer pbuf = new StringBuffer();
@@ -173,7 +174,13 @@ void process(IvyXmlWriter xw) throws Exception
                   "please avoid using them this time\n");
           }
        }
-      pbuf.append("\nPlease generate a method with the signature\n");
+      if (testerrs != null) {
+         pbuf.append(testerrs);
+       }
+      if (again) {
+         pbuf.append("Recall the problem you are supposed to solve:\n");
+       }
+      pbuf.append("Please generate a method with the signature\n");
       pbuf.append("'" + find_signature + "'\n");
       pbuf.append("that does the following: \n");
       pbuf.append(find_description);
@@ -200,8 +207,6 @@ void process(IvyXmlWriter xw) throws Exception
       if (addendum != null) { 
          pbuf.append(addendum + ".\n");
        }
-      
-      IvyLog.logD("LIMBA","Find " + pbuf.toString());
       
       String resp = limba_main.askOllama(pbuf.toString(),use_context,history);
       List<String> code = LimbaMain.getJavaCode(resp);
@@ -232,6 +237,7 @@ void process(IvyXmlWriter xw) throws Exception
                   String undef = err.substring(idx+1).trim();
                   if (undefs.add(undef)) {
                      retry = true;
+                     again = true;
                    }
                   else if (priorundef.contains(undef) && i < 4) {
                      again = true;
@@ -249,19 +255,8 @@ void process(IvyXmlWriter xw) throws Exception
        }
       if (retry) continue;
       
-      for (Iterator<LimbaSolution> it = tocheck.iterator(); it.hasNext(); ) {
-         LimbaSolution sol = it.next();
-         sol.getImportTypes().addAll(allimports);
-         if (test_cases.isEmpty()) {
-            sol.setTestsPassed(true);
-            rslt.add(sol);
-            it.remove();
-          }
-         else {
-            TestRunner tr = new TestRunner(sol);
-            tr.start();
-          } 
-       }
+      runTests(tocheck,allimports,rslt);
+      
       for (LimbaSolution sol : tocheck) {
          sol.waitForTesting();
        }
@@ -275,7 +270,10 @@ void process(IvyXmlWriter xw) throws Exception
        }
       
       if (rslt.isEmpty()) {
-         IvyLog.logD("No solution passed the tests -- need to retry with more information");
+         IvyLog.logD("None of these solution passed the tests -- need to retry with more information");
+         testerrs = getTestCorrections(tocheck);
+         retry = true;
+         continue;
        }
       
       xw.begin("SOLUTIONS");
@@ -301,10 +299,12 @@ void process(IvyXmlWriter xw) throws Exception
 private List<LimbaSolution> getSolutions(List<String> code)
 {
    List<LimbaSolution> tocheck = new ArrayList<>();
+   int ct = 1;
    for (String s : code) {
+      String name = "Solution " + ct++;
       try {
          // pass user context to solution so it can be used to resolve things
-         LimbaSolution sol = new LimbaSolution(this,s); 
+         LimbaSolution sol = new LimbaSolution(this,name,s); 
          if (sol.getAstNode() == null) {
             IvyLog.logD("LIMBA","Invalid solution -- target not found");
             // invalid solution 
@@ -321,6 +321,39 @@ private List<LimbaSolution> getSolutions(List<String> code)
 }
 
 
+
+private void runTests(List<LimbaSolution> tocheck,Set<String> allimports,List<LimbaSolution> pass)
+{
+   for (Iterator<LimbaSolution> it = tocheck.iterator(); it.hasNext(); ) {
+      LimbaSolution sol = it.next();
+      sol.getImportTypes().addAll(allimports);
+      if (test_cases.isEmpty()) {
+         sol.setTestsPassed(true);
+         pass.add(sol);
+         it.remove();
+       }
+      else {
+         TestRunner tr = new TestRunner(sol);
+         tr.start();
+       } 
+    }
+}
+
+
+
+private String getTestCorrections(List<LimbaSolution> tocheck)
+{
+   StringBuffer ebuf = new StringBuffer();
+   ebuf.append("These solutions do not work.  In particular: ");
+   for (LimbaSolution sol : tocheck) {
+      ebuf.append("For solution " + sol.getName() + ":\n");
+      for (String msg : sol.getFailures()) {
+         ebuf.append("*  " + msg + ";\n");
+       }
+    }
+   ebuf.append("Please try again taking this information into account.\n");
+   return ebuf.toString();
+}
 
 
 /********************************************************************************/

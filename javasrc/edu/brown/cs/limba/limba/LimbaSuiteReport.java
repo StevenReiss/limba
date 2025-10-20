@@ -162,18 +162,12 @@ void addReport(LimbaSolution sol,LimbaTestCase ltc,Element te)
 private static class TestReport {
    
    private boolean test_passed;
-   private boolean is_error;
-   private String error_message;
    
    TestReport(LimbaTestCase tc) {
       test_passed = false;
-      error_message = null;
-      is_error = false;
     }
    
    boolean getPassed()			{ return test_passed; }
-   boolean getError()			{ return !test_passed && is_error; }
-   String getErrorMessage()		{ return error_message; }
    
    void setReport(double time,String errmsg,boolean iserr) {
       if (errmsg != null && errmsg.startsWith("Throws java.lang.AssertionError: ")) {
@@ -184,8 +178,6 @@ private static class TestReport {
       if (errmsg == null) test_passed = true;
       else {
          test_passed = false;
-         error_message = errmsg;
-         is_error = iserr;
        }
     }
    

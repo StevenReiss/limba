@@ -64,6 +64,7 @@ private List<JcompMessage> compilation_errors;
 private List<String>    fail_messages;
 private int             line_offset;
 private int             end_offset;
+private String          solution_name;
 
 
 /********************************************************************************/
@@ -72,7 +73,7 @@ private int             end_offset;
 /*										*/
 /********************************************************************************/
 
-LimbaSolution(LimbaFinder lf,String text) throws LimbaException
+LimbaSolution(LimbaFinder lf,String name,String text) throws LimbaException
 {
    limba_finder = lf;
    tests_passed = null;
@@ -83,6 +84,7 @@ LimbaSolution(LimbaFinder lf,String text) throws LimbaException
    fail_messages = new ArrayList<>();
    line_offset = -1;
    end_offset = -1;
+   solution_name = name;
 
    if (text.contains("class")) {
       base_ast = JcompAst.parseSourceFile(text);
@@ -236,6 +238,12 @@ int getSolutionLine(int line)
    if (line < line_offset) return 0;
    if (line >= end_offset) return 0;
    return line - line_offset;
+}
+
+
+String getName() 
+{
+   return solution_name;
 }
 
 
