@@ -307,10 +307,10 @@ private void setupCompilationUnit(CompilationUnit cu)
 /*										*/
 /********************************************************************************/
 
-void output(IvyXmlWriter xw,String nm)
+void output(IvyXmlWriter xw)
 {
    xw.begin("SOLUTION"); 
-   xw.field("NAME",nm);
+   xw.field("NAME",getName());
    String code = getText();
    if (code.contains("]]>")) xw.textElement("CODE",code);
    else xw.cdataElement("CODE",code);

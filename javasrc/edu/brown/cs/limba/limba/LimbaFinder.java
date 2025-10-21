@@ -167,12 +167,10 @@ void process(IvyXmlWriter xw) throws Exception
          for (String s : undefs) {
             pbuf.append(" ");
             pbuf.append(s);
+            pbuf.append(",");
           }
          pbuf.append("\n");
-         if (again) {
-            pbuf.append("Your last solution included these undefined symbols; " +
-                  "please avoid using them this time\n");
-          }
+         pbuf.append("Do not use any of these in your solution.\n");
        }
       if (testerrs != null) {
          pbuf.append(testerrs);
@@ -224,7 +222,6 @@ void process(IvyXmlWriter xw) throws Exception
        }
       
       boolean retry = false;
-      again = false;
       Set<String> priorundef = new HashSet<>(undefs);
       for (LimbaSolution sol : tocheck) {
          List<JcompMessage> errs = sol.getCompilationErrors(); 
@@ -237,10 +234,8 @@ void process(IvyXmlWriter xw) throws Exception
                   String undef = err.substring(idx+1).trim();
                   if (undefs.add(undef)) {
                      retry = true;
-                     again = true;
                    }
                   else if (priorundef.contains(undef) && i < 4) {
-                     again = true;
                      retry = true;
                    }
                 }
@@ -253,7 +248,10 @@ void process(IvyXmlWriter xw) throws Exception
              }
           }
        }
-      if (retry) continue;
+      if (retry){
+         again = true;
+         continue;
+       }
       
       runTests(tocheck,allimports,rslt);
       
@@ -272,17 +270,15 @@ void process(IvyXmlWriter xw) throws Exception
       if (rslt.isEmpty()) {
          IvyLog.logD("None of these solution passed the tests -- need to retry with more information");
          testerrs = getTestCorrections(tocheck);
-         retry = true;
+         again = true;
          continue;
        }
       
       xw.begin("SOLUTIONS");
       xw.field("COUNT",rslt.size());
       
-      int ct = 0;
       for (LimbaSolution sol : rslt) {
-         String nm = "SOLUTION_" + (++ct);
-         sol.output(xw,nm);  
+         sol.output(xw);  
        }
       
       xw.end("SOLUTIONS");
@@ -344,13 +340,18 @@ private void runTests(List<LimbaSolution> tocheck,Set<String> allimports,List<Li
 private String getTestCorrections(List<LimbaSolution> tocheck)
 {
    StringBuffer ebuf = new StringBuffer();
-   ebuf.append("These solutions do not work.  In particular: ");
    for (LimbaSolution sol : tocheck) {
+      List<String> fails = sol.getFailures();
+      if (fails == null || fails.isEmpty()) continue;
+      if (ebuf.isEmpty()) {
+         ebuf.append("These solutions do not work.  In particular: ");
+       }
       ebuf.append("For solution " + sol.getName() + ":\n");
       for (String msg : sol.getFailures()) {
          ebuf.append("*  " + msg + ";\n");
        }
     }
+   if (ebuf.isEmpty()) return null;
    ebuf.append("Please try again taking this information into account.\n");
    return ebuf.toString();
 }
@@ -409,12 +410,15 @@ private class TestRunner extends Thread {
    @Override public void run() {
       LimbaTester tester = new LimbaTester(LimbaFinder.this,for_solution);
       LimbaSuiteReport rpt = tester.runTester();
-      IvyLog.logD("LIMBA","Check test result in " + rpt);
       if (rpt == null) {
+         IvyLog.logD("LIMBA","No suite report for " + for_solution.getName());
          for_solution.setTestsPassed(false);
          // add problem indication here
          return;
        }
+      IvyLog.logD("LIMBA","Check test result for " + for_solution.getName() +
+            " in " + rpt.getTestDirectory()); 
+      
       // check if tests passed or not, save result for later queries
       if (rpt.allPassed()) {
          for_solution.setTestsPassed(true);

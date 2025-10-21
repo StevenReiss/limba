@@ -1,17 +1,18 @@
 <LIMBA DO='PING' />
 <LIMBA DO='LIST' />
 
-<LIMBA DO='FIND' RID='LIMBA_75221' TYPE='METHOD'>
+<LIMBA DO='FIND' RID='LIMBA_994942' TYPE='METHOD'>
 <SEARCH LANGUAGE='JAVA' NAME='numericConstantParser' PREFIX='edu.brown.cs.bubbles.tutorial.romp.RompTest' USECONTEXT='false' WHAT='METHOD'>
-  <SIGNATURE>String numericConstantParser(java.io.StreamTokenizer)</SIGNATURE>
-  <DESCRIPTION><![CDATA[This is a parser for constant numeric expressions.  A constant numeric expression is a valid expression
-containing onlyi numbers, known Java constants such as Math.PI, standard mathmatical operators and
-optional parenthesis. Spaces are optional.  If the expression is valid it should return a string form of that expression
-without any spaces.  If the expression is invalid, it should return null. The end of the expression is
-either the end of the input or a comma.
-]]></DESCRIPTION>
+  <SIGNATURE>String numericConstantParser(StreamTokenizer)</SIGNATURE>
+  <DESCRIPTION><![CDATA[This is a parser for constant numeric expressions.  A constant numeric expression is a valid expression containing
+only numbers, know Java constants such as Math.PI, standard mathematical operators, and optional parenthesis.
+If the expression is valid, it should return a string form of the expression without any spaces.  If the expression is
+invalid or incomplete, it should return null.  Be sure to check for expression validity.
+The end of the expression can be either the end of the input or a comma.
+The input is a java.io.StreamTokenizer set just before the first token of the expression.]]></DESCRIPTION>
   <TESTS>
     <TESTCASE NAME='TEST_1' TYPE='CALLS'>
+      <DESCRIPTION>Calling numericConstantParser with (5.3) should yield 5.3</DESCRIPTION>
       <CALL METHOD='numericConstantParser' OP='EQL'>
 	<INPUT>
 	  <VALUE><![CDATA[new java.io.StreamTokenizer(new java.io.StringReader("5.3"))]]></VALUE>
@@ -22,16 +23,18 @@ either the end of the input or a comma.
       </CALL>
     </TESTCASE>
     <TESTCASE NAME='TEST_2' TYPE='CALLS'>
+      <DESCRIPTION>Calling numericConstantParser with (Math.PI * (3+2.2)) should yield Math.PI*(3+2.2)</DESCRIPTION>
       <CALL METHOD='numericConstantParser' OP='EQL'>
 	<INPUT>
 	  <VALUE><![CDATA[new java.io.StreamTokenizer(new java.io.StringReader("Math.PI * (3+2.2)"))]]></VALUE>
 	</INPUT>
 	<OUTPUT>
-	  <VALUE><![CDATA["Math.PI*(3+2.2)"]]></VALUE>
+	  <VALUE><![CDATA["Math.PI *(3+2.2)"]]></VALUE>
 	</OUTPUT>
       </CALL>
     </TESTCASE>
     <TESTCASE NAME='TEST_3' TYPE='CALLS'>
+      <DESCRIPTION>Calling numericConstantParser with (abc) should yield null</DESCRIPTION>
       <CALL METHOD='numericConstantParser' OP='EQL'>
 	<INPUT>
 	  <VALUE><![CDATA[new java.io.StreamTokenizer(new java.io.StringReader("abc"))]]></VALUE>
@@ -42,6 +45,7 @@ either the end of the input or a comma.
       </CALL>
     </TESTCASE>
     <TESTCASE NAME='TEST_4' TYPE='CALLS'>
+      <DESCRIPTION>Calling numericConstantParser with (3+) should yield null</DESCRIPTION>
       <CALL METHOD='numericConstantParser' OP='EQL'>
 	<INPUT>
 	  <VALUE><![CDATA[new java.io.StreamTokenizer(new java.io.StringReader("3+"))]]></VALUE>
@@ -52,6 +56,7 @@ either the end of the input or a comma.
       </CALL>
     </TESTCASE>
     <TESTCASE NAME='TEST_5' TYPE='CALLS'>
+      <DESCRIPTION>Calling numericConstantParser with ((1.2) should yield null</DESCRIPTION>
       <CALL METHOD='numericConstantParser' OP='EQL'>
 	<INPUT>
 	  <VALUE><![CDATA[new java.io.StreamTokenizer(new java.io.StringReader("(1.2"))]]></VALUE>
@@ -73,11 +78,45 @@ either the end of the input or a comma.
 </SEARCH>
 </LIMBA>
 
-<LIMBA DO='FINDJDOC' TYPE='METHOD' USECONTEXT='true'>
+
+<LIMBA DO='FINDJDOC' RID='LIMBA_650291' TYPE='METHOD' USECONTEXT='true'>
 <JAVADOC>
-  <PRIOR><![CDATA[/** Calculate the force of gravity on the pendulum using the formula from the assignment.
-@return a Force object
-*/
+  <CODE><![CDATA[public static Force calculateForce(Pendulum p)
+{
+   // Calculate magnitude
+   double magnitude = -Pendulum.getMass() * g * p.getAngle().sine();
+
+   // Error checking - remove me later
+   if (Double.isNaN(magnitude)) {
+      System.err.println("Got NaN from mass: " + Pendulum.getMass() + ", g: " + g
+	       + ", angle: " + p.getAngle() + ", sine(angle): " + p.getAngle().sine());
+      System.exit(-1);
+   }
+
+   // Calculate angles
+   Position pos = p.getPosition();
+   // use a pvec to get the angles
+   PhysicsVector vec = new PhysicsVector(pos.getX(),pos.getY(),pos.getZ());
+   Force gForce = new Force(magnitude,vec.getTheta(),vec.getPhi());
+   /*
+   System.err.println("  Gravity: " );
+   System.err.println(magnitude + ", " + vec.getTheta() + ", " + vec.getPhi());
+   System.err.println(gForce);
+   */
+   return gForce;
+}]]></CODE>
+</JAVADOC>
+</LIMBA>
+
+
+<LIMBA DO='FINDJDOC' RID='LIMBA_650291' TYPE='METHOD' USECONTEXT='true'>
+<JAVADOC>
+  <PRIOR><![CDATA[/**
+ * Calculates the gravitational force acting on a pendulum.
+ *
+ * @param p the pendulum object
+ * @return a Force object representing the gravitational force
+ */
 ]]></PRIOR>
   <CODE><![CDATA[public static Force calculateForce(Pendulum p)
 {
@@ -94,7 +133,7 @@ either the end of the input or a comma.
    // Calculate angles
    Position pos = p.getPosition();
    // use a pvec to get the angles
-   PhysicsVector vec = new PhysicsVector(pos.getX(),pos.getY(),pos.getZ());						     <
+   PhysicsVector vec = new PhysicsVector(pos.getX(),pos.getY(),pos.getZ());
    Force gForce = new Force(magnitude,vec.getTheta(),vec.getPhi());
    /*
    System.err.println("  Gravity: " );
@@ -106,47 +145,53 @@ either the end of the input or a comma.
 </JAVADOC>
 </LIMBA>
 
-<LIMBA DO='FIND' TYPE='METHOD'>
-<SEARCH WHAT='METHOD' NAME='edu.brown.cs.bubbles.tutorial.romp.Angle.reduce' USECONTEXT='false'
-   FILE='/home/spr/Eclipse/tutorial/romp/src/edu/brown/cs/bubbles/tutorial/romp/Angle.java' >
+
+<LIMBA DO='FIND' RID='LIMBA_924532' TYPE='METHOD'>
+<SEARCH LANGUAGE='JAVA' NAME='reduce' PREFIX='edu.brown.cs.bubbles.tutorial.romp.Angle' USECONTEXT='false' WHAT='METHOD'>
   <SIGNATURE>static double reduce(double)</SIGNATURE>
-  <DESCRIPTION><![CDATA[Reduce a negative angle or an angle greater than 2PI
-to something between 0 and 2PI. ]]></DESCRIPTION>
+  <DESCRIPTION><![CDATA[Reduce a negative angle or an angle greater than 2*PI
+to something between 0 and 2P]]></DESCRIPTION>
   <TESTS>
     <TESTCASE NAME='TEST_1' TYPE='CALLS'>
+      <DESCRIPTION>Calling reduce with (edu.brown.cs.ivy.swing.SwingTextField[,4,0,236x26,layout=javax.swing.plaf.basic.BasicTextUI$UpdateHandler,alignmentX=0.0,alignmentY=0.0,border=javax.swing.plaf.BorderUIResource$CompoundBorderUIResource@4ea50de8,flags=296,maximumSize=,minimumSize=,preferredSize=,caretColor=sun.swing.PrintColorUIResource[r=51,g=51,b=51],disabledTextColor=javax.swing.plaf.ColorUIResource[r=184,g=207,b=229],editable=true,margin=javax.swing.plaf.InsetsUIResource[top=0,left=0,bottom=0,right=0],selectedTextColor=sun.swing.PrintColorUIResource[r=51,g=51,b=51],selectionColor=javax.swing.plaf.ColorUIResource[r=184,g=207,b=229],columns=12,columnWidth=11,command=,horizontalAlignment=LEADING])  should yield edu.brown.cs.ivy.swing.SwingTextField[,425,4,236x26,layout=javax.swing.plaf.basic.BasicTextUI$UpdateHandler,alignmentX=0.0,alignmentY=0.0,border=javax.swing.plaf.BorderUIResource$CompoundBorderUIResource@4ea50de8,flags=296,maximumSize=,minimumSize=,preferredSize=,caretColor=sun.swing.PrintColorUIResource[r=51,g=51,b=51],disabledTextColor=javax.swing.plaf.ColorUIResource[r=184,g=207,b=229],editable=true,margin=javax.swing.plaf.InsetsUIResource[top=0,left=0,bottom=0,right=0],selectedTextColor=sun.swing.PrintColorUIResource[r=51,g=51,b=51],selectionColor=javax.swing.plaf.ColorUIResource[r=184,g=207,b=229],columns=12,columnWidth=11,command=,horizontalAlignment=LEADING]</DESCRIPTION>
       <CALL METHOD='reduce' OP='EQL'>
 	<INPUT>
-	  <VALUE><![CDATA[3]]></VALUE>
+	  <VALUE><![CDATA[3.0]]></VALUE>
 	</INPUT>
 	<OUTPUT>
-	  <VALUE><![CDATA[3]]></VALUE>
+	  <VALUE><![CDATA[3.0]]></VALUE>
 	</OUTPUT>
       </CALL>
     </TESTCASE>
     <TESTCASE NAME='TEST_2' TYPE='CALLS'>
+      <DESCRIPTION>Calling reduce with (edu.brown.cs.ivy.swing.SwingTextField[,4,0,236x26,layout=javax.swing.plaf.basic.BasicTextUI$UpdateHandler,alignmentX=0.0,alignmentY=0.0,border=javax.swing.plaf.BorderUIResource$CompoundBorderUIResource@4ea50de8,flags=296,maximumSize=,minimumSize=,preferredSize=,caretColor=sun.swing.PrintColorUIResource[r=51,g=51,b=51],disabledTextColor=javax.swing.plaf.ColorUIResource[r=184,g=207,b=229],editable=true,margin=javax.swing.plaf.InsetsUIResource[top=0,left=0,bottom=0,right=0],selectedTextColor=sun.swing.PrintColorUIResource[r=51,g=51,b=51],selectionColor=javax.swing.plaf.ColorUIResource[r=184,g=207,b=229],columns=12,columnWidth=11,command=,horizontalAlignment=LEADING])  should not yield edu.brown.cs.ivy.swing.SwingTextField[,425,34,236x26,layout=javax.swing.plaf.basic.BasicTextUI$UpdateHandler,alignmentX=0.0,alignmentY=0.0,border=javax.swing.plaf.BorderUIResource$CompoundBorderUIResource@4ea50de8,flags=296,maximumSize=,minimumSize=,preferredSize=,caretColor=sun.swing.PrintColorUIResource[r=51,g=51,b=51],disabledTextColor=javax.swing.plaf.ColorUIResource[r=184,g=207,b=229],editable=true,margin=javax.swing.plaf.InsetsUIResource[top=0,left=0,bottom=0,right=0],selectedTextColor=sun.swing.PrintColorUIResource[r=51,g=51,b=51],selectionColor=javax.swing.plaf.ColorUIResource[r=184,g=207,b=229],columns=12,columnWidth=11,command=,horizontalAlignment=LEADING]</DESCRIPTION>
       <CALL METHOD='reduce' OP='NEQ'>
 	<INPUT>
-	  <VALUE><![CDATA[9]]></VALUE>
+	  <VALUE><![CDATA[9.0]]></VALUE>
 	</INPUT>
 	<OUTPUT>
-	  <VALUE><![CDATA[9]]></VALUE>
+	  <VALUE><![CDATA[9.0]]></VALUE>
 	</OUTPUT>
       </CALL>
     </TESTCASE>
     <TESTCASE NAME='TEST_3' TYPE='CALLS'>
+      <DESCRIPTION>Calling reduce with (edu.brown.cs.ivy.swing.SwingTextField[,4,0,236x26,layout=javax.swing.plaf.basic.BasicTextUI$UpdateHandler,alignmentX=0.0,alignmentY=0.0,border=javax.swing.plaf.BorderUIResource$CompoundBorderUIResource@4ea50de8,flags=296,maximumSize=,minimumSize=,preferredSize=,caretColor=sun.swing.PrintColorUIResource[r=51,g=51,b=51],disabledTextColor=javax.swing.plaf.ColorUIResource[r=184,g=207,b=229],editable=true,margin=javax.swing.plaf.InsetsUIResource[top=0,left=0,bottom=0,right=0],selectedTextColor=sun.swing.PrintColorUIResource[r=51,g=51,b=51],selectionColor=javax.swing.plaf.ColorUIResource[r=184,g=207,b=229],columns=12,columnWidth=11,command=,horizontalAlignment=LEADING])  should not yield edu.brown.cs.ivy.swing.SwingTextField[,425,64,236x26,layout=javax.swing.plaf.basic.BasicTextUI$UpdateHandler,alignmentX=0.0,alignmentY=0.0,border=javax.swing.plaf.BorderUIResource$CompoundBorderUIResource@4ea50de8,flags=296,maximumSize=,minimumSize=,preferredSize=,caretColor=sun.swing.PrintColorUIResource[r=51,g=51,b=51],disabledTextColor=javax.swing.plaf.ColorUIResource[r=184,g=207,b=229],editable=true,margin=javax.swing.plaf.InsetsUIResource[top=0,left=0,bottom=0,right=0],selectedTextColor=sun.swing.PrintColorUIResource[r=51,g=51,b=51],selectionColor=javax.swing.plaf.ColorUIResource[r=184,g=207,b=229],columns=12,columnWidth=11,command=,horizontalAlignment=LEADING]</DESCRIPTION>
       <CALL METHOD='reduce' OP='NEQ'>
 	<INPUT>
-	  <VALUE><![CDATA[-1]]></VALUE>
+	  <VALUE><![CDATA[-1.0]]></VALUE>
 	</INPUT>
 	<OUTPUT>
-	  <VALUE><![CDATA[-1]]></VALUE>
+	  <VALUE><![CDATA[-1.0]]></VALUE>
 	</OUTPUT>
       </CALL>
     </TESTCASE>
   </TESTS>
+  <CONTEXT CLASS='Angle' LANGUAGE='JAVA' PACKAGE='edu.brown.cs.bubbles.tutorial.romp' SEPARATOR='/' USEPATH='true'>
+    <SOURCE NAME='/home/spr/Eclipse/tutorial/romp/src/edu/brown/cs/bubbles/tutorial/romp/Angle.java' />
+    <CLASSPATH>/home/spr/Eclipse/tutorial/romp/bin</CLASSPATH>
+  </CONTEXT>
 </SEARCH>
 </LIMBA>
-
 
 <LIMBA DO='FIND' TYPE='CLASS'>
 <SEARCH WHAT='CLASS' NAME='edu.brown.cs.limba.LimbaMain.IncludeReader' USECONTEXT='false'

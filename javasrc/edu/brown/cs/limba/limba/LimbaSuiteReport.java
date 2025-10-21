@@ -43,6 +43,7 @@ class LimbaSuiteReport implements LimbaConstants
 
 private LimbaFinder limba_finder;
 private Map<String,TestReport> test_cases;
+private String test_directory;
 
 private static final Pattern AT_PATTERN;
 
@@ -61,6 +62,7 @@ static {
 LimbaSuiteReport(LimbaFinder lf,Map<String,String> idmap)
 { 
    limba_finder = lf;
+   test_directory = idmap.get("DIRECTORY");
    test_cases = new HashMap<>();
    for (LimbaTestCase tc : lf.getTestCases()) {
       test_cases.put(tc.getName(),new TestReport(tc));
@@ -91,6 +93,13 @@ void addMessages(LimbaSolution sol)
       
     }
 }
+
+
+String getTestDirectory()
+{
+   return test_directory;
+}
+
 
 /********************************************************************************/
 /*                                                                              */
@@ -149,6 +158,7 @@ void addReport(LimbaSolution sol,LimbaTestCase ltc,Element te)
             " produced the wrong result: " + msg;
       msg = nmsg;
     }
+   if (msg != null) sol.addFailure(msg);
    addReport(nm,cnm,tm,msg,iserr);
 }
 

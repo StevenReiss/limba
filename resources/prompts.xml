@@ -16,7 +16,9 @@
      You are an expert Java programmer.  Return only the resultant code. $STYLE $CONTEXT
   </PROMPT>
   <PROMPT COMMAND='FIND'>
-     You are an expert Java programmer.  Return only the resultant code. $STYLE $CONTEXT
+     You are an expert Java programmer with a strong knowledge of the Java libraries and
+     other libraries that might be used in a project.
+     Return only the resultant code. $STYLE $CONTEXT
   </PROMPT>
   <PROMPT COMMAND='FINDJDOC'>
      You are an expert Java programmer.  Return only the JavaDoc, not the code.

@@ -796,6 +796,7 @@ private boolean startOllama(String hostname,int port,String usehost)
          cmd += " " + host;
        }
       IvyExec exec = new IvyExec(cmd,IvyExec.IGNORE_OUTPUT);
+      IvyLog.logD("LIMBA","Running setup commands: " + exec.getCommand());
       exec.waitFor();
     }
    catch (IOException e) {
@@ -805,13 +806,15 @@ private boolean startOllama(String hostname,int port,String usehost)
    IvyLog.logD("LIMBA","Starting OLLAMA at " + host);
    try {
       ollama_api = new OllamaAPI(host);
-      ollama_api.setRequestTimeoutSeconds(600L);
-      boolean ping = ollama_api.ping();
-      if (ping) {
-         IvyLog.logD("LIMBA","OLLAMA started successfully on " + host);
-               
-         return true;
+      ollama_api.setRequestTimeoutSeconds(900L);
+      for (int i = 0; i < 5; ++i) {
+         boolean ping = ollama_api.ping();
+         if (ping) {
+            IvyLog.logD("LIMBA","OLLAMA started successfully on " + host);
+            return true;
+          }
        }
+      IvyLog.logD("LIMBA","Pings failed to talk to ollama api");
     }
    catch (Throwable t) {
       IvyLog.logI("LIMBA","Problem with ollama on " + host + ": " + t);
