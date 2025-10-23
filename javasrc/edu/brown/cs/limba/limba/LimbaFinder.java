@@ -197,7 +197,7 @@ void process(IvyXmlWriter xw) throws Exception
       pbuf.append("that does the following: \n");
       pbuf.append(find_description);
       pbuf.append("\n");
-      pbuf.append("Generate 3 alternative versions of the code.\n");
+      pbuf.append("Generate 3 separate and complete alternative versions of the code.\n");
       pbuf.append("Include explicit import statements in the code as needed.\n");
       pbuf.append("Include any auxilliary code that is needed.\n");
       pbuf.append("Be sure to handle exceptions correctly. Avoid unreachable statements.\n");

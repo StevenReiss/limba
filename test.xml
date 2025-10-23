@@ -35,7 +35,7 @@ that is, nextToken will need to be called to get the first token.]]></DESCRIPTIO
 	  <VALUE><![CDATA[new java.io.StreamTokenizer(new java.io.StringReader("Math.PI * (3+2.2)"))]]></VALUE>
 	</INPUT>
 	<OUTPUT>
-	  <VALUE><![CDATA["Math.PI *(3+2.2)"]]></VALUE>
+	  <VALUE><![CDATA["Math.PI*(3+2.2)"]]></VALUE>
 	</OUTPUT>
       </CALL>
     </TESTCASE>
