@@ -118,11 +118,11 @@ void addReport(String nm,String cnm,double time,String errmsg,boolean iserr)
 }
 
 
-void addReport(LimbaSolution sol,LimbaTestCase ltc,Element te) 
+boolean addReport(LimbaSolution sol,LimbaTestCase ltc,Element te) 
 {
    boolean iserr = false;
    String nm = IvyXml.getAttrString(te,"name");
-   if (nm == null) return;
+   if (nm == null) return false;
    String cnm = IvyXml.getAttrString(te,"classname");
    String msg = null;
    double tm = IvyXml.getAttrDouble(te,"time");
@@ -159,7 +159,10 @@ void addReport(LimbaSolution sol,LimbaTestCase ltc,Element te)
       msg = nmsg;
     }
    if (msg != null) sol.addFailure(msg);
+   
    addReport(nm,cnm,tm,msg,iserr);
+   
+   return msg == null;
 }
 
 

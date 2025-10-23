@@ -137,15 +137,16 @@ private void process()
          System.err.println("LIMBARELAY: new client connection " +
                client.getRemoteSocketAddress() + " " + (new Date()));
          Socket relay = new Socket(host_name,host_port);
-         relay.setSoTimeout(0);
+         relay.setSoTimeout(1000*60*60*2);
          System.err.println("LIMBARELAY: Connected to relay host " + host_name + 
                " " + host_port);
          InputStream clientin = client.getInputStream();
          OutputStream clientout = client.getOutputStream();
          InputStream relayin = relay.getInputStream();
          OutputStream relayout = relay.getOutputStream();
-         RelayThread rt1 = new RelayThread(clientin,relayout);
-         RelayThread rt2 = new RelayThread(relayin,clientout);
+         String nm = client.getRemoteSocketAddress().toString();
+         RelayThread rt1 = new RelayThread(nm + "_IN",clientin,relayout);
+         RelayThread rt2 = new RelayThread(nm + "_OUT",relayin,clientout);
          rt1.start();
          rt2.start();
        }
@@ -158,7 +159,7 @@ private void process()
 
 
 
-/********************************************************************************/
+ /********************************************************************************/
 /*                                                                              */
 /*      Socket Relay                                                            */
 /*                                                                              */
@@ -169,7 +170,8 @@ private static class RelayThread extends Thread {
    private InputStream in_stream;
    private OutputStream out_stream;
    
-   RelayThread(InputStream ins,OutputStream ots) {
+   RelayThread(String nm,InputStream ins,OutputStream ots) {
+      super("RELAY_THREAD_" + nm);   
       in_stream = ins;
       out_stream = ots;
     }

@@ -752,33 +752,34 @@ private LimbaSuiteReport readTestStatus(Map<String,String> idmap) throws LimbaEx
    Element e = IvyXml.loadXmlFromFile(onm);
    if (e == null) throw new LimbaException("No junit output found in " + onm);
    
+   int tct0 = limba_finder.getTestCases().size();
+   double div = (tct0+1)*(tct0)/2;              // total possible score
+   
    int tct = 0;
+   double score = 0;
+   double sval = tct0;
    for (Element te : IvyXml.elementsByTag(e,"testcase")) {
-      String cnm = IvyXml.getAttrString(te,"classname");
       String nm = IvyXml.getAttrString(te,"name");
       LimbaTestCase ltc = limba_finder.findTestCase(nm);
       if (ltc != null) {
-         sr.addReport(for_solution,ltc,te); 
+         if (sr.addReport(for_solution,ltc,te)) { 
+            score += sval / div * 10;
+          }
        }
       else {
-         boolean iserr = false;
-         String msg = null;
-         double tm = IvyXml.getAttrDouble(te,"time");
-         Element ee = IvyXml.getElementByTag(te,"error");
-         if (ee != null) iserr = true;
-         else ee = IvyXml.getElementByTag(te,"failure");
-         
-         if (ee != null) {
-            msg = IvyXml.getAttrString(ee,"message");
-            if (msg == null) msg = IvyXml.getText(ee);
-            if (msg == null) msg = "UNKNOWN ERROR";
-          }
-         sr.addReport(nm,cnm,tm,msg,iserr); 
+         IvyLog.logE("LIMBA","Can't find test case " + nm + " for report");
        }
+      sval -= 1;
       ++tct;
     }
+   for_solution.setScore(score);
    
-   if (tct == 0) throw new LimbaException("No test case output found in " + onm);
+   if (tct == 0) {
+      throw new LimbaException("No test case output found in " + onm);
+    }
+   if (tct != tct0) {
+      IvyLog.logE("LIMBA","Wrong number of test cases found");
+    }
    
    return sr;
 }

@@ -103,6 +103,14 @@ private JcompControl jcomp_main;
 private LimbaMsg msg_server;
 private String user_style;
 private String user_context;
+private String inited_model;
+
+private static final String SPLIT_PATTERN;
+
+static {
+   String split = "^\\s*//\\s*Version\\s+\\d+$";
+   SPLIT_PATTERN = split;
+}
 
 
 
@@ -142,6 +150,7 @@ private LimbaMain(String [] args)
    user_style = "";
    user_context = "";
    ollama_api = null;
+   inited_model = null;
    
    scanArgs(args);
 }
@@ -359,6 +368,7 @@ private void process()
          if (fg) {
             ollama_host = alt_host;
             ollama_port = alt_port;
+            ollama_usehost = alt_usehost;
           }
        }
     }
@@ -663,6 +673,9 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history) throws Exception
    if (user_context != null) {
       cmd = cmd.replace("$CONTEXT",user_context);
     }
+   if (getModel() == null) return null;
+   
+   initializeModel();
    
    IvyLog.logD("LIMBA","Query " + usectx + " " + getModel() + " " +
          rag_model + ":\n" + cmd);
@@ -748,12 +761,21 @@ static List<String> getJavaCode(String resp)
        }
       else {
          if (type.isEmpty() || type.equals("java")) {
-            rslt.add(resp.substring(idx1,idx2));
+            extractFragments(resp.substring(idx1,idx2),rslt);
           }
          start = idx2+3;
        }
     }
    return rslt;
+}
+
+
+private static void extractFragments(String text,List<String> rslt)
+{
+   String [] elements = text.split(SPLIT_PATTERN);
+   for (String s : elements) {
+      rslt.add(s);
+    }
 }
 
 
@@ -786,23 +808,7 @@ static String getJavaDoc(String resp)
 private boolean startOllama(String hostname,int port,String usehost)
 {
    String host = "http://" + hostname + ":" + port + "/";
-   
-   try {
-      String cmd = "limballama.csh " + getModel();
-      if (usehost != null && !usehost.isEmpty()) {
-         cmd += " " + usehost + " " + hostname;
-       }
-      else {
-         cmd += " " + host;
-       }
-      IvyExec exec = new IvyExec(cmd,IvyExec.IGNORE_OUTPUT);
-      IvyLog.logD("LIMBA","Running setup commands: " + exec.getCommand());
-      exec.waitFor();
-    }
-   catch (IOException e) {
-      IvyLog.logI("LIMBA","Problem prepping ollama: " + e);
-    }
-   
+  
    IvyLog.logD("LIMBA","Starting OLLAMA at " + host);
    try {
       ollama_api = new OllamaAPI(host);
@@ -821,6 +827,32 @@ private boolean startOllama(String hostname,int port,String usehost)
     }
    
    return false;
+}
+
+
+private void initializeModel()
+{
+   if (getModel() == null) return;
+   if (getModel().equals(inited_model)) return;
+   inited_model = getModel();
+   
+   try {
+      String host = "http://" + ollama_host + ":" + ollama_port + "/";
+      String cmd = "limballama.csh " + inited_model;
+      if (ollama_usehost != null && !ollama_host.isEmpty()) {
+         cmd += " " + ollama_usehost + " " + ollama_host;
+       }
+      else {
+         cmd += " " + host;
+       }
+      IvyExec exec = new IvyExec(cmd,IvyExec.IGNORE_OUTPUT);
+      IvyLog.logD("LIMBA","Running setup commands: " + exec.getCommand());
+      exec.waitFor();
+    }
+   catch (IOException e) {
+      IvyLog.logI("LIMBA","Problem prepping ollama: " + e);
+    }
+   
 }
 
 

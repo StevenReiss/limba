@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -155,6 +156,9 @@ void process(IvyXmlWriter xw) throws Exception
       .maxMessages(10)
       .build();
    
+   PriorityQueue<LimbaSolution> finalset = new PriorityQueue<>();
+   List<LimbaSolution> rslt = new ArrayList<>();
+   
    Set<String> undefs = new HashSet<>();
    String addendum = null;
    String testerrs = null;
@@ -178,7 +182,16 @@ void process(IvyXmlWriter xw) throws Exception
       if (again) {
          pbuf.append("Recall the problem you are supposed to solve:\n");
        }
-      pbuf.append("Please generate a method with the signature\n");
+      pbuf.append("Please generate a ");
+      switch (find_type) {
+         case METHOD :
+            pbuf.append("method");
+            break;
+         case CLASS :
+            pbuf.append("class");
+            break;
+       }
+      pbuf.append(" with the signature\n");
       pbuf.append("'" + find_signature + "'\n");
       pbuf.append("that does the following: \n");
       pbuf.append(find_description);
@@ -214,41 +227,16 @@ void process(IvyXmlWriter xw) throws Exception
       IvyLog.logD("LIMBA","Found possible solutions: " + tocheck.size() + " " +
             code);
       
-      List<LimbaSolution> rslt = new ArrayList<>();
       Set<String> allimports = new HashSet<>();
       for (LimbaTestCase ct : test_cases) {
          Collection<String> imps = ct.getImports();
          if (imps != null) allimports.addAll(imps);
        }
       
-      boolean retry = false;
-      Set<String> priorundef = new HashSet<>(undefs);
-      for (LimbaSolution sol : tocheck) {
-         List<JcompMessage> errs = sol.getCompilationErrors(); 
-         if (errs != null && errs.size() > 0) {
-            for (JcompMessage jm : errs) {
-               IvyLog.logD("LIMBA","Handle compiler error: " + jm.getText());
-               String err = jm.getText();
-               if (err.startsWith("Undefined ")) {
-                  int idx = err.lastIndexOf(" ");
-                  String undef = err.substring(idx+1).trim();
-                  if (undefs.add(undef)) {
-                     retry = true;
-                   }
-                  else if (priorundef.contains(undef) && i < 4) {
-                     retry = true;
-                   }
-                }
-               else {
-                  if (addendum == null) {
-                     addendum = "Please avoid syntax errors.";
-                     retry = true;
-                   }
-                }
-             }
-          }
-       }
-      if (retry){
+      String newadd = checkCompilation(undefs,tocheck,(i < 4));
+      if (newadd != null && !newadd.isEmpty()) addendum = newadd;
+      else addendum = null;
+      if (newadd != null) {
          again = true;
          continue;
        }
@@ -262,34 +250,39 @@ void process(IvyXmlWriter xw) throws Exception
       for (Iterator<LimbaSolution> it = tocheck.iterator(); it.hasNext(); ) {
          LimbaSolution sol = it.next();
          if (sol.getTestsPassed()) {
+            sol.setScore(10);
             rslt.add(sol);
             it.remove();
           }
+         else if (sol.getScore() >= 0.5) {
+            finalset.add(sol);
+          }
        }
       
-      if (rslt.isEmpty()) {
-         IvyLog.logD("None of these solution passed the tests -- need to retry with more information");
-         testerrs = getTestCorrections(tocheck);
-         again = true;
-         continue;
-       }
+      if (!rslt.isEmpty()) break;
       
-      xw.begin("SOLUTIONS");
-      xw.field("COUNT",rslt.size());
-      
-      for (LimbaSolution sol : rslt) {
-         sol.output(xw);  
-       }
-      
-      xw.end("SOLUTIONS");
-      break;
+      IvyLog.logD("None of these solution passed the tests -- need to retry with more information");
+      testerrs = getTestCorrections(tocheck);
+      again = true;
     }
-   // Then check the test cases
-   // if a test passes, just return it
-   // otherwise determine what is wrong and issue a new generate with the
-   //           additional inforamtion
-   // iterate this process up to k times
+      
+   int ct0 = rslt.size();
+   if (ct0 == 0) {
+      while (rslt.size() < 3 && finalset.peek() != null) {
+         rslt.add(finalset.remove());
+         
+       }
+    }
+   
+   xw.begin("SOLUTIONS");
+   xw.field("ALLPASSED",ct0);
+   xw.field("COUNT",rslt.size());
+   for (LimbaSolution sol : rslt) {
+      sol.output(xw);  
+    }
+   xw.end("SOLUTIONS");
 }
+
 
 
 private List<LimbaSolution> getSolutions(List<String> code)
@@ -335,6 +328,48 @@ private void runTests(List<LimbaSolution> tocheck,Set<String> allimports,List<Li
     }
 }
 
+
+private String checkCompilation(Set<String> undefs,List<LimbaSolution> tocheck,boolean recheck)
+{
+   boolean retry = false;
+   Set<String> priorundef = new HashSet<>(undefs);
+   String addendum = null;
+   for (LimbaSolution sol : tocheck) {
+      List<JcompMessage> errs = sol.getCompilationErrors(); 
+      if (errs != null && errs.size() > 0) {
+         for (JcompMessage jm : errs) {
+            String cnts = sol.getFullText();
+            int s0 = jm.getStartOffset();
+            s0 = Math.max(0,s0-5);
+            int s1 = jm.getEndOffset();
+            s1 = Math.min(s1+5,cnts.length());
+            String str = cnts.substring(s0,s1);
+            IvyLog.logD("LIMBA","Handle compiler error: " + 
+                  jm.getLineNumber() + " @ " + str + " : " +
+                  jm.getText());
+            String err = jm.getText();
+            if (err.startsWith("Undefined ")) {
+               int idx = err.lastIndexOf(" ");
+               String undef = err.substring(idx+1).trim();
+               if (undefs.add(undef)) {
+                  retry = true;
+                }
+               else if (priorundef.contains(undef) && recheck) {
+                  retry = true;
+                }
+             }
+            else {
+               if (addendum == null) {
+                  addendum = "Please avoid syntax errors.";
+                  retry = true;
+                }
+             }
+          }
+       }
+    }
+   if (retry && addendum == null) addendum = "";
+   return addendum;
+}
 
 
 private String getTestCorrections(List<LimbaSolution> tocheck)

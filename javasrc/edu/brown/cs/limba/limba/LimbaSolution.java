@@ -43,7 +43,7 @@ import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 
 
-class LimbaSolution implements LimbaConstants
+class LimbaSolution implements LimbaConstants, Comparable<LimbaSolution>
 {
 
 
@@ -65,6 +65,7 @@ private List<String>    fail_messages;
 private int             line_offset;
 private int             end_offset;
 private String          solution_name;
+private double          solution_score;
 
 
 /********************************************************************************/
@@ -85,6 +86,7 @@ LimbaSolution(LimbaFinder lf,String name,String text) throws LimbaException
    line_offset = -1;
    end_offset = -1;
    solution_name = name;
+   solution_score = 0;
 
    if (text.contains("class")) {
       base_ast = JcompAst.parseSourceFile(text);
@@ -247,6 +249,28 @@ String getName()
 }
 
 
+String getFullText()
+{
+   return base_ast.toString();
+}
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Scoring methods                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+double getScore()                               { return solution_score; }
+
+void setScore(double s)                         { solution_score = s; }
+
+@Override public int compareTo(LimbaSolution sol)
+{
+   return Double.compare(sol.solution_score,solution_score);
+}
+
+
 /********************************************************************************/
 /*										*/
 /*	Setup methods to parse result						*/
@@ -273,9 +297,16 @@ private void setupCompilationUnit(CompilationUnit cu)
 	 if (td.getName().getIdentifier().equals(tgtend)) {
 	    main_node = td;
 	  }
-	 else {
-	    helper_nodes.add(td);
-	  }
+         else {
+            for (Object o1 : td.bodyDeclarations()) {
+               if (o1 instanceof TypeDeclaration) {
+                  TypeDeclaration td1 = (TypeDeclaration) o1;
+                  if (td1.getName().getIdentifier().equals(tgtend)) {
+                     main_node = td;
+                   }
+                }
+             }
+          }
        }
       else if (limba_finder.getFindType() == LimbaFindType.METHOD) {
 	 for (Object o1 : td.bodyDeclarations()) {
@@ -311,6 +342,7 @@ void output(IvyXmlWriter xw)
 {
    xw.begin("SOLUTION"); 
    xw.field("NAME",getName());
+   
    String code = getText();
    if (code.contains("]]>")) xw.textElement("CODE",code);
    else xw.cdataElement("CODE",code);
@@ -318,6 +350,7 @@ void output(IvyXmlWriter xw)
    xw.begin("COMPLEXITY");
    xw.field("LINES",getCodeLines(code));
    xw.field("CODE",code.length());
+   xw.field("SCORE",getScore());
    xw.end("COMPLEXITY");
 
    xw.end("SOLUTION");

@@ -387,7 +387,7 @@ private class CommandSetModel extends CommandBase {
    @Override public String getCommandName()             { return "SETMODEL"; }
    
    @Override public void localProcess(IvyXmlWriter xw) throws Exception {
-      limba_main.setModel(command_text);
+      limba_main.setModel(command_text.trim());
     }
    
 }       // end of inner class CommandSetModel
