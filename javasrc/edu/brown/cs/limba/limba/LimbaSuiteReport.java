@@ -46,13 +46,18 @@ private Map<String,TestReport> test_cases;
 private String test_directory;
 
 private static final Pattern AT_PATTERN;
+private static final Pattern EXPECT_ACTUAL_PATTERN;
 
 static {
    String pat = "at .*\\." + LIMBA_TEST_CLASS + ".*\\(" + LIMBA_TEST_CLASS + ".java:" +
         "([0-9]+)\\)";
    AT_PATTERN = Pattern.compile(pat);
+   
+   String p1 = "expected:<(.*)> but was:<(.*)>$";
+   EXPECT_ACTUAL_PATTERN = Pattern.compile(p1);
 }
  
+
 /********************************************************************************/
 /*                                                                              */
 /*      Constructors                                                            */
@@ -154,8 +159,7 @@ boolean addReport(LimbaSolution sol,LimbaTestCase ltc,Element te)
    else if (fail != null) {
       msg = IvyXml.getAttrString(fail,"message");
       if (msg == null) msg = IvyXml.getText(fail);
-      String nmsg = "Test " + ltc.getDescription() + 
-            " produced the wrong result: " + msg;
+      String nmsg = getFailureMessage(ltc,msg);
       msg = nmsg;
     }
    if (msg != null) sol.addFailure(msg);
@@ -163,6 +167,25 @@ boolean addReport(LimbaSolution sol,LimbaTestCase ltc,Element te)
    addReport(nm,cnm,tm,msg,iserr);
    
    return msg == null;
+}
+
+
+private String getFailureMessage(LimbaTestCase ltc,String msg)
+{
+   String desc = ltc.getDescription();
+   int idx1 = desc.indexOf(" should yield ");
+   if (idx1 > 0) {
+      Matcher m1 = EXPECT_ACTUAL_PATTERN.matcher(msg);
+      if (m1.find()) {
+         String exp = m1.group(1);
+         String act = m1.group(2);
+         String d1 = desc.substring(0,idx1);
+         return d1 + " should yield  <" + exp +
+               ">  but returned <" + act + ">";
+       }
+    }
+   
+   return "Test " + desc + " produced the wrong result: " + msg;
 }
 
 

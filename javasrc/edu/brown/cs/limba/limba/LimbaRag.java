@@ -175,7 +175,7 @@ private EmbeddingStoreContentRetriever setupRAG()
    EmbeddingStoreContentRetriever retrv = EmbeddingStoreContentRetriever.builder()
          .embeddingModel(embed)
          .embeddingStore(store)
-         .maxResults(10)
+         .maxResults(5)
          .build();
    IvyLog.logD("LIMBA","Build RAG content retreiver " + retrv);
    

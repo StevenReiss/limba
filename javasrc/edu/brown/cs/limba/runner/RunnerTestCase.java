@@ -28,6 +28,16 @@ public class RunnerTestCase extends Assert
 {
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Default constants                                                       */
+/*                                                                              */
+/********************************************************************************/
+
+private static final double DEFAULT_DELTA = 1e-10;
+private static final float DEFAULT_FLOAT_DELTA = 1e-6f;
+
+
 
 /********************************************************************************/
 /*                                                                              */
@@ -37,43 +47,57 @@ public class RunnerTestCase extends Assert
 
 public static void limbaAssertEquals(String msg,long exp,long act)
 {
-   assertEquals(msg,exp,act);
+   if (exp != act) {
+      limbaFailEquals(msg,exp,act);
+    }
 }
 
 
 public static void limbaAssertEquals(String msg,Object exp,Object act)
 {
-   assertEquals(msg,exp,act);
+   if (exp == null && act == null) return;
+   if (exp != null && act != null && exp.equals(act)) return;
+   limbaFailEquals(msg,exp,act);
 }
 
 
 public static void limbaAssertEquals(String msg,int exp,int act)
 {
-   assertEquals(msg,exp,act);
+   if (exp != act) {
+      limbaFailEquals(msg,exp,act);
+    }
 }
 
 
 public static void limbaAssertEquals(String msg,byte exp,byte act)
 {
-   assertEquals(msg,exp,act);
+   if (exp != act) {
+      limbaFailEquals(msg,exp,act);
+    }
 }
 
 
 public static void limbaAssertEquals(String msg,char exp,char act)
 {
-   assertEquals(msg,exp,act);
+   if (exp != act) {
+      limbaFailEquals(msg,exp,act);
+    }
 }
 
 
 public static void limbaAssertEquals(String msg,boolean exp,boolean act)
 {
-   assertEquals(msg,exp,act);
+   if (exp != act) {
+      limbaFailEquals(msg,exp,act);
+    }
 }
 
 
 public static void limbaAssertEquals(String msg,short exp,short act)
 {
-   assertEquals(msg,exp,act);
+   if (exp != act) {
+      limbaFailEquals(msg,exp,act);
+    }
 }
 
 
@@ -122,47 +146,50 @@ public static void limbaAssertNotEquals(String msg,float exp,float act,float del
 
 public static void limbaAssertNotEquals(String msg,long exp,long act)
 {
-   assertNotEquals(msg,Long.valueOf(exp),Long.valueOf(act));
+   if (exp != act) {
+      limbaFailNotEquals(msg,exp,act);
+    }
 }
 
 
 public static void limbaAssertNotEquals(String msg,boolean exp,boolean act)
 {
-   assertNotEquals(msg,Boolean.valueOf(exp),Boolean.valueOf(act));
+   if (exp != act) {
+      limbaFailNotEquals(msg,exp,act);
+    }
 }
 
 
 public static void limbaAssertNotEquals(String msg,byte exp,byte act)
 {
-   assertNotEquals(msg,Byte.valueOf(exp),Byte.valueOf(act));
+   if (exp != act) {
+      limbaFailNotEquals(msg,exp,act);
+    }
 }
 
 
 public static void limbaAssertNotEquals(String msg,char exp,char act)
 {
-   assertNotEquals(msg,Character.valueOf(exp),Character.valueOf(act));
+   if (exp != act) {
+      limbaFailNotEquals(msg,exp,act);
+    }
 }
 
 
 public static void limbaAssertNotEquals(String msg,short exp,short act)
 {
-   assertNotEquals(msg,Short.valueOf(exp),Short.valueOf(act));
+   if (exp != act) {
+      limbaFailNotEquals(msg,exp,act);
+    }
 }
 
 
 public static void limbaAssertNotEquals(String msg,int exp,int act)
 {
-   assertNotEquals(msg,Integer.valueOf(exp),Integer.valueOf(act));
+   if (exp != act) {
+      limbaFailNotEquals(msg,exp,act);
+    }
 }
-
-private static void limbaFailNotEquals(String msg,Object e,Object a)
-{
-   String f = "";
-   if (msg != null) f = msg + " ";
-   f += "expected not:<" + e + "> but was:<" + a + ">";
-   fail(f);
-}
-
 
 
 /********************************************************************************/
@@ -173,54 +200,110 @@ private static void limbaFailNotEquals(String msg,Object e,Object a)
 
 public static void limbaAssertEquals(String msg,Object [] exp,Object [] act)
 {
-   assertArrayEquals(msg,exp,act);
+   if (exp == null && act == null) return;
+   else if (exp == null || act == null) limbaFailEquals(msg,exp,act);
+   else if (exp.length != act.length) limbaFailEquals(msg,exp,act);
+   else {
+      for (int i = 0; i < exp.length; ++i) {
+	 limbaAssertEquals(msg,exp[i],act[i]);
+       }
+    }
 }
 
 public static void limbaAssertEquals(String msg,double [] exp,double [] act,double delta)
 {
-   assertArrayEquals(msg,exp,act,delta);
+   if (exp == null && act == null) return;
+   else if (exp == null || act == null) limbaFailEquals(msg,exp,act);
+   else if (exp.length != act.length) limbaFailEquals(msg,exp,act);
+   else {
+      for (int i = 0; i < exp.length; ++i) {
+	 limbaAssertEquals(msg,exp[i],act[i],delta);
+       }
+    }
 }
 
 
 
 public static void limbaAssertEquals(String msg,float [] exp,float [] act,float delta)
 {
-   assertArrayEquals(msg,exp,act,delta);
+   if (exp == null && act == null) return;
+   else if (exp == null || act == null) limbaFailEquals(msg,exp,act);
+   else if (exp.length != act.length) limbaFailEquals(msg,exp,act);
+   else {
+      for (int i = 0; i < exp.length; ++i) {
+	 limbaAssertEquals(msg,exp[i],act[i],delta);
+       }
+    }
 }
 
 
 
 public static void limbaAssertEquals(String msg,int [] exp,int [] act)
 {
-   assertArrayEquals(msg,exp,act);
+   if (exp == null && act == null) return;
+   else if (exp == null || act == null) limbaFailEquals(msg,exp,act);
+   else if (exp.length != act.length) limbaFailEquals(msg,exp,act);
+   else {
+      for (int i = 0; i < exp.length; ++i) {
+	 limbaAssertEquals(msg,exp[i],act[i]);
+       }
+    }
 }
 
 
 
 public static void limbaAssertEquals(String msg,short [] exp,short [] act)
 {
-   assertArrayEquals(msg,exp,act);
+   if (exp == null && act == null) return;
+   else if (exp == null || act == null) limbaFailEquals(msg,exp,act);
+   else if (exp.length != act.length) limbaFailEquals(msg,exp,act);
+   else {
+      for (int i = 0; i < exp.length; ++i) {
+	 limbaAssertEquals(msg,exp[i],act[i]);
+       }
+    }
 }
 
 
 
 public static void limbaAssertEquals(String msg,byte [] exp,byte [] act)
 {
-   assertArrayEquals(msg,exp,act);
+   if (exp == null && act == null) return;
+   else if (exp == null || act == null) limbaFailEquals(msg,exp,act);
+   else if (exp.length != act.length) limbaFailEquals(msg,exp,act);
+   else {
+      for (int i = 0; i < exp.length; ++i) {
+	 limbaAssertEquals(msg,exp[i],act[i]);
+       }
+    }
 }
 
 
 
 public static void limbaAssertEquals(String msg,char [] exp,char [] act)
 {
-   assertArrayEquals(msg,exp,act);
+   if (exp == null && act == null) return;
+   else if (exp == null || act == null) limbaFailEquals(msg,exp,act);
+   else if (exp.length != act.length) limbaFailEquals(msg,exp,act);
+   else {
+      for (int i = 0; i < exp.length; ++i) {
+	 limbaAssertEquals(msg,exp[i],act[i]);
+       }
+    }
 }
 
 
 
 public static void limbaAssertEquals(String msg,long [] exp,long [] act)
 {
-   assertArrayEquals(msg,exp,act);
+   if (exp == null && act == null) return;
+   else if (exp == null || act == null) limbaFailEquals(msg,exp,act);
+   else if (exp.length != act.length) limbaFailEquals(msg,exp,act);
+   else {
+      for (int i = 0; i < exp.length; ++i) {
+	 limbaAssertEquals(msg,exp[i],act[i]);
+       }
+    }
 }
 
 
@@ -238,7 +321,6 @@ public static void limbaAssertEquals(String msg,double [][] exp,double [][] act,
 }
 
 
-
 public static void limbaAssertEquals(String msg,float [][] exp,float [][] act,float delta)
 {
    if (exp == null && act == null) return;
@@ -252,9 +334,6 @@ public static void limbaAssertEquals(String msg,float [][] exp,float [][] act,fl
 }
 
 
-
-
-
 public static void limbaAssertNotEquals(String msg,double [] exp,double [] act,double delta)
 {
    if (exp == null && act == null) return;
@@ -266,7 +345,6 @@ public static void limbaAssertNotEquals(String msg,double [] exp,double [] act,d
        }
     }
 }
-
 
 
 public static void limbaAssertNotEquals(String msg,float [] exp,float [] act,float delta)
@@ -457,66 +535,90 @@ public static void limbaAssertNotEquals(String msg,long [][] exp,long [][] act)
 /*										*/
 /********************************************************************************/
 
+public static void limbaAssertEquals(String msg,double exp,double act,double delta)
+{
+   if (Math.abs(exp-act) <= delta) return;
+   limbaFailEquals(msg,exp,act);
+}
+
+
+public static void limbaAssertEquals(String msg,float exp,float act,double delta)
+{
+   if (Math.abs(exp-act) <= delta) return;
+   limbaFailEquals(msg,exp,act);
+}
+
+
 public static void limbaAssertEquals(String msg,double exp,double act)
 {
-   assertEquals(msg,exp,act,1e-12);
+   limbaAssertEquals(msg,exp,act,DEFAULT_DELTA);
 }
 
 public static void limbaAssertEquals(String msg,float exp,float act)
 {
-   assertEquals(msg,exp,act,1e-6f);
+   limbaAssertEquals(msg,exp,act,DEFAULT_FLOAT_DELTA);
 }
 
 public static void limbaAssertNotEquals(String msg,double exp,double act)
 {
-   assertNotEquals(msg,exp,act,1e-12);
+   limbaAssertNotEquals(msg,exp,act,DEFAULT_DELTA);
 }
 
 public static void limbaAssertNotEquals(String msg,float exp,float act)
 {
-   assertNotEquals(msg,exp,act,1e-6f);
+   limbaAssertNotEquals(msg,exp,act,DEFAULT_FLOAT_DELTA);
 }
-
-
 
 public static void limbaAssertEquals(String msg,double [] exp,double [] act)
 {
-   limbaAssertEquals(msg,exp,act,1e-12);
+   limbaAssertEquals(msg,exp,act,DEFAULT_DELTA);
 }
 
 public static void limbaAssertEquals(String msg,float [] exp,float [] act)
 {
-   limbaAssertEquals(msg,exp,act,1e-6f);
+   limbaAssertEquals(msg,exp,act,DEFAULT_FLOAT_DELTA);
 }
 
 public static void limbaAssertNotEquals(String msg,double [] exp,double [] act)
 {
-   limbaAssertNotEquals(msg,exp,act,1e-12);
+   limbaAssertNotEquals(msg,exp,act,DEFAULT_DELTA);
 }
 
 public static void limbaAssertNotEquals(String msg,float [] exp,float [] act)
 {
-   limbaAssertNotEquals(msg,exp,act,1e-6f);
+   limbaAssertNotEquals(msg,exp,act,DEFAULT_FLOAT_DELTA);
 }
 
 public static void limbaAssertEquals(String msg,double [][] exp,double [][] act)
 {
-   limbaAssertEquals(msg,exp,act,1e-12);
+   limbaAssertEquals(msg,exp,act,DEFAULT_DELTA);
 }
 
 public static void limbaAssertEquals(String msg,float [][] exp,float [][] act)
 {
-   limbaAssertEquals(msg,exp,act,1e-6f);
+   limbaAssertEquals(msg,exp,act,DEFAULT_FLOAT_DELTA);
 }
 
 public static void limbaAssertNotEquals(String msg,double [][] exp,double [][] act)
 {
-   limbaAssertNotEquals(msg,exp,act,1e-12);
+   limbaAssertNotEquals(msg,exp,act,DEFAULT_DELTA);
 }
 
 public static void limbaAssertNotEquals(String msg,float [][] exp,float [][] act)
 {
-   limbaAssertNotEquals(msg,exp,act,1e-6f);
+   limbaAssertNotEquals(msg,exp,act,DEFAULT_FLOAT_DELTA);
+}
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Map JUNIT calls to our calls for user tests                             */
+/*                                                                              */
+/********************************************************************************/
+
+public static void assertEquals(String message,Object exp,Object act)
+{
+   limbaAssertEquals(message,exp,act);
 }
 
 
@@ -530,8 +632,18 @@ private static void limbaFailEquals(String message, Object expected, Object actu
 {
    String formatted= "";
    if (message != null) formatted = message + " ";
-   fail(formatted+"expected:<"+expected+"> but was:<"+actual+">");
+   fail(formatted+"expected:<"+String.valueOf(expected)+"> but was:<"+String.valueOf(actual)+">");
 }
+
+private static void limbaFailNotEquals(String msg,Object e,Object a)
+{
+   String f = "";
+   if (msg != null) f = msg + " ";
+   f += "expected not:<" + String.valueOf(e) + "> but was:<" + String.valueOf(a) + ">";
+   fail(f);
+}
+
+
 
 
 

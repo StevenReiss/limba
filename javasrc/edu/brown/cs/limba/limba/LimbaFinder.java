@@ -180,6 +180,7 @@ void process(IvyXmlWriter xw) throws Exception
          pbuf.append(testerrs);
        }
       if (again) {
+         pbuf.append("Pleasse provide the complete solution, not a correction.\n"); 
          pbuf.append("Recall the problem you are supposed to solve:\n");
        }
       pbuf.append("Please generate a ");
@@ -261,7 +262,8 @@ void process(IvyXmlWriter xw) throws Exception
       
       if (!rslt.isEmpty()) break;
       
-      IvyLog.logD("None of these solution passed the tests -- need to retry with more information");
+      IvyLog.logD("None of these solution passed the tests -- " + 
+           "need to retry with more information");
       testerrs = getTestCorrections(tocheck);
       again = true;
     }
@@ -270,12 +272,12 @@ void process(IvyXmlWriter xw) throws Exception
    if (ct0 == 0) {
       while (rslt.size() < 3 && finalset.peek() != null) {
          rslt.add(finalset.remove());
-         
        }
     }
    
    xw.begin("SOLUTIONS");
    xw.field("ALLPASSED",ct0);
+   xw.field("TESTCOUNT",test_cases.size());
    xw.field("COUNT",rslt.size());
    for (LimbaSolution sol : rslt) {
       sol.output(xw);  

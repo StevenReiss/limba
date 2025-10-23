@@ -29,6 +29,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -214,12 +215,13 @@ void setUserContext(String s)
 
 boolean setModel(String model) 
 {
-   if (getOllama() != null) {
+   if (getOllama() != null && model != null) {
       boolean fnd = false;
       try {
          List<Model> mdls = getOllama().listModels();
          for (Model m : mdls) {
-            if (m.getModelName().equals(model)) {
+            if (model.equals(m.getModelName()) || 
+                  model.equals(m.getModel())) {
                fnd = true;
                break;
              }
@@ -228,6 +230,7 @@ boolean setModel(String model)
       catch (Exception e) { }
       if (!fnd) {
          IvyLog.logI("LIMBA","Model " + model + " not found");
+         model = null;
        }
     }
    
@@ -358,7 +361,8 @@ private void process()
    IvyLog.setLogFile(log_file);
    IvyLog.useStdErr(log_stderr);
    
-   IvyLog.logD("LIMBA","Running with " + getUrl() + " " + getModel());
+   IvyLog.logD("LIMBA","Running with " + getUrl() + " " + getModel() + " " +
+         new Date());
    
    boolean fg = startOllama(ollama_host,ollama_port,ollama_usehost);
    if (!fg) {
@@ -375,6 +379,10 @@ private void process()
    if (!fg) {
       System.err.println("OLLAMA server not running");
       System.exit(1);
+    }
+   
+   if (getModel() != null) {
+      setModel(ollama_model);
     }
    
    setupRag(project_file);

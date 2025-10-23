@@ -89,7 +89,13 @@ LimbaSolution(LimbaFinder lf,String name,String text) throws LimbaException
    solution_score = 0;
 
    if (text.contains("class")) {
-      base_ast = JcompAst.parseSourceFile(text);
+      try {
+         base_ast = JcompAst.parseSourceFile(text);
+       }
+      catch (Throwable t) {
+         IvyLog.logE("LIMBA","Problem compiling code -- not valid compilation unit",t); 
+         throw new LimbaException("Not a compilation unit");
+       }
       setupCompilationUnit(base_ast);
     }
    else {
@@ -97,8 +103,13 @@ LimbaSolution(LimbaFinder lf,String name,String text) throws LimbaException
       //   and body
       // alternatively, extract import statements and parse the rest using
       //   JcompAst.parseDeclarations() and then build a compilation unit
-      ASTNode decls = JcompAst.parseDeclarations(text);
-      IvyLog.logD("LIMBA","Scanned declarations, not compilation unit " + decls);
+      try {
+         ASTNode decls = JcompAst.parseDeclarations(text);
+         IvyLog.logD("LIMBA","Scanned declarations, not compilation unit " + decls);
+       }
+      catch (Throwable  t) {
+         IvyLog.logI("LIMBA","Problem compiling declarations: " + t);
+       }
       throw new LimbaException("Not a compilation unit");
     }
 
