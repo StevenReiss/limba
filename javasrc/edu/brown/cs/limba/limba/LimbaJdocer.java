@@ -84,7 +84,7 @@ void process(IvyXmlWriter xw) throws Exception
    pbuf.append("The code is: \n");
    pbuf.append(method_body);
    
-   IvyLog.logD("LIMBA","Find " + pbuf.toString());
+   IvyLog.logD("LIMBA","Find  " + pbuf.toString());
    
    String resp = limba_main.askOllama(pbuf.toString(),use_context);
    String jdoc = LimbaMain.getJavaDoc(resp);

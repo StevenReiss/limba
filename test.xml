@@ -1,6 +1,52 @@
 <LIMBA DO='PING' />
 <LIMBA DO='LIST' />
 <LIMBA DO='SETMODEL'><BODY>llama4:maverick</BODY></LIMBA>
+<LIMBA DO='PROJECT'><BODY>/home/spr/Eclipse/tutorial</BODY></LIMBA>
+<LIMBA DO='STYLE'><BODY>Do not use on-demand imports.
+Do not use anonymous classes.
+Do not use lambdas.
+Place right brace on a separate line.</BODY></LIMBA>
+
+
+<LIMBA DO='TESTS' RID='LIMBA_797054' USECONTEXT='true'>
+<TOTEST TARGETCLASS='edu.brown.cs.bubbles.tutorial.romp.MagnetTest' NEWCLASS='true' SOURCETYPE='METHOD' SOURCEFILE='/home/spr/Eclipse/tutorial/romp/src/edu/brown/cs/bubbles/tutorial/romp/Magnet.java'>
+  <CODE><![CDATA[/** Calculates the force between this magnet and otherMag using the formula
+from the assignment
+@return a new Force
+*/
+public Force calculateForce(Magnet otherMag)
+{
+   // calculate the force between one magnet and another
+   int direction;
+
+   if (attractsP(otherMag)) {
+      direction = 1;
+   }
+   else {
+      direction = -1;
+   }
+
+   double  magnitude = (direction * K * strength * otherMag.getStrength())
+	    / Math.pow(getDistance(otherMag), 2);
+
+   Position otherPos = otherMag.getPos();
+   double deltaX = pos.getX() - otherPos.getX();
+   double deltaY = pos.getY() - otherPos.getY();
+   double deltaZ = pos.getZ() - otherPos.getZ();
+
+   // use a pvec to get the angles
+   PhysicsVector vec = new PhysicsVector(deltaX,deltaY,deltaZ);
+   Force mForce = new Force(magnitude,vec.getTheta(),vec.getPhi());
+   /*
+   System.err.println("Magnet: " + magnitude + ", " + mForce.getTheta() + ", " + mForce.getPhi());
+   System.err.println("         " + mForce.getIHat() + ", " +
+			     mForce.getJHat() + ", " +
+			     mForce.getKHat());
+   */
+   return mForce;
+}]]></CODE>
+</TOTEST>
+</LIMBA>
 
 
 <LIMBA DO='FIND' RID='LIMBA_994942' TYPE='METHOD'>

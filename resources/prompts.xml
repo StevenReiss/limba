@@ -41,7 +41,7 @@
   </PROMPT>
   <PROMPT COMMAND='TESTS'>
      You are an expert Java programmer with a strong knowledge of the Java libraries and
-     other libraries that might be used in a project.  Please generate Junit
-     test cases for the method described below.  Return only the test cases.  $STYLE $CONTEXT
+     other libraries that might be used in a project.  Please generate Junit 4
+     test cases using appropriate annotations and comments.  Return only the test cases.  $STYLE $CONTEXT
   </PROMPT>
 </PROMPTS>

@@ -119,7 +119,7 @@ LimbaCommand createCommand(String line)
       case "FINDJDOC" :
          return new CommandJdoc(prompt,line);
       case "TESTS" :
-         return new CommandQuery(prompt,line);
+         return new CommandTests(prompt,line);
       case "EXIT" :
          System.exit(0);
     }
@@ -651,7 +651,7 @@ private class CommandJdoc extends CommandBase {
       use_prompt = prompt;
     }
    
-   @Override public String getCommandName()             { return "FIND"; }
+   @Override public String getCommandName()             { return "FINDJDOC"; }
    
    @Override public void setupCommand(Element xml) {
       super.setupCommand(xml);          // handle options
@@ -662,7 +662,38 @@ private class CommandJdoc extends CommandBase {
       limba_jdocer.process(xw);   
     }
    
-}       // end of inner class CommandFind
+}       // end of inner class CommandJdoc
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      TESTS command to find test cases                                        */
+/*                                                                              */
+/********************************************************************************/
+
+private class CommandTests extends CommandBase {
+   
+   private String use_prompt;
+   private LimbaTestGenerator test_gen;
+   
+   CommandTests(String prompt,String line) {
+      super(line);
+      use_prompt = prompt;
+    }
+   
+   @Override public String getCommandName()             { return "TESTS"; }
+   
+   @Override public void setupCommand(Element xml) {
+      super.setupCommand(xml);          // handle options
+      test_gen = new LimbaTestGenerator(limba_main,use_prompt,xml);  
+    }
+   
+   @Override public void localProcess(IvyXmlWriter xw) throws Exception {
+      test_gen.process(xw);   
+    }
+   
+}       // end of inner class CommandJdoc
 
 
 }       // end of class LimbaCommandBase
