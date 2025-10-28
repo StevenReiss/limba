@@ -385,6 +385,7 @@ private class CommandSetModel extends CommandBase {
     }
    
    @Override public String getCommandName()             { return "SETMODEL"; }
+   @Override public String getEndToken()                { return null; } 
    
    @Override public void localProcess(IvyXmlWriter xw) throws Exception {
       limba_main.setModel(command_text.trim());
@@ -690,7 +691,10 @@ private class CommandTests extends CommandBase {
     }
    
    @Override public void localProcess(IvyXmlWriter xw) throws Exception {
-      test_gen.process(xw);   
+      // NEED TO CREATE TEST_GEN for non-xml case
+      if (test_gen != null) {
+         test_gen.process(xw);  
+       }
     }
    
 }       // end of inner class CommandJdoc

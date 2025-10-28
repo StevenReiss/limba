@@ -479,7 +479,6 @@ private void processFile(Reader r,boolean prompt)
             line = line.substring(0,line.length()-1);
           }
 
-         
          if (!buf.isEmpty()) buf.append("\n");
          buf.append(line);
          if (fini) {
