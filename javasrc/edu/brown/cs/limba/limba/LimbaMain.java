@@ -27,6 +27,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Date;
@@ -705,6 +706,8 @@ private ConversationalRetrievalChain getChain(ChatMemory mem,boolean usectx)
 {
    OllamaChatModel chat = OllamaChatModel.builder()
       .baseUrl(getUrl())
+      .maxRetries(3)
+      .timeout(Duration.ofMinutes(10))
       .logRequests(true)
       .logResponses(true)
       .modelName(getModel())

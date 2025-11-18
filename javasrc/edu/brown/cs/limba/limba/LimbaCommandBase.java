@@ -570,6 +570,7 @@ private class CommandProperty extends LocalCommand {
     }
    
    @Override public String getCommandName()             { return "PROPERTY"; }
+   @Override public String getEndToken()                { return null; }
    
    @Override public void localProcess(IvyXmlWriter xw) {
       // PROPERTY x=y or PROPERTY x y
@@ -586,6 +587,7 @@ private class CommandProject extends LocalCommand {
     }
    
    @Override public String getCommandName()             { return "PROPERTY"; }
+   @Override public String getEndToken()                { return null; }
    
    @Override public void localProcess(IvyXmlWriter xw) {
       String fnm = null;

@@ -13,7 +13,8 @@
      Please clean and reformat the following, returning just the resultant code.
   </PROMPT>
   <PROMPT COMMAND='GENERATE'>
-     You are an expert Java programmer.  Return only the resultant code. $STYLE $CONTEXT
+     You are an expert Java programmer.  Please create Java code that does the following.
+     Return only the resultant code. $STYLE $CONTEXT
   </PROMPT>
   <PROMPT COMMAND='FIND'>
      You are an expert Java programmer with a strong knowledge of the Java libraries and
@@ -42,6 +43,52 @@
   <PROMPT COMMAND='TESTS'>
      You are an expert Java programmer with a strong knowledge of the Java libraries and
      other libraries that might be used in a project.  Please generate Junit 4
-     test cases using appropriate annotations and comments.  Return only the test cases.  $STYLE $CONTEXT
+     test cases using appropriate annotations (e.g. @Test) and comments.  Return only the test cases.  $STYLE $CONTEXT
   </PROMPT>
 </PROMPTS>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

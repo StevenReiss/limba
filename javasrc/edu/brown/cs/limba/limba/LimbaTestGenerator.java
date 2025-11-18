@@ -29,12 +29,17 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
+import org.eclipse.jdt.core.dom.IExtendedModifier;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
+import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
+import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.file.IvyFile;
@@ -61,11 +66,12 @@ private boolean         use_context;
 private String          source_type;
 private String          source_file;
 private String          target_class;
+private File            target_file;
 private boolean         new_class;
 
 private Set<String>    import_types;
 private Set<String>    static_imports;
-private List<TestDecl>       test_decls;
+private List<TestDecl> test_decls;
 
 private Set<String>     prior_imports;
 private Set<String>     prior_statics;
@@ -86,10 +92,15 @@ LimbaTestGenerator(LimbaMain lm,String prompt,Element xml)
    base_prompt = prompt;
    use_context = IvyXml.getAttrBool(xml,"USECONTEXT",true);  Element txml = IvyXml.getChild(xml,"TOTEST");
    code_totest = IvyXml.getTextElement(txml,"CODE");
-   target_class = IvyXml.getAttrString(txml,"TARGETCLASS");
    new_class = IvyXml.getAttrBool(txml,"NEWCLASS");
    source_type = IvyXml.getAttrString(txml,"SOURCETYPE").toLowerCase();
    source_file = IvyXml.getAttrString(txml,"SOURCEFILE");
+   
+   target_class = IvyXml.getAttrString(txml,"TARGETCLASS");
+   String tnm = IvyXml.getAttrString(txml,"TARGETFILE");
+   if (tnm == null) target_file = null;
+   else target_file = new File(tnm);
+   
    import_types = new TreeSet<>();
    static_imports = new TreeSet<>();
    prior_imports = new HashSet<>();
@@ -123,11 +134,17 @@ void process(IvyXmlWriter xw) throws Exception
    IvyLog.logD("LIMBA","Find  " + pbuf.toString());
    
    String resp = limba_main.askOllama(pbuf.toString(),use_context);
+   
    List<String> code = LimbaMain.getJavaCode(resp);
+   TestDecl top = null;
    for (String s : code) {
-      analyzeResult(s);
+      top = analyzeResult(s);
       xw.cdataElement("TESTCODE",s);
     }
+   if (top != null) {
+     top.outputXml(xw,"TOP");
+    }
+   
    for (String s : import_types) {
       xw.begin("IMPORT");
       xw.text(s);
@@ -140,9 +157,8 @@ void process(IvyXmlWriter xw) throws Exception
       xw.end("IMPORT");
     }
    for (TestDecl td : test_decls) {
-      td.outputXml(xw);
+      td.outputXml(xw,"DECL");
     }
-   
 }
 
 
@@ -152,7 +168,7 @@ void process(IvyXmlWriter xw) throws Exception
 /*                                                                              */
 /********************************************************************************/
 
-void analyzeResult(String code)
+TestDecl analyzeResult(String code)
 {
    CompilationUnit cu;
    
@@ -161,10 +177,10 @@ void analyzeResult(String code)
     }
    catch (Throwable t) {
       IvyLog.logE("LIMBA","Result is not a compilation unit");
-      return;
+      return null;
     }
    
-   getSourceInformation();
+   getTargetInformation();
    
    for (Object o : cu.imports()) {
       ImportDeclaration id = (ImportDeclaration) o;
@@ -177,6 +193,16 @@ void analyzeResult(String code)
          else {
             import_types.add(typ);
           }
+       }
+    }
+   
+   TestDecl top = null;
+   
+   for (Object o1 : cu.types()) {
+      if (o1 instanceof TypeDeclaration) {
+         TypeDeclaration td = (TypeDeclaration) o1;
+         top = new TestDecl(td);
+         break;
        }
     }
    
@@ -196,23 +222,25 @@ void analyzeResult(String code)
          if (testd != null) test_decls.add(testd);
        }
     }
+   
+   return top;
 }
 
 
 
 /********************************************************************************/
 /*                                                                              */
-/*      Get information for the source file to insert into                      */
+/*      Get information for the target file to insert into                      */
 /*                                                                              */
 /********************************************************************************/
 
-private void getSourceInformation()
+private void getTargetInformation()
 {
-   if (source_file == null | source_file.isEmpty()) return;
+   if (target_file == null) return;
    
    CompilationUnit cu = null; 
    try {
-      String src = IvyFile.loadFile(new File(source_file));
+      String src = IvyFile.loadFile(target_file);
       cu = JcompAst.parseSourceFile(src);
     }
    catch (Throwable t) {
@@ -266,20 +294,24 @@ private final class TestDecl {
    private String decl_code;
    private boolean is_field;
    private boolean is_helper;
+   private BodyDeclaration body_decl;
    
    TestDecl(TypeDeclaration td) {
+      body_decl = td;
       is_helper = true;
       is_field = false;
       decl_code = td.toString();
     }
    
    TestDecl(FieldDeclaration fd) {
+      body_decl = fd;
       is_helper = true;
       is_field = true;
       decl_code = fd.toString();
     }
    
    TestDecl(MethodDeclaration md) {
+      body_decl = md;
       decl_code = md.toString();
       if (!decl_code.startsWith("@Test") && !md.getName().getIdentifier().startsWith("test")) {
          is_helper = true;
@@ -287,13 +319,85 @@ private final class TestDecl {
       is_field = false;
     }
    
-   void outputXml(IvyXmlWriter xw) {
-      xw.begin("DECL");
-      xw.field("FIELD",is_field);
+   void outputXml(IvyXmlWriter xw,String what) {
+      xw.begin(what);
+      if (is_field) xw.field("FIELD",is_field);
       if (is_helper) xw.field("HELPER",is_helper);
       else xw.field("TEST",true);
-      xw.cdataElement("CODE",decl_code);
-      xw.end("DECL");
+      xw.field("MODINT",body_decl.getModifiers());
+      
+      if (body_decl instanceof MethodDeclaration) {
+         MethodDeclaration md = (MethodDeclaration) body_decl;
+         xw.field("NAME",md.getName().toString());
+         if (md.isConstructor()) xw.field("CONSTRUCTOR",true);
+         else {
+            xw.textElement("RETURNS",md.getReturnType2().toString());
+          }
+         StringBuffer buf = new StringBuffer();
+         xw.textElement("PARAMETERS","(" + getListValue(md.parameters(),",") + ")");
+         for (Object o : md.parameters()) {
+            SingleVariableDeclaration svd = (SingleVariableDeclaration) o;
+            if (!buf.isEmpty()) buf.append(",");
+            buf.append(svd.toString());
+          }
+         xw.textElement("PARAMTERS","(" + buf.toString() + ")");
+         xw.cdataElement("CONTENTS",md.getBody().toString());
+       }
+      else if (body_decl instanceof FieldDeclaration) {
+         FieldDeclaration fd = (FieldDeclaration) body_decl;
+         xw.textElement("RETURNS",fd.getType().toString());
+         for (Object o : fd.fragments()) {
+            VariableDeclarationFragment vdf = (VariableDeclarationFragment) o;
+            xw.begin("FIELD");
+            xw.field("NAME",vdf.getName().toString());
+            if (vdf.getExtraDimensions() != 0) {
+               xw.field("DIMS",vdf.getExtraDimensions());
+             }
+            if (vdf.getInitializer() != null) {
+               xw.cdataElement("INIT",vdf.getInitializer().toString());
+             }
+            xw.end("FIELD");
+          }
+       }
+      else if (body_decl instanceof TypeDeclaration) {
+         if (what.equals("DECL")) xw.field("INNERTYPE",true);
+         TypeDeclaration td = (TypeDeclaration) body_decl;
+         if (td.isInterface()) xw.field("INTERFACE",true);
+         if (td.getSuperclassType() != null) {
+            xw.field("SUPERCLASS",td.getSuperclassType().toString());
+          }
+         xw.textElement("IMPLEMENTS",getListValue(td.superInterfaceTypes(),","));
+       }
+      
+      Javadoc jd = body_decl.getJavadoc();
+      if (jd != null) {
+         xw.cdataElement("JAVADOC",jd.toString());
+       }
+      xw.textElement("ATTRIBUTES",getAttributes());
+      xw.cdataElement("RAWCODE",decl_code);
+      
+      xw.end(what);
+    }
+   
+   private String getAttributes() {
+      StringBuffer buf = new StringBuffer();
+      for (Object o : body_decl.modifiers()) {
+         IExtendedModifier em = (IExtendedModifier) o;
+         if (em.isAnnotation()) {
+            if (!buf.isEmpty()) buf.append(" ");
+            buf.append(o.toString());
+          }
+       }
+      return buf.toString();
+    }
+   
+   private String getListValue(List<?> data,String sep) {
+      StringBuffer buf = new StringBuffer();
+      for (Object o : data) {
+         if (!buf.isEmpty()) buf.append(sep);
+         buf.append(o.toString());
+       }
+      return buf.toString();
     }
    
 }       // end of inner class TestDecl

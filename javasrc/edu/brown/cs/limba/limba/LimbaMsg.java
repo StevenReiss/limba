@@ -215,6 +215,7 @@ private class CommandProcessor extends Thread {
          for_command.process(xw);
          xw.end("RESULT");
          xw.end("LIMBAREPLY");
+         IvyLog.logD("LIMBA","Send reply " + xw.toString());
          mint_control.send(xw.toString());
        }
       catch (Throwable t) {
@@ -225,6 +226,7 @@ private class CommandProcessor extends Thread {
          xw.textElement("MESSAGE",t);
          xw.end("ERROR");
          xw.end("LIMBAREPLY");
+         IvyLog.logD("LIMBA","Send error reply " + xw.toString());
          mint_control.send(xw.toString());
          xw.close();
        }

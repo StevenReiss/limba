@@ -1,9 +1,12 @@
-SETMODEL -- granite4:small-h
+SETMODEL -- qwen3-coder:480b
+
+PROJECT -- /pro/limba
 
 ASK -- Who are you?
 
 STYLE EOL
 Do not use on-demand imports.
+Do not use on-demand static imports.
 Do not use anonymous classes.
 Do not use lambdas.
 Place right brace on a separate line.
@@ -278,7 +281,3 @@ The host and port should be definable as command line options (-h <host> and -p 
 EOL
 
 EXIT
-
-
-
-
