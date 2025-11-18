@@ -36,8 +36,10 @@ import dev.langchain4j.data.document.loader.FileSystemDocumentLoader;
 import dev.langchain4j.data.document.splitter.DocumentByLineSplitter;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.ollama.OllamaEmbeddingModel;
+import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
+import dev.langchain4j.rag.query.Query;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import dev.langchain4j.store.embedding.chroma.ChromaEmbeddingStore;
@@ -59,7 +61,7 @@ class LimbaRag implements LimbaConstants
 
 private LimbaMain limba_main;
 private Collection<File> project_files;
-private EmbeddingStoreContentRetriever content_retriever;
+private ContentRetriever content_retriever;
       
 
 /********************************************************************************/
@@ -99,11 +101,13 @@ LimbaRag(LimbaMain lm,List<File> files)
 ContentRetriever getContentRetriever()
 {
    if (content_retriever == null && !project_files.isEmpty()) {
+      content_retriever = new EmptyContentRetriever();
       content_retriever = setupRAG();
     }
    
    return content_retriever;
 }
+
 
 
 /********************************************************************************/
@@ -112,7 +116,7 @@ ContentRetriever getContentRetriever()
 /*                                                                              */
 /********************************************************************************/
 
-private EmbeddingStoreContentRetriever setupRAG()
+private ContentRetriever setupRAG()
 {
    List<Document> docs = new ArrayList<>();
    for (File f : project_files) {
@@ -163,24 +167,41 @@ private EmbeddingStoreContentRetriever setupRAG()
       store = new InMemoryEmbeddingStore<>();
     }
    
-// need class okhttp3/Interceptor -- if this fails, defer to immemboery model
-   EmbeddingStoreIngestor ingest = EmbeddingStoreIngestor.builder()
+// need class okhttp3/Interceptor -- if this fails, defer to immemboery mode
+   ContentRetriever retrv;
+   try {
+      EmbeddingStoreIngestor ingest = EmbeddingStoreIngestor.builder()
          .documentSplitter(spliter)
          .embeddingModel(embed)
          .embeddingStore(store)
          .build();
-   IvyLog.logD("LIMBA","Ingest documents " + docs.size());
-   ingest.ingest(docs);
-   IvyLog.logD("LIMBA","Done ingest");
-   EmbeddingStoreContentRetriever retrv = EmbeddingStoreContentRetriever.builder()
-         .embeddingModel(embed)
-         .embeddingStore(store)
-         .maxResults(5)
-         .build();
-   IvyLog.logD("LIMBA","Build RAG content retreiver " + retrv);
+      IvyLog.logD("LIMBA","Ingest documents " + docs.size());
+      ingest.ingest(docs);
+      IvyLog.logD("LIMBA","Done ingest");
+      retrv = EmbeddingStoreContentRetriever.builder()
+            .embeddingModel(embed)
+            .embeddingStore(store)
+            .maxResults(5)
+            .build();
+      IvyLog.logD("LIMBA","Build RAG content retreiver " + retrv);
+    }
+   catch (Throwable t) {
+      IvyLog.logE("LIMBA","Problem setting up RAG",t);
+      retrv = new EmptyContentRetriever();
+    }
    
    return retrv;
 }
+
+
+
+private static final class EmptyContentRetriever implements ContentRetriever {
+   
+   @Override public List<Content> retrieve(Query query) { 
+      return new ArrayList<>();
+    }
+
+}       // end of inner class EmptyContentRetriever
 
 
 

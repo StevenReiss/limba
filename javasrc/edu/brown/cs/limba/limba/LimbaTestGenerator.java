@@ -367,6 +367,11 @@ private final class TestDecl {
             xw.field("SUPERCLASS",td.getSuperclassType().toString());
           }
          xw.textElement("IMPLEMENTS",getListValue(td.superInterfaceTypes(),","));
+         String cnts = decl_code;
+         int idx1 = cnts.indexOf("{");
+         int idx2 = cnts.lastIndexOf("}");
+         cnts = cnts.substring(idx1,idx2+1);
+         xw.cdataElement("CONTENTS",cnts);
        }
       
       Javadoc jd = body_decl.getJavadoc();
