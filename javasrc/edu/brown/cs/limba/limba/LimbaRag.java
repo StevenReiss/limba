@@ -147,7 +147,7 @@ private ContentRetriever setupRAG()
          .build();
     }
    catch (Throwable t) {
-      IvyLog.logI("LIMBA","Can't create chroma store: " + t);
+      IvyLog.logE("LIMBA","Can't create chroma store", t);
     }
 // if (store == null) {
 //    try {
