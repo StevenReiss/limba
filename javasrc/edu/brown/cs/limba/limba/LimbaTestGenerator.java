@@ -197,30 +197,28 @@ TestDecl analyzeResult(String code)
     }
    
    TestDecl top = null;
-   
+   TypeDeclaration typedecl = null;
    for (Object o1 : cu.types()) {
       if (o1 instanceof TypeDeclaration) {
-         TypeDeclaration td = (TypeDeclaration) o1;
-         top = new TestDecl(td);
+         typedecl = (TypeDeclaration) o1;
+         top = new TestDecl(typedecl);
          break;
        }
     }
+   if (typedecl == null) return null;
    
-   for (Object o : cu.types()) {
-      TypeDeclaration td = (TypeDeclaration) o;
-      for (Object o1 : td.bodyDeclarations()) {
-         TestDecl testd = null;
-         if (o1 instanceof TypeDeclaration) {
-            testd = new TestDecl((TypeDeclaration) o1);
-          }
-         else if (o1 instanceof FieldDeclaration) {
-            testd = new TestDecl((FieldDeclaration) o1);
-          }
-         else if (o1 instanceof MethodDeclaration) {
-            testd = new TestDecl((MethodDeclaration) o1);
-          }
-         if (testd != null) test_decls.add(testd);
+   for (Object o1 : typedecl.bodyDeclarations()) {
+      TestDecl testd = null;
+      if (o1 instanceof TypeDeclaration) {
+         testd = new TestDecl((TypeDeclaration) o1);
        }
+      else if (o1 instanceof FieldDeclaration) {
+         testd = new TestDecl((FieldDeclaration) o1);
+       }
+      else if (o1 instanceof MethodDeclaration) {
+         testd = new TestDecl((MethodDeclaration) o1);
+       }
+      if (testd != null) test_decls.add(testd);
     }
    
    return top;

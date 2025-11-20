@@ -110,13 +110,25 @@ void setIsHelper(boolean fg)                    { is_helper = fg; }
 
 void outputXml(IvyXmlWriter xw,String what)
 {
+   outputXmlStart(xw,what);
+   
+   localOutputXml(xw);
+   
+   outputXmlEnd(xw,what);
+}
+
+
+protected void outputXmlStart(IvyXmlWriter xw,String what)
+{
    xw.begin(what);
    if (is_helper) xw.field("HELPER",is_helper);
    else xw.field("TEST",true);
    xw.field("MODINT",body_decl.getModifiers());
-   
-   localOutputXml(xw);
-   
+}
+
+
+protected void outputXmlEnd(IvyXmlWriter xw,String what)
+{
    Javadoc jd = body_decl.getJavadoc();
    if (jd != null) {
       xw.cdataElement("JAVADOC",jd.toString());
@@ -127,7 +139,8 @@ void outputXml(IvyXmlWriter xw,String what)
    xw.end(what);
 }
 
-abstract void localOutputXml(IvyXmlWriter xw);
+
+void localOutputXml(IvyXmlWriter xw)                    { }
 
 
 
@@ -207,20 +220,22 @@ private static class LimbaFieldDecl extends LimbaCodeDecl {
       super(fd);
     }
    
-   @Override void localOutputXml(IvyXmlWriter xw) {
+   @Override void outputXml(IvyXmlWriter xw,String what) {
       FieldDeclaration fd = (FieldDeclaration) body_decl;
-      xw.textElement("RETURNS",fd.getType().toString());
+      int ct = 0;
       for (Object o : fd.fragments()) {
          VariableDeclarationFragment vdf = (VariableDeclarationFragment) o;
-         xw.begin("FIELD");
+         outputXmlStart(xw,what);
          xw.field("NAME",vdf.getName().toString());
+         xw.field("INDEX",ct++);
          if (vdf.getExtraDimensions() != 0) {
             xw.field("DIMS",vdf.getExtraDimensions());
           }
+         xw.textElement("RETURNS",fd.getType().toString());
          if (vdf.getInitializer() != null) {
             xw.cdataElement("INIT",vdf.getInitializer().toString());
-          }
-         xw.end("FIELD");
+          } 
+         outputXmlEnd(xw,what);
        }
     }
    
@@ -247,13 +262,13 @@ private static class LimbaMethodDecl extends LimbaCodeDecl {
          xw.textElement("RETURNS",md.getReturnType2().toString());
        }
       StringBuffer buf = new StringBuffer();
-      xw.textElement("PARAMETERS","(" + getListValue(md.parameters(),",") + ")");
+      xw.textElement("PARAMETERS",getListValue(md.parameters(),","));
       for (Object o : md.parameters()) {
          SingleVariableDeclaration svd = (SingleVariableDeclaration) o;
          if (!buf.isEmpty()) buf.append(",");
          buf.append(svd.toString());
        }
-      xw.textElement("PARAMTERS","(" + buf.toString() + ")");
+      xw.textElement("PARAMETERSBUF",buf.toString());
       xw.cdataElement("CONTENTS",md.getBody().toString());
     }
 
