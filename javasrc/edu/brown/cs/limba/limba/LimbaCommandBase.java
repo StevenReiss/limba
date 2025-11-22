@@ -593,12 +593,20 @@ private class CommandProject extends LocalCommand {
       String fnm = null;
       if (command_text == null) command_text = "";
       fnm = command_text.trim();
+      String [] args = fnm.split("\\s");
+      if (args.length > 1) {
+         limba_main.setWorkspace(args[1]);
+         fnm = args[0];
+       }
       IvyLog.logD("LIMBA","Load project from " + fnm);
       if (fnm.equals("QUERY")) {
          limba_main.setupRag(); 
        }
       else {
          File f = new File(fnm);
+         if (limba_main.getWorkspace() == null) {
+            limba_main.setWorkspace(f.getName());
+          }
          if (f.exists()) limba_main.setupRag(f);
        }
     }

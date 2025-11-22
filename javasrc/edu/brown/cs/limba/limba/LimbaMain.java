@@ -106,6 +106,7 @@ private LimbaMsg msg_server;
 private String user_style;
 private String user_context;
 private String inited_model;
+private String workspace_name;
 
 private static final String SPLIT_PATTERN;
 
@@ -135,6 +136,7 @@ private LimbaMain(String [] args)
    server_mode = false;
    ollama_model = "llama4:scout";
    project_file = null;
+   workspace_name = null;
    input_file = null;
    raw_flag = false;
    rag_model = null;
@@ -212,6 +214,14 @@ void setUserContext(String s)
    else if (!s.isEmpty() && !s.startsWith("\n")) s = "\n" + s;
    user_context = s;
 }
+
+String getWorkspace()                   { return workspace_name; }
+void setWorkspace(String nm)
+{
+   workspace_name = nm;
+}
+
+
 
 
 boolean setModel(String model) 
@@ -293,10 +303,6 @@ private void scanArgs(String [] args)
              }
             else if (args[i].startsWith("-l")) {                // -l <llama model>
                ollama_model = args[++i];
-               continue;
-             }
-            else if (args[i].startsWith("-d")) {                // -d <project file | dir>
-               project_file = new File(args[++i]);
                continue;
              }
             else if (args[i].startsWith("-f")) {                // -f <input file>
@@ -383,7 +389,7 @@ private void process()
     }
    
    if (getModel() != null) {
-      setModel(ollama_model);
+      setModel(ollama_model); 
     }
    
    setupRag(project_file);
@@ -631,8 +637,8 @@ LimbaRag getRagModel()                  { return rag_model; }
 
 void setupRag(File f)
 {
-   if (f != null) {
-      rag_model = new LimbaRag(this,f);
+   if (f != null && workspace_name != null) {
+      rag_model = new LimbaRag(this,f,workspace_name);
       rag_model.getContentRetriever();         // FOR DEBUGGING ONLY
     }
    else {
@@ -650,8 +656,8 @@ void setupRag()
    else { 
       List<File> sources = msg_server.getSources();
       IvyLog.logD("LIMBA","Found " + sources.size() + " sources");
-      if (sources != null && !sources.isEmpty()) {
-         rag_model = new LimbaRag(this,sources);  
+      if (sources != null && !sources.isEmpty() && workspace_name != null) {
+         rag_model = new LimbaRag(this,sources,workspace_name);  
        }
       else {
          rag_model = null;

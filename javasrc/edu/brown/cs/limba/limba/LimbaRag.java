@@ -23,12 +23,18 @@
 package edu.brown.cs.limba.limba;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
+import org.json.JSONObject;
 
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
@@ -42,9 +48,10 @@ import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.rag.query.Query;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
+import dev.langchain4j.store.embedding.chroma.ChromaApiVersion;
 import dev.langchain4j.store.embedding.chroma.ChromaEmbeddingStore;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
-import edu.brown.cs.ivy.exec.IvyExecQuery;
+import edu.brown.cs.ivy.file.IvyFile;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.project.IvyProject;
 import edu.brown.cs.ivy.project.IvyProjectManager;
@@ -62,6 +69,10 @@ class LimbaRag implements LimbaConstants
 private LimbaMain limba_main;
 private Collection<File> project_files;
 private ContentRetriever content_retriever;
+private String workspace_name;
+private long last_modified;
+private File config_file;
+private boolean remove_old;
       
 
 /********************************************************************************/
@@ -70,24 +81,28 @@ private ContentRetriever content_retriever;
 /*                                                                              */
 /********************************************************************************/
 
-LimbaRag(LimbaMain lm,File base)
+LimbaRag(LimbaMain lm,File base,String ws)
 {
    limba_main = lm;
    project_files = new HashSet<>();
    content_retriever = null;
-   
+   workspace_name = ws;
+  
    IvyLog.logD("LIMBA","Loading project files for " + base);
-   
    if (base != null) findProjectFiles(base);
+   
+   checkUpdates();
 }
 
 
-LimbaRag(LimbaMain lm,List<File> files)
+LimbaRag(LimbaMain lm,List<File> files,String ws)
 {
-   this(lm,(File) null);
+   this(lm,(File) null,ws);
    if (files != null) {
       project_files.addAll(files);
     }
+   
+   checkUpdates();
 }
 
 
@@ -95,7 +110,7 @@ LimbaRag(LimbaMain lm,List<File> files)
 /********************************************************************************/
 /*                                                                              */
 /*      Access methods                                                          */
-/*                                                                              */
+/*                                                                    */
 /********************************************************************************/
 
 ContentRetriever getContentRetriever()
@@ -106,6 +121,48 @@ ContentRetriever getContentRetriever()
     }
    
    return content_retriever;
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      File/update management                                                  */
+/*                                                                              */
+/********************************************************************************/
+
+private void checkUpdates()
+{
+   last_modified = 0;
+   remove_old = false;
+   
+   File f1 = new File(System.getProperty("user.home"));
+   File f2 = new File(f1,".config");
+   File f3 = new File(f2,"limba");
+   f3.mkdirs();
+   config_file = new File(f3,workspace_name + ".json");
+   try {
+      String cnts = IvyFile.loadFile(config_file);
+      if (cnts != null && !cnts.isEmpty()) {
+         JSONObject jo = new JSONObject(cnts);
+         last_modified = jo.optLong("lastupdate",0);
+       }
+    }
+   catch (IOException e) {
+      // use 0 as last modified
+    }   
+   
+   if (last_modified > 0) {
+      remove_old = true;
+      for (Iterator<File> it = project_files.iterator(); it.hasNext(); ) {
+         File f = it.next();
+         long lm = f.lastModified();
+         if (lm < last_modified) {
+            // remove files that don't need updating
+            it.remove();
+          }
+       }
+    }
 }
 
 
@@ -123,6 +180,7 @@ private ContentRetriever setupRAG()
       if (f.length() == 0) continue;
       Path p = f.toPath();
       Document d = FileSystemDocumentLoader.loadDocument(p);
+      d.metadata().put("LIMBAID",getUID(f));
       docs.add(d);
     }
    DocumentSplitter spliter = new DocumentByLineSplitter(64,0);
@@ -140,8 +198,11 @@ private ContentRetriever setupRAG()
    EmbeddingStore<TextSegment> store = null;
    try {
       store = ChromaEmbeddingStore.builder()
-         .collectionName("LIMBA-" + IvyExecQuery.getProcessId())
-         .baseUrl("http://localhost:8000")
+         .apiVersion(ChromaApiVersion.V2)
+         .collectionName("LIMBA_" + workspace_name)
+         .baseUrl("http://localhost:8000/")
+//       .tenantName("LIMBA_" + IvyExecQuery.getProcessId())
+         .tenantName("LIMBA")
          .logRequests(true)
          .logResponses(true)
          .build();
@@ -157,7 +218,7 @@ private ContentRetriever setupRAG()
 //          .host("localhost")
 //          .port(6379)
 //          .build();
-//     }
+//     } 
 //    catch (Throwable t) {
 //       IvyLog.logI("LIMBA","Can't create redis store: " + t);
 //     }
@@ -165,11 +226,16 @@ private ContentRetriever setupRAG()
   
    if (store == null) {
       store = new InMemoryEmbeddingStore<>();
+      last_modified = -1;
+      remove_old = false;
     }
    
 // need class okhttp3/Interceptor -- if this fails, defer to immemboery mode
    ContentRetriever retrv;
    try {
+      if (remove_old) {
+         // remove old files from store
+       }
       EmbeddingStoreIngestor ingest = EmbeddingStoreIngestor.builder()
          .documentSplitter(spliter)
          .embeddingModel(embed)
@@ -178,6 +244,16 @@ private ContentRetriever setupRAG()
       IvyLog.logD("LIMBA","Ingest documents " + docs.size());
       ingest.ingest(docs);
       IvyLog.logD("LIMBA","Done ingest");
+      
+      JSONObject jo = new JSONObject();
+      jo.put("lastupdate",System.currentTimeMillis());
+      try (FileWriter fw = new FileWriter(config_file)) {
+         fw.write(jo.toString() + "\n");
+       }
+      catch (IOException e) {
+         IvyLog.logE("LIMBA","Problem writing config file",e);
+       }
+            
       retrv = EmbeddingStoreContentRetriever.builder()
             .embeddingModel(embed)
             .embeddingStore(store)
@@ -204,6 +280,12 @@ private static final class EmptyContentRetriever implements ContentRetriever {
 }       // end of inner class EmptyContentRetriever
 
 
+
+private String getUID(File f)
+{
+   String p = IvyFile.getCanonicalPath(f);
+   return p;
+}
 
 /********************************************************************************/
 /*                                                                              */

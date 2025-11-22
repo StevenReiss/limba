@@ -137,6 +137,12 @@ List<File> getSources()
     }
    
    for (Element pe : IvyXml.children(r,"PROJECT")) {
+      if (limba_main.getWorkspace() == null) {
+         String wsn = IvyXml.getAttrString(pe,"WORKSPACE");
+         wsn = wsn.replace("/","_");
+         wsn = wsn.replace("\\","_");
+         limba_main.setWorkspace(wsn);  
+       }
       String pnm = IvyXml.getAttrString(pe,"NAME");
       MintDefaultReply prply = new MintDefaultReply();
       String pmsg = "<BUBBLES DO='OPENPROJECT' PROJECT='" + pnm +

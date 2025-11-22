@@ -1,6 +1,6 @@
 SETMODEL -- qwen3-coder:480b
 
-PROJECT -- /pro/limba
+PROJECT -- /pro/limba limba
 
 ASK -- Who are you?
 
