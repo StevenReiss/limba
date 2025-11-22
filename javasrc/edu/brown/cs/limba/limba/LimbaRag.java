@@ -50,6 +50,7 @@ import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import dev.langchain4j.store.embedding.chroma.ChromaApiVersion;
 import dev.langchain4j.store.embedding.chroma.ChromaEmbeddingStore;
+import dev.langchain4j.store.embedding.filter.comparison.IsIn;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import edu.brown.cs.ivy.file.IvyFile;
 import edu.brown.cs.ivy.file.IvyLog;
@@ -176,12 +177,14 @@ private void checkUpdates()
 private ContentRetriever setupRAG()
 {
    List<Document> docs = new ArrayList<>();
+   List<String> uids = new ArrayList<>();
    for (File f : project_files) {
       if (f.length() == 0) continue;
       Path p = f.toPath();
       Document d = FileSystemDocumentLoader.loadDocument(p);
       d.metadata().put("LIMBAID",getUID(f));
       docs.add(d);
+      uids.add(getUID(f));
     }
    DocumentSplitter spliter = new DocumentByLineSplitter(64,0);
 // List<TextSegment> segs = spliter.splitAll(docs);
@@ -234,7 +237,8 @@ private ContentRetriever setupRAG()
    ContentRetriever retrv;
    try {
       if (remove_old) {
-         // remove old files from store
+         List<String> files = new ArrayList<>();
+         store.removeAll(new DocFilter(uids));
        }
       EmbeddingStoreIngestor ingest = EmbeddingStoreIngestor.builder()
          .documentSplitter(spliter)
@@ -257,7 +261,7 @@ private ContentRetriever setupRAG()
       retrv = EmbeddingStoreContentRetriever.builder()
             .embeddingModel(embed)
             .embeddingStore(store)
-            .maxResults(5)
+            .maxResults(10)
             .build();
       IvyLog.logD("LIMBA","Build RAG content retreiver " + retrv);
     }
@@ -268,6 +272,16 @@ private ContentRetriever setupRAG()
    
    return retrv;
 }
+
+
+
+private class DocFilter extends IsIn {
+   
+   DocFilter(List<String> docs) {
+      super("LIMBAID",docs);
+    }
+      
+}       // end of inner class DocFilter
 
 
 
