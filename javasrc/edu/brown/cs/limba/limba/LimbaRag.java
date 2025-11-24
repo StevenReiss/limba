@@ -29,10 +29,10 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.json.JSONObject;
 
@@ -40,6 +40,7 @@ import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.loader.FileSystemDocumentLoader;
 import dev.langchain4j.data.document.splitter.DocumentByLineSplitter;
+import dev.langchain4j.data.document.splitter.DocumentByRegexSplitter;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.ollama.OllamaEmbeddingModel;
 import dev.langchain4j.rag.content.Content;
@@ -73,7 +74,12 @@ private ContentRetriever content_retriever;
 private String workspace_name;
 private long last_modified;
 private File config_file;
+private JSONObject local_data;
+private JSONObject global_data;
 private boolean remove_old;
+private String chroma_url;
+
+private static boolean use_java_splitter = true;
       
 
 /********************************************************************************/
@@ -88,9 +94,12 @@ LimbaRag(LimbaMain lm,File base,String ws)
    project_files = new HashSet<>();
    content_retriever = null;
    workspace_name = ws;
+   chroma_url = "http://localhost:8000";
   
    IvyLog.logD("LIMBA","Loading project files for " + base);
    if (base != null) findProjectFiles(base);
+   
+   loadConfigData();
    
    checkUpdates();
 }
@@ -137,21 +146,11 @@ private void checkUpdates()
    last_modified = 0;
    remove_old = false;
    
-   File f1 = new File(System.getProperty("user.home"));
-   File f2 = new File(f1,".config");
-   File f3 = new File(f2,"limba");
-   f3.mkdirs();
-   config_file = new File(f3,workspace_name + ".json");
-   try {
-      String cnts = IvyFile.loadFile(config_file);
-      if (cnts != null && !cnts.isEmpty()) {
-         JSONObject jo = new JSONObject(cnts);
-         last_modified = jo.optLong("lastupdate",0);
-       }
-    }
-   catch (IOException e) {
-      // use 0 as last modified
-    }   
+   IvyLog.logD("LIMBA","Update based on " + new Date(last_modified));
+   
+   // force update -- DEBUGGING ONLY
+   last_modified = 0;
+   remove_old = true;
    
    if (last_modified > 0) {
       remove_old = true;
@@ -166,6 +165,55 @@ private void checkUpdates()
     }
 }
 
+
+private void loadConfigData() 
+{
+   File f1 = new File(System.getProperty("user.home"));
+   File f2 = new File(f1,".config");
+   File f3 = new File(f2,"limba");
+   f3.mkdirs();
+   
+   local_data = new JSONObject();
+   global_data = new JSONObject();
+   
+   File f4 = new File(f2,"Config.json");
+   try {
+      String cnts = IvyFile.loadFile(f4);
+      if (cnts != null && !cnts.isEmpty()) {
+         global_data = new JSONObject(cnts);
+         chroma_url = local_data.optString("chromaUrl",chroma_url);
+         global_data.put("chromaUrl",chroma_url);
+       }
+    }
+   catch (IOException e) {
+      // missing config file is okay for now
+    }
+   
+   config_file = new File(f3,workspace_name + ".json");
+   try {
+      String cnts = IvyFile.loadFile(config_file);
+      if (cnts != null && !cnts.isEmpty()) {
+         local_data = new JSONObject(cnts);
+         last_modified = local_data.optLong("lastupdate",0);
+         chroma_url = local_data.optString("chromaUrl",chroma_url);
+       }
+    }
+   catch (IOException e) {
+      // use 0 as last modified
+    }   
+}
+
+
+private void updateLocalConfig()
+{
+   local_data.put("lastupdate",last_modified);
+   try (FileWriter fw = new FileWriter(config_file)) {
+      fw.write(local_data.toString() + "\n");
+    }
+   catch (IOException e) {
+      IvyLog.logE("LIMBA","Problem writing config file",e);
+    }
+}
 
 
 /********************************************************************************/
@@ -182,12 +230,11 @@ private ContentRetriever setupRAG()
       if (f.length() == 0) continue;
       Path p = f.toPath();
       Document d = FileSystemDocumentLoader.loadDocument(p);
-      d.metadata().put("LIMBAID",getUID(f));
+      d.metadata().put("id",getUID(f));
       docs.add(d);
       uids.add(getUID(f));
     }
-   DocumentSplitter spliter = new DocumentByLineSplitter(64,0);
-// List<TextSegment> segs = spliter.splitAll(docs);
+   DocumentSplitter splitter = getSplitter();
    
    OllamaEmbeddingModel embed = OllamaEmbeddingModel.builder()
          .baseUrl(limba_main.getUrl()) 
@@ -199,20 +246,27 @@ private ContentRetriever setupRAG()
          .build();
    
    EmbeddingStore<TextSegment> store = null;
-   try {
-      store = ChromaEmbeddingStore.builder()
-         .apiVersion(ChromaApiVersion.V2)
-         .collectionName("LIMBA_" + workspace_name)
-         .baseUrl("http://localhost:8000/")
-//       .tenantName("LIMBA_" + IvyExecQuery.getProcessId())
-         .tenantName("LIMBA")
-         .logRequests(true)
-         .logResponses(true)
-         .build();
+   if (chroma_url != null && !chroma_url.isEmpty() && !chroma_url.startsWith("*")) {
+      try {
+         ChromaEmbeddingStore cstore = ChromaEmbeddingStore.builder()
+            .apiVersion(ChromaApiVersion.V2)
+            .collectionName("LIMBA_" + workspace_name)
+            .baseUrl("http://localhost:8000/")
+            .tenantName("LIMBA")
+            .logRequests(true)
+            .logResponses(true)
+            .build();
+         if (last_modified <= 0) {
+            cstore.removeAll();
+            remove_old = false;
+          }
+         store = cstore;
+       }
+      catch (Throwable t) {
+         IvyLog.logE("LIMBA","Can't create chroma store", t);
+       }
     }
-   catch (Throwable t) {
-      IvyLog.logE("LIMBA","Can't create chroma store", t);
-    }
+   
 // if (store == null) {
 //    try {
 //       store = RedisEmbeddingStore.builder()
@@ -237,11 +291,10 @@ private ContentRetriever setupRAG()
    ContentRetriever retrv;
    try {
       if (remove_old) {
-         List<String> files = new ArrayList<>();
-         store.removeAll(new DocFilter(uids));
+         store.removeAll(new IsIn("id",uids));
        }
       EmbeddingStoreIngestor ingest = EmbeddingStoreIngestor.builder()
-         .documentSplitter(spliter)
+         .documentSplitter(splitter)
          .embeddingModel(embed)
          .embeddingStore(store)
          .build();
@@ -249,14 +302,8 @@ private ContentRetriever setupRAG()
       ingest.ingest(docs);
       IvyLog.logD("LIMBA","Done ingest");
       
-      JSONObject jo = new JSONObject();
-      jo.put("lastupdate",System.currentTimeMillis());
-      try (FileWriter fw = new FileWriter(config_file)) {
-         fw.write(jo.toString() + "\n");
-       }
-      catch (IOException e) {
-         IvyLog.logE("LIMBA","Problem writing config file",e);
-       }
+      last_modified = System.currentTimeMillis();
+      updateLocalConfig();
             
       retrv = EmbeddingStoreContentRetriever.builder()
             .embeddingModel(embed)
@@ -275,16 +322,6 @@ private ContentRetriever setupRAG()
 
 
 
-private class DocFilter extends IsIn {
-   
-   DocFilter(List<String> docs) {
-      super("LIMBAID",docs);
-    }
-      
-}       // end of inner class DocFilter
-
-
-
 private static final class EmptyContentRetriever implements ContentRetriever {
    
    @Override public List<Content> retrieve(Query query) { 
@@ -298,8 +335,55 @@ private static final class EmptyContentRetriever implements ContentRetriever {
 private String getUID(File f)
 {
    String p = IvyFile.getCanonicalPath(f);
+// try {
+//    MessageDigest md = MessageDigest.getInstance("MD5");
+//    byte [] dvl = md.digest(p.getBytes());
+//    String rslt = Base64.getEncoder().encodeToString(dvl);
+//    if (rslt.length() > 16) rslt = rslt.substring(0,16);
+//    return rslt;
+//  }
+// catch (Exception e) {
+//    IvyLog.logE("LIMBA","Problem with MD5 encoding of " + p);
+//  }
+   
    return p;
 }
+
+
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Document splitter for Java Source Code                                  */
+/*                                                                              */
+/********************************************************************************/
+
+private DocumentSplitter getSplitter()
+{
+   DocumentSplitter splitter1 = new DocumentByLineSplitter(128,4);
+   
+   // and may need refinement for complex real-world code.
+   String regex = "(?=\\s*(public|protected|private|static|void|int|String).*\\w+\\s*\\([^)]*\\)\\s*\\{)";
+   
+   // Use the DocumentByRegexSplitter
+   // Parameters: regex, joinDelimiter, maxSegmentSize (chars), maxOverlap (chars), subSplitter
+   DocumentByRegexSplitter splitter2 = new DocumentByRegexSplitter(
+         regex,      // The regex to split by
+         "\\n\\n",   // The delimiter to join parts with if they fit in max size
+         1000,       // Max segment size in characters (adjust as needed)
+         100,                    // Max overlap in characters (adjust as needed)
+         splitter1
+   );
+   
+   
+   // SHOULD USE DocumentByCodeSplitter when available
+   
+   if (use_java_splitter) return splitter2;
+   
+   return splitter1;
+}
+
 
 /********************************************************************************/
 /*                                                                              */
