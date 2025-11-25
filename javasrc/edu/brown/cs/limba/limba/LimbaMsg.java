@@ -115,8 +115,11 @@ private String processCommand(String cmd,Element xml) throws LimbaException
 
 
 
-
-
+/********************************************************************************/
+/*                                                                              */
+/*      Bubbles queries                                                         */
+/*                                                                              */
+/********************************************************************************/
 
 List<File> getSources()
 {
@@ -172,6 +175,20 @@ List<File> getSources()
    
    return srcs;
 }
+
+Element findClass(String name)
+{
+   MintDefaultReply rply = new MintDefaultReply(); 
+   String pmsg = "<BUBBLES DO='PATTERNSEARCH' PATTERN='" + name + "'";
+   pmsg += " DEFS='true' REFS='false' FOR='TYPE'";
+   IvyLog.logD("LIMBA","Send to bubbles: " + pmsg);
+   mint_control.send(pmsg,rply,MintControl.MINT_MSG_FIRST_NON_NULL);
+   Element pr = rply.waitForXml(); 
+   
+   return pr;
+}
+
+
 
 /********************************************************************************/
 /*                                                                              */

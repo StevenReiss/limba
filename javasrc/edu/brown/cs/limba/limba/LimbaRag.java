@@ -70,6 +70,7 @@ class LimbaRag implements LimbaConstants
 
 private LimbaMain limba_main;
 private Collection<File> project_files;
+private Collection<File> all_files;
 private ContentRetriever content_retriever;
 private String workspace_name;
 private long last_modified;
@@ -134,6 +135,11 @@ ContentRetriever getContentRetriever()
 }
 
 
+Collection<File> getFiles()
+{
+   return all_files;
+}
+
 
 /********************************************************************************/
 /*                                                                              */
@@ -153,6 +159,7 @@ private void checkUpdates()
    remove_old = true;
    
    if (last_modified > 0) {
+      all_files = new ArrayList<>(project_files);
       remove_old = true;
       for (Iterator<File> it = project_files.iterator(); it.hasNext(); ) {
          File f = it.next();
@@ -162,6 +169,9 @@ private void checkUpdates()
             it.remove();
           }
        }
+    }
+   else {
+      all_files = project_files;
     }
 }
 

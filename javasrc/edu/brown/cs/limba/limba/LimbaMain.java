@@ -44,6 +44,7 @@ import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.query.Query;
+import dev.langchain4j.service.AiServices;
 import io.github.ollama4j.OllamaAPI;
 import io.github.ollama4j.models.response.Model;
 import io.github.ollama4j.utils.Options;
@@ -107,6 +108,7 @@ private String user_style;
 private String user_context;
 private String inited_model;
 private String workspace_name;
+private boolean use_tools;
 
 private static final String SPLIT_PATTERN;
 
@@ -155,6 +157,7 @@ private LimbaMain(String [] args)
    user_context = "";
    ollama_api = null;
    inited_model = null;
+   use_tools = true;
    
    scanArgs(args);
 }
@@ -696,7 +699,7 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history) throws Exception
    
    try {
       // might need to add to history
-      String resp = getChain(history,usectx).execute(cmd);
+      String resp = getChain(history,usectx).chat(cmd);
       IvyLog.logD("LIMBA","Context Response: " + resp);
       IvyLog.logD("LIMBA","\n------------------------\n\n");
       return resp;
@@ -708,7 +711,7 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history) throws Exception
 }
 
 
-private ConversationalRetrievalChain getChain(ChatMemory mem,boolean usectx)
+private LimbaChatter getChain(ChatMemory mem,boolean usectx)
 {
    OllamaChatModel chat = OllamaChatModel.builder()
       .baseUrl(getUrl())
@@ -731,10 +734,49 @@ private ConversationalRetrievalChain getChain(ChatMemory mem,boolean usectx)
    if (mem != null) {
       bldr.chatMemory(mem);
     }
+   
+   if (use_tools) {
+      AiServices<LimbaAssistant> aib = AiServices.builder(LimbaAssistant.class)
+         .chatModel(chat)
+         .tools(new LimbaTools(msg_server,rag_model.getFiles())) 
+         .contentRetriever(cr);
+      if (mem != null) {
+         aib.chatMemory(mem);
+       }
+      LimbaAssistant la = aib.build();
+      IvyLog.logD("LIMBA","Built limba assistant " + la);
+      return la;
+    }
+   
    ConversationalRetrievalChain chain = bldr.build();
    
-   return chain;
+   return new ChainChatter(chain);
 }
+
+
+
+private interface LimbaChatter {
+   String chat(String msg);
+}
+
+private interface LimbaAssistant extends LimbaChatter {
+   String chat(String msg);
+}
+
+private class ChainChatter implements LimbaChatter {
+   
+   private ConversationalRetrievalChain ret_chain;
+   
+   ChainChatter(ConversationalRetrievalChain chain) {
+      ret_chain = chain;
+    }
+   
+   @Override public String chat(String msg) {
+      return ret_chain.execute(msg);
+    }
+   
+}       // end of inner class ChainChatter
+
 
 
 private static final class EmptyContentRetriever implements ContentRetriever {
