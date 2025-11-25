@@ -109,8 +109,10 @@ private String user_context;
 private String inited_model;
 private String workspace_name;
 private boolean use_tools;
+private LimbaChatter chat_interface;
 
 private static final String SPLIT_PATTERN;
+private static boolean http_log = false;
 
 static {
    String split = "^\\s*//\\s*Version\\s+\\d+$";
@@ -158,6 +160,7 @@ private LimbaMain(String [] args)
    ollama_api = null;
    inited_model = null;
    use_tools = true;
+   chat_interface = null;
    
    scanArgs(args);
 }
@@ -198,6 +201,8 @@ void setKeyMap(String key,String val)
 
 boolean getRemoteFileAccess()           { return remote_files; }
 
+LimbaMsg getMessageServer()             { return msg_server; }
+
 JcompControl getJcompControl()          { return jcomp_main; }
 
 String getUserStyle()                   { return user_style; }
@@ -225,8 +230,6 @@ void setWorkspace(String nm)
 }
 
 
-
-
 boolean setModel(String model) 
 {
    if (getOllama() != null && model != null) {
@@ -249,6 +252,7 @@ boolean setModel(String model)
     }
    
    ollama_model = model;
+   chat_interface = null;
    
    return true;
 }
@@ -647,6 +651,8 @@ void setupRag(File f)
    else {
       rag_model = null;
     }
+   
+   chat_interface = null;
 }
 
 void setupRag() 
@@ -713,12 +719,14 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history) throws Exception
 
 private LimbaChatter getChain(ChatMemory mem,boolean usectx)
 {
+   if (chat_interface != null) return chat_interface;
+   
    OllamaChatModel chat = OllamaChatModel.builder()
       .baseUrl(getUrl())
       .maxRetries(3)
       .timeout(Duration.ofMinutes(10))
-      .logRequests(true)
-      .logResponses(true)
+      .logRequests(http_log)
+      .logResponses(http_log)
       .modelName(getModel())
       .build();
    ConversationalRetrievalChain.Builder bldr = ConversationalRetrievalChain.builder();
@@ -738,19 +746,21 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx)
    if (use_tools) {
       AiServices<LimbaAssistant> aib = AiServices.builder(LimbaAssistant.class)
          .chatModel(chat)
-         .tools(new LimbaTools(msg_server,rag_model.getFiles())) 
+         .tools(new LimbaTools(this,rag_model.getFiles())) 
          .contentRetriever(cr);
       if (mem != null) {
          aib.chatMemory(mem);
        }
       LimbaAssistant la = aib.build();
       IvyLog.logD("LIMBA","Built limba assistant " + la);
-      return la;
+      chat_interface = la;
+    }
+   else {
+      ConversationalRetrievalChain chain = bldr.build();
+      chat_interface = new ChainChatter(chain);
     }
    
-   ConversationalRetrievalChain chain = bldr.build();
-   
-   return new ChainChatter(chain);
+   return chat_interface;
 }
 
 

@@ -81,6 +81,7 @@ private boolean remove_old;
 private String chroma_url;
 
 private static boolean use_java_splitter = true;
+private static boolean rag_log = false;
       
 
 /********************************************************************************/
@@ -251,8 +252,8 @@ private ContentRetriever setupRAG()
          .modelName("nomic-embed-text")
          .timeout(Duration.ofMinutes(2))
          .maxRetries(10)
-         .logRequests(true)
-         .logResponses(true)
+         .logRequests(rag_log)
+         .logResponses(rag_log)
          .build();
    
    EmbeddingStore<TextSegment> store = null;
@@ -263,8 +264,8 @@ private ContentRetriever setupRAG()
             .collectionName("LIMBA_" + workspace_name)
             .baseUrl("http://localhost:8000/")
             .tenantName("LIMBA")
-            .logRequests(true)
-            .logResponses(true)
+            .logRequests(rag_log)
+            .logResponses(rag_log)
             .build();
          if (last_modified <= 0) {
             cstore.removeAll();

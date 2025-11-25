@@ -23,15 +23,23 @@
 package edu.brown.cs.limba.limba;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.w3c.dom.Element;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import edu.brown.cs.ivy.file.IvyFile;
 import edu.brown.cs.ivy.file.IvyLog;
+import edu.brown.cs.ivy.jcomp.JcompAst;
+import edu.brown.cs.ivy.jcomp.JcompControl;
+import edu.brown.cs.ivy.jcomp.JcompProject;
 import edu.brown.cs.ivy.xml.IvyXml;
 
 public class LimbaTools implements LimbaConstants
@@ -44,6 +52,7 @@ public class LimbaTools implements LimbaConstants
 /*                                                                              */
 /********************************************************************************/
 
+private LimbaMain       limba_main;
 private LimbaMsg        message_server;
 private Collection<File> project_files;
 
@@ -53,9 +62,10 @@ private Collection<File> project_files;
 /*                                                                              */
 /********************************************************************************/
 
-LimbaTools(LimbaMsg msg,Collection<File> files)
+LimbaTools(LimbaMain lm,Collection<File> files)
 {
-   message_server = msg;
+   limba_main = lm;
+   message_server = lm.getMessageServer();
    project_files = new ArrayList<>(files);
 }
 
@@ -72,9 +82,22 @@ public List<String> getConstructorsForClass(@P("name of the class") String name)
 {
    List<String> rslt = new ArrayList<>();
    
-   findClass(name);
+   TypeDeclaration td = findClassAst(name,false);
    
    IvyLog.logD("LIMBA","Find constructors for class " + name);
+   
+   if (td != null) {
+      for (Object o1 : td.bodyDeclarations()) {
+         if (o1 instanceof MethodDeclaration) {
+            MethodDeclaration md = (MethodDeclaration) o1;
+            if (!md.isConstructor()) continue;
+            String txt = getMethodDescription(md);
+            rslt.add(txt);
+          }
+       }
+    }
+   
+   IvyLog.logD("LIMBA","Result is " + rslt);
    
    return rslt;
 }
@@ -105,13 +128,31 @@ public String getMethodInformation(@P("full name of the method") String name)
       mnm = name.substring(idx1+1);
     }
    
+   IvyLog.logD("LIMBA","Get info for class " + cnm + " and method " + mnm);
+   
+   String rslt = name;
+   
    if (cnm != null) {
-      findClass(cnm);
+      TypeDeclaration td = findClassAst(cnm,false);
+      if (td != null) {
+         for (Object o1 : td.bodyDeclarations()) {
+            if (o1 instanceof MethodDeclaration) {
+               MethodDeclaration md = (MethodDeclaration) o1;
+               if (md.getName().getIdentifier().equals(mnm)) {
+                  rslt = getMethodDescription(md);
+                  break;
+                }
+             }
+          }
+       }
+    }
+   else {
+      // handle case where only method is given -- if msg server is available
     }
    
-   IvyLog.logD("LIMBA","Get info for class " + cnm + " and method " + mnm);
+   IvyLog.logD("LIMBA","Return " + rslt);
 
-   return name;
+   return rslt;
 }
 
 
@@ -126,9 +167,20 @@ public List<String> getClassMethods(@P("name of the class") String name)
 {
    List<String> rslt = new ArrayList<>();
    
-   findClass(name);
-   
    IvyLog.logD("LIMBA","Find methods for class " + name);
+   
+   TypeDeclaration td = findClassAst(name,false);
+   if (td != null) {
+      for (Object o1 : td.bodyDeclarations()) {
+         if (o1 instanceof MethodDeclaration) {
+            MethodDeclaration md = (MethodDeclaration) o1;
+            String txt = getMethodDescription(md);
+            rslt.add(txt);
+          }
+       }
+    }
+   
+   IvyLog.logD("LIMBA","Result is " + rslt);
    
    return rslt;
 }
@@ -140,20 +192,133 @@ public List<String> getClassMethods(@P("name of the class") String name)
 /*                                                                              */
 /********************************************************************************/
 
-private void findClass(String name) 
+private TypeDeclaration findClassAst(String name,boolean resolve)
+{
+   File f1 = findClassFile(name);
+   if (f1 == null) return null;
+   
+   String cnts = null;
+   try {
+      cnts = IvyFile.loadFile(f1);
+    }
+   catch (IOException e) { }
+   if (cnts == null || cnts.isEmpty()) return null;
+   
+   CompilationUnit cu = JcompAst.parseSourceFile(cnts); 
+   
+   if (resolve) {
+      JcompControl jcomp = limba_main.getJcompControl();  
+      JcompProject jp = JcompAst.getResolvedAst(jcomp,cu,null);
+      if (jp == null) {
+         IvyLog.logD("LIMBA","Unable to resolve AST for tools " + name);
+       }
+    }
+   
+   String cnm = f1.getName();
+   int idx = cnm.lastIndexOf(".");
+   cnm = cnm.substring(0,idx);
+   String name1 = name.replace("$",".");
+   int idx1 = name1.lastIndexOf(cnm + ".");
+   String subnm = null;
+   if (idx1 > 0) {
+      subnm = name1.substring(idx1+1);
+    }
+   
+   for (Object o1 : cu.types()) {
+      TypeDeclaration td = (TypeDeclaration) o1;
+      String tnm = td.getName().getIdentifier();
+      if (tnm.equals(cnm)) {
+         if (subnm == null) return td;
+         return findInnerType(td,subnm);
+       }
+    }
+   
+   return null;
+}
+
+
+private TypeDeclaration findInnerType(TypeDeclaration td,String name)
+{
+   String subnm = null;
+   String name1 = name;
+   int idx1 = name1.indexOf(".");
+   if (idx1 > 0) {
+      subnm = name1.substring(idx1+1);
+      name1 = name1.substring(0,idx1);
+    }
+   
+   for (Object o1 : td.bodyDeclarations()) {
+      if (o1 instanceof TypeDeclaration) {
+         TypeDeclaration intd = (TypeDeclaration) o1;
+         if (td.getName().getIdentifier().equals(name1)) {
+            if (subnm == null) return intd;
+            return findInnerType(intd,subnm);
+          }
+       }
+    }
+   return null;
+}
+
+
+private File findClassFile(String name) 
 {
    if (message_server != null) {
       Element xml = message_server.findClass(name);
       if (xml != null && IvyXml.isElement(xml,"RESULT")) {
-         // handle result
+         Element xml1 = IvyXml.getChild(xml,"MATCH");
+         String f = IvyXml.getAttrString(xml1,"FILE");
+         if (f != null) {
+            return new File(f);
+          }
        }
+    }
+   
+   List<String> possibles = new ArrayList<>();
+   String n1 = name;
+   int idx = n1.indexOf("$");
+   if (idx > 0) {
+      n1 = n1.substring(0,idx);
+    }
+   n1 = n1.replace(".",File.separator);
+   for ( ; ; ) {
+      String n2 = n1 + ".java";
+      possibles.add(n2);
+      int idx1 = n1.lastIndexOf(File.separator);
+      if (idx < 0) break;
+      n1 = n1.substring(0,idx1);
     }
    
    for (File f : project_files) {
       String pnm = f.getPath();
-      pnm = pnm.replace("/",".");
-      // find file that matches the name -- take inner classes into account
+      for (String n3 : possibles) {
+         if (pnm.endsWith(n3)) {
+            return f;
+          }
+       }
     }
+   
+   return null;
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Get method description                                                  */
+/*                                                                              */
+/********************************************************************************/
+
+private String getMethodDescription(MethodDeclaration md)
+{
+   String mtxt = md.toString();
+   int idx3 = mtxt.indexOf("(");
+   if (idx3 < 0) idx3 = 0;
+   int idx2 = mtxt.indexOf("{",idx3);
+   if (idx2 < 0) idx2 = mtxt.indexOf(";",idx3);
+   if (idx2 > 0) mtxt = mtxt.substring(0,idx2);
+   mtxt = mtxt.trim();
+   
+   return mtxt;
 }
 
 
