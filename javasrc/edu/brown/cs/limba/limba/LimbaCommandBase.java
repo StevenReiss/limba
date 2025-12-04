@@ -26,10 +26,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpTimeoutException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
 
 import org.w3c.dom.Element;
 
@@ -72,54 +72,65 @@ LimbaCommandFactory(LimbaMain lm)
 }
 
 
-LimbaCommand createCommand(String line)
+LimbaCommand createCommand(Element xml)
 {
-   StringTokenizer tok = new StringTokenizer(line);
-   if (!tok.hasMoreTokens()) return null;
-   String cmd = tok.nextToken();
+   String cmd = IvyXml.getAttrString(xml,"DO");
    cmd = cmd.toUpperCase();
+   
    String prompt = getPrompt(cmd);
+   Element pelt = IvyXml.getChild(xml,"PROMPT");
+   if (pelt != null) {
+      String p1 = IvyXml.getText(pelt);
+      if (IvyXml.getAttrBool(pelt,"REPLACE")) {
+         prompt = p1;
+       }
+      else if (p1 != null) {
+         prompt += "\n" + p1.trim();
+       }
+    }
    
    switch (cmd) {
       case "PING" :
-         return new CommandPing(line);
+         return new CommandPing(xml);
       case "LIST" :
-         return new CommandList(line);
+         return new CommandList(xml);
       case "STYLE" :
-         return new CommandStyle(line);
+         return new CommandStyle(xml);
       case "CONTEXT" :
-         return new CommandContext(line);
+         return new CommandContext(xml);
       case "SETMODEL" :
-         return new CommandSetModel(line);
+         return new CommandSetModel(xml);
       case "CLEAR" :
-         return new CommandClear(line);
+         return new CommandClear(xml);
       case "DETAIL" :
       case "DETAILS" :
-         return new CommandDetails(line);
+         return new CommandDetails(xml);
       case "QUERY" :
-         return new CommandQuery(prompt,line);
+         return new CommandQuery("QUERY",prompt,xml);
       case "ASK" :
-         return new CommandQuery(prompt,line);
+         return new CommandQuery("ASK",prompt,xml);
       case "CLEAN" :
-         return new CommandQuery(prompt,line);
+         return new CommandQuery("CLEAN",prompt,xml);
       case "GENERATE" :
-         return new CommandQuery(prompt,line);
+         return new CommandQuery("GENERATE",prompt,xml);
       case "JAVADOC" :
-         return new CommandQuery(prompt,line);
+         return new CommandQuery("JAVADOC",prompt,xml);
       case "SUGGEST" :
-         return new CommandQuery(prompt,line);
+         return new CommandQuery("SUGGEST",prompt,xml);
       case "EXPLAIN" :
-         return new CommandQuery(prompt,line);
+         return new CommandQuery("EXPLAIN",prompt,xml);
       case "PROJECT" :
-         return new CommandProject(line);
-      case "PROPERTY" :
-         return new CommandProperty(line);
+         return new CommandProject(xml);
       case "FIND" :
-         return new CommandFind(prompt,line);
+         return new CommandFind(prompt,xml);
       case "FINDJDOC" :
-         return new CommandJdoc(prompt,line);
+         return new CommandJdoc(prompt,xml);
       case "TESTS" :
-         return new CommandTests(prompt,line);
+         return new CommandTests(prompt,xml);
+      case "SETUPBUBBLES" :
+         return new CommandSetupBubbles(xml);
+      case "AGENT" :
+         return new CommandAgent(xml);
       case "EXIT" :
          System.exit(0);
     }
@@ -176,113 +187,17 @@ private String getPrompt(String cmd)
 
 private abstract class CommandBase implements LimbaCommand {
    
-   private String end_token;
-   private boolean end_on_blank;
-   protected Map<String,String> option_set;
-   protected String command_text;
    protected String command_id;
-   private String first_line;
    
-   CommandBase(String line) {
-      end_token  = "EOL";
-      option_set = null;
-      end_on_blank = false;
-      command_text = null;
-      command_id = null;
-      readOptions(line);
+   CommandBase(Element xml) {
+      command_id = IvyXml.getAttrString(xml,"ID");
     }
 
-   @Override public boolean getEndOnBlank()             { return end_on_blank; }
-   @Override public String getEndToken()                { return end_token; } 
-   
    protected OllamaAPI getOllama() {
       return limba_main.getOllama();
     }
    protected String getModel() {
       return limba_main.getModel();
-    }
-   
-  @Override public void setOptions(String opts) {
-      if (opts == null || opts.isEmpty()) return;
-      StringTokenizer tok = new StringTokenizer(opts);
-      while (tok.hasMoreTokens()) {
-         String opt = tok.nextToken();
-         if (option_set == null) option_set = new HashMap<>();
-         int idx = opt.indexOf("=");
-         String key = opt;
-         String value = "";
-         if (idx > 0) {
-            key = opt.substring(0,idx);
-            value = opt.substring(idx+1);
-          }
-         option_set.put(key,value);
-       }
-    }
-   
-   private  void readOptions(String line) {
-      StringTokenizer tok = new StringTokenizer(line);
-      if (tok.hasMoreTokens()) {
-         tok.nextToken();                       // skip the command
-       }
-      
-      boolean haveeol = false;
-      while (tok.hasMoreTokens()) {
-         String opt = tok.nextToken();
-         if (opt.equals("--")) {
-            if (!haveeol) end_on_blank = true;
-            haveeol = true;
-            first_line = tok.nextToken("\n");
-            break;
-          }
-         if (opt.equals("-b")) {
-            end_on_blank = true;
-            continue;
-          }
-         if (opt.startsWith("-")) {
-            haveeol = true;
-            if (option_set == null) option_set = new HashMap<>();
-            int idx = opt.indexOf("=");
-            String key = opt;
-            String value = "";
-            if (idx > 0) {
-               key = opt.substring(0,idx);
-               value = opt.substring(idx+1);
-             }
-            option_set.put(key,value);
-          }
-         else if (!haveeol) {
-            end_token = opt;
-            haveeol = true;
-          }
-         else {
-            first_line = opt + " " + tok.nextToken("\n");
-          }
-       }
-    }
-   
-   @Override public void setupCommand(String complete,boolean user) {
-      StringBuffer text = new StringBuffer();
-      if (complete == null) complete = "";
-      StringTokenizer lines = new StringTokenizer(complete,"\n");
-      int ct = (user ? 0 : 1);
-      while (lines.hasMoreTokens()) {
-         String line = lines.nextToken();
-         if (ct++ == 0) { 
-            if (first_line == null) continue;
-            line = first_line.trim();
-          }
-         text.append(line);
-         text.append("\n");
-       }
-      command_text = text.toString();
-    }
-   
-   @Override public void setupCommand(Element xml) {
-      String opts = IvyXml.getAttrString(xml,"OPTIONS");
-      setOptions(opts);
-      command_id = IvyXml.getAttrString(xml,"ID");
-      String body = IvyXml.getTextElement(xml,"BODY");
-      if (body != null) setupCommand(body,false);
     }
    
    @Override public void process(IvyXmlWriter rslt) { 
@@ -324,14 +239,13 @@ private abstract class CommandBase implements LimbaCommand {
 /*                                                                              */
 /********************************************************************************/
 
-private class CommandPing extends CommandBase {
+private class CommandPing extends CommandBase {  
    
-   CommandPing(String line) { 
-      super(line);
+   CommandPing(Element xml) { 
+      super(xml);
     }
    
    @Override public String getCommandName()             { return "PING"; }
-   @Override public void setupCommand(String complete,boolean user)  { }
    
    @Override public void localProcess(IvyXmlWriter xw) throws Exception {
       xw.text("PONG");
@@ -349,22 +263,16 @@ private class CommandPing extends CommandBase {
 
 private class CommandList extends CommandBase {
    
-   CommandList(String line) { 
-      super(line);
+   CommandList(Element xml) {
+      super(xml);
     }
    
    @Override public String getCommandName()             { return "LIST"; }
-   @Override public void setupCommand(String complete,boolean user)  { }
    
    @Override public void localProcess(IvyXmlWriter xw) throws Exception {
       List<Model> models = getOllama().listModels();
       for (Model m : models) {
-         if (xw != null) {
-            xw.textElement("MODEL",m.getName());
-          }
-         else {
-            System.out.println(m.getName());
-          }
+         xw.textElement("MODEL",m.getName());
        }
     }
 
@@ -380,19 +288,21 @@ private class CommandList extends CommandBase {
 
 private class CommandSetModel extends CommandBase {
    
-   CommandSetModel(String line) {
-      super(line);
+   private String model_name;
+   
+   CommandSetModel(Element xml) {
+      super(xml);
+      model_name = IvyXml.getTextElement(xml,"MODEL");
+      if (model_name != null) model_name = model_name.trim();
     }
    
    @Override public String getCommandName()             { return "SETMODEL"; }
-   @Override public String getEndToken()                { return null; } 
    
    @Override public void localProcess(IvyXmlWriter xw) throws Exception {
-      limba_main.setModel(command_text.trim());
+      if (model_name != null) limba_main.setModel(model_name);
     }
    
 }       // end of inner class CommandSetModel
-
 
 
 
@@ -404,20 +314,16 @@ private class CommandSetModel extends CommandBase {
 
 private class CommandDetails extends CommandBase {
 
-   CommandDetails(String line) { 
-      super(line);
+   CommandDetails(Element xml) { 
+      super(xml);
     }
    
    @Override public String getCommandName()             { return "DETAILS"; }
-   @Override public void setupCommand(String complete,boolean user)  { }
    
    @Override public void localProcess(IvyXmlWriter xw) throws Exception {
       ModelDetail md = getOllama().getModelDetails(getModel());
       if (xw != null) {
          xw.textElement("DETAILS",md.toString());
-       }
-      else {
-         System.out.println(md);
        }
     }
 
@@ -432,14 +338,17 @@ private class CommandDetails extends CommandBase {
 
 private class CommandStyle extends CommandBase {
    
-   CommandStyle(String line) { 
-      super(line);
+   private String style_text;
+   
+   CommandStyle(Element xml) { 
+      super(xml);
+      style_text = IvyXml.getTextElement(xml,"STYLE");
     }
    
    @Override public String getCommandName()             { return "STYLE"; }
    
    @Override public void localProcess(IvyXmlWriter xw) throws Exception {
-      limba_main.setUserStyle(command_text);
+      limba_main.setUserStyle(style_text);
     }
    
 }       // end of inner class CommandStyle
@@ -448,14 +357,17 @@ private class CommandStyle extends CommandBase {
 
 private class CommandContext extends CommandBase {
    
-   CommandContext(String line) { 
-      super(line);
+   private String context_text;
+   
+   CommandContext(Element xml) { 
+      super(xml);
+      context_text = IvyXml.getTextElement(xml,"CONTEXT");
     }
    
    @Override public String getCommandName()             { return "CONTEXT"; }
    
    @Override public void localProcess(IvyXmlWriter xw) throws Exception {
-      limba_main.setUserContext(command_text); 
+      limba_main.setUserContext(context_text); 
     }
    
 }       // end of inner class CommandContext
@@ -464,8 +376,8 @@ private class CommandContext extends CommandBase {
 
 private class CommandClear extends CommandBase {
    
-   CommandClear(String line) {
-      super(line);
+   CommandClear(Element xml) {
+      super(xml);
     }
    
    @Override public String getCommandName()             { return "CLEAR"; }
@@ -489,19 +401,23 @@ private class CommandClear extends CommandBase {
 private class CommandQuery extends CommandBase {
    
    private String programmer_prompt;
+   private String command_name;
+   private String query_text;
    
-   CommandQuery(String prompt,String line) {
-      super(line);
+   CommandQuery(String nm,String prompt,Element xml) {
+      super(xml);
+      command_name = nm;
       programmer_prompt = prompt;
+      query_text = IvyXml.getTextElement(xml,"CONTENTS");
     }
    
-   @Override public String getCommandName()             { return "QUERY"; }
+   @Override public String getCommandName()             { return command_name; }
    
    @Override public void localProcess(IvyXmlWriter xw) throws Exception {
-      String cmd = command_text;
+      String cmd = query_text;
       boolean usectx = false;
       if (programmer_prompt != null) {
-         cmd = programmer_prompt + "\n" + command_text;
+         cmd = programmer_prompt + "\n" + query_text;
          usectx = true;
        }
       ChatMemory history = null;
@@ -515,103 +431,70 @@ private class CommandQuery extends CommandBase {
        } 
        
       String resp = limba_main.askOllama(cmd,usectx,history);  
-      if (xw != null) {
-         xw.cdataElement("RESPONSE",resp);
-         List<String> jcodes = LimbaMain.getJavaCode(resp);
-         if (jcodes != null) {
-            for (String jcode : jcodes) {
-               xw.cdataElement("JAVA",jcode);
-             }
-          }
-         String jdoc = LimbaMain.getJavaDoc(resp);
-         if (jdoc != null) xw.cdataElement("JAVADOC",jdoc);
-       }
-      else {
-         System.out.println(resp);
-         List<String> jcodes = LimbaMain.getJavaCode(resp);
-         if (jcodes != null) {
-            for (String jcode : jcodes) {
-               IvyLog.logD("LIMBA","JAVA CODE:\n" + jcode);
-   //          System.out.println("\n\nJAVA CODE:\n" + jcode + "\n\n");
-             }
-          }
-         String jdoc = LimbaMain.getJavaDoc(resp);
-         if (jdoc != null) {
-            IvyLog.logD("LIMBA","JAVADOC:\n" + jdoc);
-   //       System.out.println("\n\nJAVA DOC:\n" + jdoc + "\n\n");
+      
+      xw.cdataElement("RESPONSE",resp);
+      List<String> jcodes = LimbaMain.getJavaCode(resp);
+      if (jcodes != null) {
+         for (String jcode : jcodes) {
+            xw.cdataElement("JAVA",jcode);
           }
        }
+      String jdoc = LimbaMain.getJavaDoc(resp);
+      if (jdoc != null) xw.cdataElement("JAVADOC",jdoc);
+      
       return;
     }
    
 }       // end of inner class CommandQuery
 
 
+
 /********************************************************************************/
 /*                                                                              */
-/*      Local commands                                                          */
+/*      Project command                                                         */
 /*                                                                              */
 /********************************************************************************/
 
-private abstract class LocalCommand extends CommandBase {
+private class CommandProject extends CommandBase {
    
-   LocalCommand(String line) {
-      super(line);
+   CommandProject(Element xml) {
+      super(xml);
     }
    
-}       // end of inner class LocalCommand
-
-
-
-private class CommandProperty extends LocalCommand {
-
-   CommandProperty(String line) {
-      super(line);
-    }
-   
-   @Override public String getCommandName()             { return "PROPERTY"; }
-   @Override public String getEndToken()                { return null; }
+   @Override public String getCommandName()             { return "PROJECT"; }
    
    @Override public void localProcess(IvyXmlWriter xw) {
-      // PROPERTY x=y or PROPERTY x y
-    }
-   
-}       // end of inner class CommandProperty
-
-
-
-private class CommandProject extends LocalCommand {
-   
-   CommandProject(String line) {
-      super(line);
-    }
-   
-   @Override public String getCommandName()             { return "PROPERTY"; }
-   @Override public String getEndToken()                { return null; }
-   
-   @Override public void localProcess(IvyXmlWriter xw) {
-      String fnm = null;
-      if (command_text == null) command_text = "";
-      fnm = command_text.trim();
-      String [] args = fnm.split("\\s");
-      if (args.length > 1) {
-         limba_main.setWorkspace(args[1]);
-         fnm = args[0];
-       }
-      IvyLog.logD("LIMBA","Load project from " + fnm);
-      if (fnm.equals("QUERY")) {
-         limba_main.setupRag(); 
-       }
-      else {
-         File f = new File(fnm);
-         if (limba_main.getWorkspace() == null) {
-            limba_main.setWorkspace(f.getName());
-          }
-         if (f.exists()) limba_main.setupRag(f);
-       }
+      limba_main.setupRag();
     }
    
 }       // end of inner class CommandProject
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Setup BEDROCK for debugging purposes                                    */
+/*                                                                              */
+/********************************************************************************/
+
+private class CommandSetupBubbles extends CommandBase {
+   
+   private String workspace_name;
+   private String mint_name;
+   
+   CommandSetupBubbles(Element xml) {
+      super(xml);
+      workspace_name = IvyXml.getTextElement(xml,"WORKSPACE");
+      mint_name = IvyXml.getAttrString(xml,"MINT");
+    }
+   
+   @Override public String getCommandName()             { return "SETUPBUBBLES"; }
+  
+   @Override public void localProcess(IvyXmlWriter xw) {
+      limba_main.setupBedrock(workspace_name,mint_name); 
+    }
+   
+}       // end of inner class CommandSetupBubbles
 
 
 
@@ -626,17 +509,13 @@ private class CommandFind extends CommandBase {
    private String use_prompt;
    private LimbaFinder limba_finder;
    
-   CommandFind(String prompt,String line) {
-      super(line);
+   CommandFind(String prompt,Element xml) {
+      super(xml);
       use_prompt = prompt;
+      limba_finder = new LimbaFinder(limba_main,use_prompt,xml); 
     }
    
    @Override public String getCommandName()             { return "FIND"; }
-   
-   @Override public void setupCommand(Element xml) {
-      super.setupCommand(xml);          // handle options
-      limba_finder = new LimbaFinder(limba_main,use_prompt,xml); 
-    }
    
    @Override public void localProcess(IvyXmlWriter xw) throws Exception {
       limba_finder.process(xw);   
@@ -657,17 +536,13 @@ private class CommandJdoc extends CommandBase {
    private String use_prompt;
    private LimbaJdocer limba_jdocer;
    
-   CommandJdoc(String prompt,String line) {
-      super(line);
+   CommandJdoc(String prompt,Element xml) {
+      super(xml);
       use_prompt = prompt;
+      limba_jdocer = new LimbaJdocer(limba_main,use_prompt,xml);  
     }
    
    @Override public String getCommandName()             { return "FINDJDOC"; }
-   
-   @Override public void setupCommand(Element xml) {
-      super.setupCommand(xml);          // handle options
-      limba_jdocer = new LimbaJdocer(limba_main,use_prompt,xml);  
-    }
    
    @Override public void localProcess(IvyXmlWriter xw) throws Exception {
       limba_jdocer.process(xw);   
@@ -688,26 +563,60 @@ private class CommandTests extends CommandBase {
    private String use_prompt;
    private LimbaTestGenerator test_gen;
    
-   CommandTests(String prompt,String line) {
-      super(line);
+   CommandTests(String prompt,Element xml) {
+      super(xml);
       use_prompt = prompt;
+      test_gen = new LimbaTestGenerator(limba_main,use_prompt,xml);  
     }
    
    @Override public String getCommandName()             { return "TESTS"; }
    
-   @Override public void setupCommand(Element xml) {
-      super.setupCommand(xml);          // handle options
-      test_gen = new LimbaTestGenerator(limba_main,use_prompt,xml);  
+   @Override public void localProcess(IvyXmlWriter xw) throws Exception {
+      test_gen.process(xw);  
     }
    
-   @Override public void localProcess(IvyXmlWriter xw) throws Exception {
-      // NEED TO CREATE TEST_GEN for non-xml case
-      if (test_gen != null) {
-         test_gen.process(xw);  
+}       // end of inner class CommandTests
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      AGENT command to load agents                                            */
+/*                                                                              */
+/********************************************************************************/
+
+private class CommandAgent extends CommandBase {
+
+   private File jar_file;
+   private List<String> class_names;
+   
+   CommandAgent(Element xml) {
+      super(xml);
+      String jfnm = IvyXml.getAttrString(xml,"JARFILE");
+      if (jfnm == null) jar_file = null;
+      else jar_file = new File(jfnm);
+      class_names = new ArrayList<>();
+      for (Element cxml : IvyXml.children(xml,"CLASS")) {
+         class_names.add(IvyXml.getText(cxml));
        }
     }
    
-}       // end of inner class CommandJdoc
+   
+   @Override public String getCommandName()             { return "AGENT"; }
+   
+   @Override public void localProcess(IvyXmlWriter xw) throws Exception {
+      IvyLog.logD("LIMBA","Load jar file " + jar_file + " with dependencies if needed");
+      // load jar file and its dependencies (see BemaMain.setupPackage)
+      // for each class in class_names
+      //        find the class and instantiate
+      //        call limba_main.addAgent(resultant object)
+      // But only load a jar file once, even it used multiple times
+      // And only add a class once if it is used multiple times
+      // Possibly do this in a separate class
+      // Might want to do this message-based and pass in the parameters for messaging
+    }
+   
+}       // end of inner class CommandAgent
 
 
 }       // end of class LimbaCommandBase

@@ -1,16 +1,17 @@
 <LIMBA DO='PING' />
 <LIMBA DO='LIST' />
-<LIMBA DO='SETMODEL'><BODY>qwen3-coder:480b</BODY></LIMBA>
-<LIMBA DO='PROJECT'><BODY>/home/spr/Eclipse/tutorial</BODY></LIMBA>
-<LIMBA DO='STYLE'><BODY>Do not use on-demand imports.
+<LIMBA DO='SETMODEL' MODEL='qwen3-coder:480b' />
+<LIMBA DO='SETUPBUBBLES' MINT='limba_tutorial_debug' WORKSPACE='tutorial' />
+<LIMBA DO='PROJECT' />
+<LIMBA DO='STYLE'><STYLE>Do not use on-demand imports.
 Do not use on-demand static imports.
 Do not use anonymous classes.
 Do not use lambdas.
-Place right brace on a separate line.</BODY></LIMBA>
+Place right brace on a separate line.</STYLE></LIMBA>
 
 
 <LIMBA DO='QUERY' USECONTEXT='true'>
-   <BODY>List the methods of the class edu.brown.cs.bubbles.tutorial.romp.Magnet</BODY>
+   <CONTENTS>List the methods of the class edu.brown.cs.bubbles.tutorial.romp.Magnet</CONTENTS>
 </LIMBA>
 
 

@@ -121,6 +121,39 @@ private String processCommand(String cmd,Element xml) throws LimbaException
 /*                                                                              */
 /********************************************************************************/
 
+void pongEclipse()
+{
+   mint_control.register("<BEDROCK TYPE='PING' />",new BubblesPingHandler());
+}
+
+
+boolean pingEclipse()
+{
+   MintDefaultReply rply = new MintDefaultReply();
+   String msg = "<BUBBLES DO='PING' />";
+   IvyLog.logD("LIMBA","Send to bubbles: " + msg);
+   mint_control.send(msg,rply,MintControl.MINT_MSG_FIRST_NON_NULL); 
+ 
+   String r = rply.waitForString(500);
+   
+   return r != null;
+}
+
+
+void sendBubblesMessage(String cmd,String arg,MintDefaultReply rply)
+{
+   String msg = "<BUBBLES DO='" + cmd + "'";
+   if (arg != null) msg += " " + arg;
+   msg += " />";
+   IvyLog.logD("LIMBA","Send to bubbles: " + msg);
+   
+   int fgs = MintControl.MINT_MSG_NO_REPLY;
+   if (rply != null) fgs = MintControl.MINT_MSG_FIRST_NON_NULL;
+   
+   mint_control.send(msg,rply,fgs);
+}
+
+
 List<File> getSources()
 {
    List<File> srcs = new ArrayList<>();
@@ -307,6 +340,16 @@ private final class ExitHandler implements MintHandler {
     }
 
 }	// end of inner class ExitHandler
+
+
+private final class BubblesPingHandler implements MintHandler {
+
+   @Override public void receive(MintMessage msg,MintArguments args) {
+      msg.replyTo("<PONG/>");
+    }
+
+}	// end of inner class ExitHandler
+
 
 
 }       // end of class LimbaMsg

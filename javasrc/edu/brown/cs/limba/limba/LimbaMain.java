@@ -21,17 +21,13 @@
 
 package edu.brown.cs.limba.limba;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.time.Duration;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,9 +84,7 @@ private String alt_host;
 private int alt_port;
 private String alt_usehost;
 private String ollama_model;
-private boolean interactive_mode;
 private boolean server_mode;
-private File project_file;
 private File input_file;
 private OllamaAPI ollama_api;
 private boolean raw_flag;
@@ -110,6 +104,7 @@ private String inited_model;
 private String workspace_name;
 private boolean use_tools;
 private LimbaChatter chat_interface;
+private Collection<Object> agent_objects;
 
 private static final String SPLIT_PATTERN;
 private static boolean http_log = false;
@@ -136,10 +131,8 @@ private LimbaMain(String [] args)
    alt_host = "localhost";
    alt_port = 11434;
    alt_usehost = null;
-   interactive_mode = false;
    server_mode = false;
    ollama_model = "llama4:scout";
-   project_file = null;
    workspace_name = null;
    input_file = null;
    raw_flag = false;
@@ -161,6 +154,7 @@ private LimbaMain(String [] args)
    inited_model = null;
    use_tools = true;
    chat_interface = null;
+   agent_objects = new ArrayList<>();
    
    scanArgs(args);
 }
@@ -186,10 +180,7 @@ String getUrl()
    return "http://" + ollama_host + ":" + ollama_port;
 }
 
-LimbaCommand createCommand(String line)
-{
-   return command_factory.createCommand(line);
-}
+
 
 Map<String,String> getKeyMap()          { return key_map; }
 
@@ -202,6 +193,12 @@ void setKeyMap(String key,String val)
 boolean getRemoteFileAccess()           { return remote_files; }
 
 LimbaMsg getMessageServer()             { return msg_server; }
+
+void setupMessageServer(String mintid)
+{
+   mint_id = mintid;
+   msg_server = new LimbaMsg(this,mint_id);
+}
 
 JcompControl getJcompControl()          { return jcomp_main; }
 
@@ -256,6 +253,14 @@ boolean setModel(String model)
    
    return true;
 }
+
+
+void addAgentObject(Object o)
+{
+   agent_objects.add(o);
+   chat_interface = null;
+}
+
 
 
 /********************************************************************************/
@@ -322,10 +327,7 @@ private void scanArgs(String [] args)
              }
           }
          if (args[i].startsWith("-")) {
-            if (args[i].startsWith("-i")) {                     // -interactive
-               interactive_mode = true;
-             }
-            else if (args[i].startsWith("-remote")) {           // -remoteFileAccess
+            if (args[i].startsWith("-remote")) {                // -remoteFileAccess
                remote_files = true;
              }
             else if (args[i].startsWith("-D")) {                // -DEBUG  
@@ -399,37 +401,25 @@ private void process()
       setModel(ollama_model); 
     }
    
-   setupRag(project_file);
+   rag_model = null;
+   chat_interface = null;
     
    command_factory = new LimbaCommandFactory(this);
    
    if (server_mode && mint_id != null) {
-      msg_server = new LimbaMsg(this,mint_id);
+      setupMessageServer(mint_id);
     }
    
    if (input_file != null) {
       try (FileReader fr = new FileReader(input_file)) {
-         if (input_file.getName().endsWith(".xml")) {
-            processXmlFile(fr);
-          }
-         else {
-            processFile(fr,false);
-          }
+         processXmlFile(fr); 
        }
       catch (IOException e) {
          IvyLog.logE("LIMBA","Problem reading input file " + input_file,e);
        }
     }
    
-   if (interactive_mode) {
-      try (Reader r = new InputStreamReader(System.in)) {
-         processFile(r,true);
-       }
-      catch (IOException e) {
-         IvyLog.logE("LIMBA","Problem reading stdin",e);
-       }
-    }
-   else if (server_mode) {
+   if (server_mode) {
       boolean haveping = msg_server.sendPing();
       synchronized (this) {
          for ( ; ; ) {
@@ -454,65 +444,6 @@ private void process()
 /*      Process multiple queries/commands                                       */
 /*                                                                              */
 /********************************************************************************/
-
-private void processFile(Reader r,boolean prompt)
-{
-   try (BufferedReader rdr = new IncludeReader(r)) {
-      StringBuffer buf = new StringBuffer();
-      
-      String promptxt = "LIMBA> ";
-      String endtoken = "END";
-      boolean endonblank = false;
-      LimbaCommand cmd = null;
-            
-      for ( ; ; ) {
-         if (prompt) {
-            System.out.print(promptxt);
-            promptxt = "LIMBA>>> ";
-          }
-         
-         String line = rdr.readLine();
-         if (line == null) break;
-         line = line.trim();
-         if (line.isEmpty() && buf.isEmpty()) continue;
-         if (buf.isEmpty()) {
-            cmd = command_factory.createCommand(line); 
-            if (cmd == null) continue;
-            endonblank = cmd.getEndOnBlank();
-            endtoken = cmd.getEndToken(); 
-          }
-         boolean fini = false;
-         if (endtoken != null && line.trim().equals(endtoken)) {
-            line = "";
-            fini = true;
-          }
-         if (endonblank && line.isEmpty()) fini = true;
-         if (!endonblank && endtoken == null) fini = true;
-         
-         if (line.endsWith("\\")) {
-            line = line.substring(0,line.length()-1);
-          }
-
-         if (!buf.isEmpty()) buf.append("\n");
-         buf.append(line);
-         if (fini) {
-            handleCommand(cmd,buf.toString());
-            buf.setLength(0);
-            if (prompt) {
-               System.out.println();
-               promptxt = "LIMBA> ";
-             }
-            endtoken = "END";
-            endonblank = false;
-            cmd = null;
-          }
-       }
-    }
-   catch (IOException e) {
-      IvyLog.logE("LIMBA","Problem reading commands",e);
-    }
-}
-
 
 private void processXmlFile(FileReader fr)
 {
@@ -548,90 +479,14 @@ private void processXmlFile(FileReader fr)
 LimbaCommand setupLimbaCommand(Element xml) throws LimbaException
 {
    String cmd = IvyXml.getAttrString(xml,"DO");
-   LimbaCommand lcmd = createCommand(cmd);
+   LimbaCommand lcmd = command_factory.createCommand(xml);
    if (lcmd == null) {
       throw new LimbaException("Invalid command " + cmd);
     }
-   lcmd.setupCommand(xml); 
    
    return lcmd;
 }
 
-
-private void handleCommand(LimbaCommand cmd,String cmdtxt)
-{
-   try {
-      cmd.setupCommand(cmdtxt,true);
-      cmd.process(null);
-    }
-   catch (Throwable t) {
-      IvyLog.logE("LIMBA","Problem handling command",t);
-    }
-}
-
-
-
-/********************************************************************************/
-/*                                                                              */
-/*      Class for nesting inputs                                                */
-/*                                                                              */
-/********************************************************************************/
-
-private static class IncludeReader extends BufferedReader {
-   
-   private Deque<BufferedReader> reader_stack;
-   
-   IncludeReader(Reader in) {
-      super(in);
-      reader_stack = new ArrayDeque<>();
-      reader_stack.push(new BufferedReader(in));     // Push the initial reader onto the stack
-    }
-   
-   @Override
-   public String readLine() throws IOException {
-      String currentline = null;
-      while (true) {
-         if (reader_stack.isEmpty()) {
-            return null; // No more readers in the stack
-          }
-         
-         BufferedReader currentReader = reader_stack.peek();
-         currentline = currentReader.readLine();
-         
-         if (currentline == null) {
-            // End of current reader, pop it and try the next one
-            reader_stack.pop().close(); // Close the popped reader
-            continue;
-          }
-         
-         if (currentline.startsWith(">")) {
-            String fileName = currentline.substring(1).trim();
-            try {
-               BufferedReader includedReader = new BufferedReader(new FileReader(fileName));
-               reader_stack.push(includedReader);
-               // Continue to read from the new included file
-               continue;
-             }
-            catch (IOException e) {
-               // Handle file not found or other I/O errors during inclusion
-               System.err.println("Error including file: " + fileName + " - " + e.getMessage());
-               // Skip this include and continue with the current reader
-               continue;
-             }
-          }
-         return currentline; // Return a regular line
-       }
-    }
-   
-   @Override
-   public void close() throws IOException {
-      while (!reader_stack.isEmpty()) {
-         reader_stack.pop().close();
-       }
-      super.close(); // Close the initial reader passed to the constructor
-    }
-   
-}       // end of inner class IncldueHandlingReader
 
 
 /********************************************************************************/
@@ -642,18 +497,7 @@ private static class IncludeReader extends BufferedReader {
 
 LimbaRag getRagModel()                  { return rag_model; }
 
-void setupRag(File f)
-{
-   if (f != null && workspace_name != null) {
-      rag_model = new LimbaRag(this,f,workspace_name);
-      rag_model.getContentRetriever();         // FOR DEBUGGING ONLY
-    }
-   else {
-      rag_model = null;
-    }
-   
-   chat_interface = null;
-}
+
 
 void setupRag() 
 {
@@ -744,9 +588,12 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx)
     }
    
    if (use_tools) {
+      List<Object> tools = new ArrayList<>();
+      tools.add(new LimbaTools(this,rag_model.getFiles()));
+      if (agent_objects != null) tools.addAll(agent_objects);
       AiServices<LimbaAssistant> aib = AiServices.builder(LimbaAssistant.class)
          .chatModel(chat)
-         .tools(new LimbaTools(this,rag_model.getFiles())) 
+         .tools(tools) 
          .contentRetriever(cr);
       if (mem != null) {
          aib.chatMemory(mem);
@@ -921,6 +768,77 @@ private void initializeModel()
       IvyLog.logI("LIMBA","Problem prepping ollama: " + e);
     }
    
+}
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Setup bedrock for debugging                                             */
+/*                                                                              */
+/********************************************************************************/
+
+private static final String BROWN_ECLIPSE = "/u/spr/java-2024-09/eclipse/eclipse";
+private static final String BROWN_WS = "/u/spr/Eclipse/";
+private static final String HOME_MAC_ECLIPSE =
+   "/vol/Developer/java-2024-09/Eclipse.app/Contents/MacOS/eclipse";
+private static final String HOME_MAC_WS = "/Users/spr/Eclipse/";
+private static final String HOME_LINUX_ECLIPSE = "/pro/eclipse/java-2023-12/eclipse/eclipse";
+private static final String HOME_LINUX_WS = "/home/spr/Eclipse/";
+
+void setupBedrock(String workspace,String mint)
+{
+   IvyLog.logI("LIMBA","Starting bedrock/eclipse for debugging");
+   
+   File ec1 = new File(BROWN_ECLIPSE);
+   File ec2 = new File(BROWN_WS);
+   if (!ec1.exists()) {
+      ec1 = new File(HOME_MAC_ECLIPSE);
+      ec2 = new File(HOME_MAC_WS);
+    }
+   if (!ec1.exists()) {
+      ec1 = new File(HOME_LINUX_ECLIPSE);
+      ec2 = new File(HOME_LINUX_WS);
+    }
+   if (!ec1.exists()) {
+      System.err.println("Can't find bubbles version of eclipse to run");
+      throw new Error("No eclipse");
+    }
+   ec2 = new File(ec2,workspace);
+   
+   setupMessageServer(mint);
+   
+   String cmd = ec1.getAbsolutePath();
+   cmd += " -application edu.brown.cs.bubbles.bedrock.application";
+   cmd += " -data " + ec2.getAbsolutePath();
+   cmd += " -nosplash";
+   cmd += " -vmargs -Dedu.brown.cs.bubbles.MINT=" + mint;
+   cmd += " -Xmx16000m";
+   
+   IvyLog.logI("LIMBA","RUN: " + cmd);
+   
+   try {
+      for (int i = 0; i < 250; ++i) {
+	 try {
+	    Thread.sleep(1000);
+          }
+         catch (InterruptedException e) { }
+	 if (msg_server.pingEclipse()) { 
+	    msg_server.sendBubblesMessage("LOGLEVEL","LEVEL='DEBUG'",null);
+	    msg_server.sendBubblesMessage("ENTER",null,null);
+            setWorkspace(workspace);
+	    return;
+	  }
+	 if (i == 0) {
+            new IvyExec(cmd);
+            msg_server.pongEclipse();
+          }
+       }
+    }
+   catch (IOException e) { 
+      IvyLog.logE("LIMBA","Problem with eclipse",e);
+    }
+   
+   throw new Error("Problem running Eclipse: " + cmd);
 }
 
 

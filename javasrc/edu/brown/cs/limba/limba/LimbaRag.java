@@ -55,8 +55,6 @@ import dev.langchain4j.store.embedding.filter.comparison.IsIn;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import edu.brown.cs.ivy.file.IvyFile;
 import edu.brown.cs.ivy.file.IvyLog;
-import edu.brown.cs.ivy.project.IvyProject;
-import edu.brown.cs.ivy.project.IvyProjectManager;
 
 class LimbaRag implements LimbaConstants
 {
@@ -90,26 +88,16 @@ private static boolean rag_log = false;
 /*                                                                              */
 /********************************************************************************/
 
-LimbaRag(LimbaMain lm,File base,String ws)
+LimbaRag(LimbaMain lm,List<File> files,String ws)
 {
    limba_main = lm;
    project_files = new HashSet<>();
    content_retriever = null;
    workspace_name = ws;
    chroma_url = "http://localhost:8000";
-  
-   IvyLog.logD("LIMBA","Loading project files for " + base);
-   if (base != null) findProjectFiles(base);
    
    loadConfigData();
    
-   checkUpdates();
-}
-
-
-LimbaRag(LimbaMain lm,List<File> files,String ws)
-{
-   this(lm,(File) null,ws);
    if (files != null) {
       project_files.addAll(files);
     }
@@ -362,8 +350,6 @@ private String getUID(File f)
 
 
 
-
-
 /********************************************************************************/
 /*                                                                              */
 /*      Document splitter for Java Source Code                                  */
@@ -396,96 +382,6 @@ private DocumentSplitter getSplitter()
 }
 
 
-/********************************************************************************/
-/*                                                                              */
-/*      Find files for a project                                                */
-/*                                                                              */
-/********************************************************************************/
-
-private void findProjectFiles(File base)
-{
-   if (base == null) return;
-   else if (isEclipseWorkspace(base)) {
-      addEclipseFiles(base);
-    }
-   else if (base.isDirectory()) {
-      addDirectoryFiles(base);
-    }
-}
-
-
-
-/********************************************************************************/
-/*                                                                              */
-/*      Handle Eclipse workspaces                                               */
-/*                                                                              */
-/********************************************************************************/
-
-private boolean isEclipseWorkspace(File base)
-{
-   if (base == null) return false;
-   if (!base.exists()) return false;
-   if (!base.isDirectory()) return false;
-   
-   File df1 = new File(base,".metadata");
-   if (!df1.exists() || !df1.canRead()) return false;
-   File df2 = new File(df1,"version.ini");
-   if (!df2.exists()) return false;
-      
-   return true;
-}
-   
-
-private void addEclipseFiles(File base)
-{
-   IvyProjectManager pm = IvyProjectManager.getManager();
-   List<IvyProject> projs = pm.defineEclipseProjects(base);
-   for (IvyProject ip : projs) {
-      for (File f : ip.getSourceFiles()) {
-         project_files.add(f);
-       }
-    }
-}
-  
-   
-/********************************************************************************/
-/*                                                                              */
-/*      Handle directory                                                        */
-/*                                                                              */
-/********************************************************************************/
-
-private void addDirectoryFiles(File base)
-{
-   if (base.isDirectory()) {
-      for (File f : base.listFiles()) {
-         addDirectoryFiles(f);
-       }
-    }
-   else if (isRelevant(base)) {
-      project_files.add(base);
-    }
-}
-
-
-private boolean isRelevant(File base)
-{
-   String nm = base.getName();
-   int idx = nm.lastIndexOf(".");
-   if (idx < 0) return false;
-   String ext = nm.substring(idx).toLowerCase();
-   switch (ext) {
-      case ".java" :
-      case ".xml" :
-      case ".json" :
-      case ".txt" :
-      case ".md" :
-         break;
-      default :
-         return false;
-    }
-   
-   return true;
-}
 
 }       // end of class LimbaRag
 

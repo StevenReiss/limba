@@ -9,8 +9,6 @@
 
 package edu.brown.cs.limba.limba;
 
-import org.w3c.dom.Element;
-
 import edu.brown.cs.ivy.file.IvyFile;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
@@ -55,12 +53,7 @@ enum LimbaFindType {
 
 interface LimbaCommand {
    String getCommandName();
-   boolean getEndOnBlank();
-   String getEndToken();
    
-   void setupCommand(String complete,boolean user);
-   void setupCommand(Element xml);
-   void setOptions(String options);
    void process(IvyXmlWriter rslt);
 }
 
