@@ -108,19 +108,6 @@
       <copy file='limba.jar' tofile='${PRO}/bubbles/dropins.export/limba.jar' verbose='true' />
    </target>
 
-   <target name='test' depends='compile'>
-      <java classname='edu.brown.cs.limba.limba.LimbaMain' fork='true'>
-	 <classpath refid='spr.classpath' />
-	 <arg value='-f' />
-	 <arg value='${PRO}/limba/test.in' />
-	 <arg value='-d' />
-	 <arg value='${PRO}/limba' />
-	 <arg value='-l' />
-	 <arg value='llama4:scout' />
-	 <assertions><enable/></assertions>
-      </java>
-   </target>
-
    <target name='testfred4' depends='compile'>
       <java classname='edu.brown.cs.limba.limba.LimbaMain' fork='true'>
 	 <classpath refid='spr.classpath' />

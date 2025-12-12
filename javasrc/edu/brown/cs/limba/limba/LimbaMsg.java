@@ -288,7 +288,7 @@ private class CommandProcessor extends Thread {
        }
     }
 
-}
+}       // end of inner class CommandProecessor
 
 
 
@@ -329,7 +329,8 @@ private final class CommandHandler implements MintHandler {
       IvyLog.logD("LIMBA","Reply for " + cmd + ": " + rslt);
       msg.replyTo(rslt);
     }
-}
+   
+}       // end of inner class CommandHandler
 
 
 
