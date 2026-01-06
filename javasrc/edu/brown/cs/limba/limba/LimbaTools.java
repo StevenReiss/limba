@@ -186,6 +186,43 @@ public List<String> getClassMethods(@P("name of the class") String name)
 }
 
 
+
+/********************************************************************************/
+/*                                                                              */
+/*      Return the code of a method with line numbers                           */
+/*                                                                              */
+/********************************************************************************/
+
+@Tool("Return the source code for a method with line numbers. Each source line " +
+      "is prefixed by its line number and a tab")
+public List<String> getSourceCodeWithLineNumbers(
+      @P("full name of the method") String name0)
+{
+   String name = name0;
+   
+   if (message_server != null) {
+      try {
+         Element xml = message_server.findMethod(name); 
+         if (xml != null && IvyXml.isElement(xml,"RESULT")) {
+            Element xml1 = IvyXml.getChild(xml,"MATCH");
+            int soff = IvyXml.getAttrInt(xml1,"STARTOFFSET");
+            int eoff = IvyXml.getAttrInt(xml1,"ENDOFFSET");  
+            String fnm = IvyXml.getAttrString(xml1,"FILE");
+            String cnds = IvyFile.loadFile(new File(fnm));
+            return getLineNumbersAndText(cnds,soff,eoff);
+          }
+       }
+      catch (Throwable t) {
+         IvyLog.logE("LIMBA","Problem getting source lines",t);
+       }
+    }
+   
+   return null;
+}
+
+
+
+
 /********************************************************************************/
 /*                                                                              */
 /*      Helper methods                                                          */
@@ -320,6 +357,71 @@ private String getMethodDescription(MethodDeclaration md)
    
    return mtxt;
 }
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Get source lines with line numbers                                      */
+/*                                                                              */
+/********************************************************************************/
+
+/**
+ * Returns the line numbers together with their text for a range of character
+ * offsets in a source file.
+ *
+ * @param src		    The complete source code (one string).
+ * @param startOffset	    Inclusive beginning offset (0bQbased).
+ * @param endOffset	    Exclusive ending offset (b	$ length of src).
+ * @return		    An ArrayList<String> with "lineNumber<TAB>line".
+ */
+private static ArrayList<String> getLineNumbersAndText(String src,
+      int startOffset, int endOffset) {
+   
+   // sanity checks
+   if (src == null || src.isEmpty()) return new ArrayList<>();
+   if (startOffset < 0) startOffset = 0;
+   if (endOffset > src.length()) endOffset = src.length();
+   if (startOffset >= endOffset) return new ArrayList<>();
+   
+   var lines = new ArrayList<String>();
+   int lineNo = 1;				   // humanbQreadable line count
+   int pos   = 0;
+   
+   while (pos < src.length() && pos <= startOffset) {
+      // skip leading whitespace before the requested range starts
+      if (!Character.isWhitespace(src.charAt(pos))) break;
+      if (src.charAt(pos++) == '\n') ++lineNo;     // still in prebQrange area
+    }
+   
+   int lineStart = -1;				   // position of current line start
+   
+   for (int i = pos; i < src.length(); ) {
+      // detect the beginning of a new line
+      // need to handle \r as EOL terminator?
+      if (src.charAt(i) == '\n') {                // \n is always used as line terminator here
+	 if (lineStart >= 0) {			  // we already have a complete line before it
+	    String txt = src.substring(lineStart, i);
+	    int relPos = startOffset - lineStart;
+	    if (relPos < txt.length() && i <= endOffset) {
+	       lines.add(String.format("%d\t%s", lineNo, txt));
+	     }
+	  }
+	 ++lineNo;				 // next line
+	 lineStart = i + 1;			 // after the \n character
+       }
+      
+      if (i == endOffset - 1 || i == src.length() - 1) {
+	 // last requested line bS capture it even if it does not end with '\n'
+	 String txt = src.substring(lineStart, i + 1);
+	 lines.add(String.format("%d\t%s", lineNo, txt));
+       }
+      
+      ++i;
+    }
+   return lines;
+}
+
+
 
 
 }       // end of class LimbaTools

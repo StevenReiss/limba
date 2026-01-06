@@ -48,6 +48,7 @@ import io.github.ollama4j.utils.OptionsBuilder;
 import edu.brown.cs.ivy.exec.IvyExec;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.jcomp.JcompControl;
+import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlReader;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
@@ -655,7 +656,8 @@ static List<String> getJavaCode(String resp)
 {
    if (resp == null) return null;
    if (!resp.contains("```")) return List.of(resp);
-   
+  
+   List<String> base = new ArrayList<>();
    List<String> rslt = new ArrayList<>();
    int start = 0;
    for ( ; ; ) {
@@ -675,12 +677,19 @@ static List<String> getJavaCode(String resp)
          break;
        }
       else {
-         if (type.isEmpty() || type.equals("java")) {
+         if (type.equals("java")) {
             extractFragments(resp.substring(idx1,idx2),rslt);
           }
+         else if (type.isEmpty()) {
+            extractFragments(resp.substring(idx1,idx2),base);
+          }
+         
          start = idx2+3;
        }
     }
+   
+   if (!base.isEmpty() && rslt.isEmpty()) rslt = base;
+   
    return rslt;
 }
 
@@ -823,8 +832,9 @@ void setupBedrock(String workspace,String mint)
           }
          catch (InterruptedException e) { }
 	 if (msg_server.pingEclipse()) { 
-	    msg_server.sendBubblesMessage("LOGLEVEL","LEVEL='DEBUG'",null);
-	    msg_server.sendBubblesMessage("ENTER",null,null);
+            CommandArgs a1 = new CommandArgs("LEVEL","DEBUG");
+	    msg_server.sendBubblesMessage("LOGLEVEL",a1,null); 
+	    msg_server.sendBubblesMessage("ENTER",null,null); 
             setWorkspace(workspace);
 	    return;
 	  }

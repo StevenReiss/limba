@@ -26,6 +26,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
@@ -39,6 +40,7 @@ import edu.brown.cs.ivy.mint.MintControl;
 import edu.brown.cs.ivy.mint.MintDefaultReply;
 import edu.brown.cs.ivy.mint.MintHandler;
 import edu.brown.cs.ivy.mint.MintMessage;
+import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
 import edu.brown.cs.ivy.mint.MintConstants.MintSyncMode;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
@@ -140,17 +142,34 @@ boolean pingEclipse()
 }
 
 
-void sendBubblesMessage(String cmd,String arg,MintDefaultReply rply)
+Element sendBubblesMessage(String cmd,CommandArgs args,String cnts)
 {
-   String msg = "<BUBBLES DO='" + cmd + "'";
-   if (arg != null) msg += " " + arg;
-   msg += " />";
+   MintDefaultReply rply = new MintDefaultReply();
+   IvyXmlWriter xw = new IvyXmlWriter();
+   xw.begin("BUBBLES");
+   xw.field("DO",cmd);
+   if (args != null) {
+      for (Map.Entry<String,Object> ent : args.entrySet()) {
+	 xw.field(ent.getKey(),ent.getValue());
+       }
+    }
+   if (cnts != null) {
+      xw.xmlText(cnts);
+    }
+   xw.end("BUBBLES");
+   
+   String msg = xw.toString();
+   xw.close();
+   
    IvyLog.logD("LIMBA","Send to bubbles: " + msg);
    
-   int fgs = MintControl.MINT_MSG_NO_REPLY;
-   if (rply != null) fgs = MintControl.MINT_MSG_FIRST_NON_NULL;
+   mint_control.send(msg,rply,MintControl.MINT_MSG_FIRST_NON_NULL);
    
-   mint_control.send(msg,rply,fgs);
+   Element rslt = rply.waitForXml(60000);
+   
+   IvyLog.logD("LIMBA","Reply from bubbles: " + IvyXml.convertXmlToString(rslt));
+   
+   return rslt;
 }
 
 
@@ -211,14 +230,29 @@ List<File> getSources()
 
 Element findClass(String name)
 {
-   MintDefaultReply rply = new MintDefaultReply(); 
-   String pmsg = "<BUBBLES DO='PATTERNSEARCH' PATTERN='" + name + "'";
-   pmsg += " DEFS='true' REFS='false' FOR='TYPE'";
-   IvyLog.logD("LIMBA","Send to bubbles: " + pmsg);
-   mint_control.send(pmsg,rply,MintControl.MINT_MSG_FIRST_NON_NULL);
-   Element pr = rply.waitForXml(); 
+   CommandArgs args = new CommandArgs("PATTERN",name,
+         "DEFS",true,"REFS",false,"FOR","TYPE");
+   Element pr = sendBubblesMessage("PATTERNSEARCH",args,null);
    
    return pr;
+}
+
+Element findMethod(final String name0)
+{
+   String name = name0;
+   // fix constructors
+   String what = "METHOD";
+   if (name.contains(".<init>")) {
+      name = name.replace(".<init>","");
+      what = "CONSTRUCTOR";
+    }
+   // check for X.X as constructor ???
+   
+   CommandArgs args = new CommandArgs("PATTERN",name,
+         "DEFS",true,"REFS",false,"FOR",what,"SYSTEM",false);
+   Element xml = sendBubblesMessage("PATTERNSEARCH",args,null);
+   
+   return xml;
 }
 
 
