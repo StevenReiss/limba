@@ -209,7 +209,9 @@ public List<String> getSourceCodeWithLineNumbers(
             int eoff = IvyXml.getAttrInt(xml1,"ENDOFFSET");  
             String fnm = IvyXml.getAttrString(xml1,"FILE");
             String cnds = IvyFile.loadFile(new File(fnm));
-            return getLineNumbersAndText(cnds,soff,eoff);
+            List<String> lines = getLineNumbersAndText(cnds,soff,eoff);
+            IvyLog.logD("LIMBA","Found source for method " + name0 + " " + lines);
+            return lines;
           }
        }
       catch (Throwable t) {
