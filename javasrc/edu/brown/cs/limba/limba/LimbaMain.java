@@ -48,6 +48,7 @@ import io.github.ollama4j.utils.OptionsBuilder;
 import edu.brown.cs.ivy.exec.IvyExec;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.jcomp.JcompControl;
+import edu.brown.cs.ivy.mint.MintControl;
 import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlReader;
@@ -98,7 +99,7 @@ private File log_file;
 private IvyLog.LogLevel log_level;
 private boolean log_stderr;
 private JcompControl jcomp_main;
-private LimbaMsg msg_server;
+private LimbaMonitor msg_server;
 private String user_style;
 private String user_context;
 private String inited_model;
@@ -106,6 +107,7 @@ private String workspace_name;
 private boolean use_tools;
 private LimbaChatter chat_interface;
 private Collection<Object> agent_objects;
+private ThreadLocal<Map<String,?>> query_context;
 
 private static final String SPLIT_PATTERN;
 private static boolean http_log = false;
@@ -156,6 +158,7 @@ private LimbaMain(String [] args)
    use_tools = true;
    chat_interface = null;
    agent_objects = new ArrayList<>();
+   query_context = new ThreadLocal<>();
    
    scanArgs(args);
 }
@@ -193,12 +196,17 @@ void setKeyMap(String key,String val)
 
 boolean getRemoteFileAccess()           { return remote_files; }
 
-LimbaMsg getMessageServer()             { return msg_server; }
+LimbaMonitor getMessageServer()             { return msg_server; }
+public MintControl getMintControl()        
+{ 
+   return msg_server.getMintControl();
+}
+
 
 void setupMessageServer(String mintid)
 {
    mint_id = mintid;
-   msg_server = new LimbaMsg(this,mint_id);
+   msg_server = new LimbaMonitor(this,mint_id);
 }
 
 JcompControl getJcompControl()          { return jcomp_main; }
@@ -262,6 +270,11 @@ void addAgentObject(Object o)
    chat_interface = null;
 }
 
+
+public ThreadLocal<Map<String,?>> getQueryContext()
+{
+   return query_context;
+}
 
 
 /********************************************************************************/
@@ -546,7 +559,8 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history) throws Exception
    initializeModel();
    
    IvyLog.logD("LIMBA","Query " + usectx + " " + getModel() + " " +
-         rag_model + ":\n" + cmd);
+         rag_model + " " + Thread.currentThread().threadId() + " " + 
+         Thread.currentThread().getName() + ":\n" + cmd);
    
    try {
       // might need to add to history

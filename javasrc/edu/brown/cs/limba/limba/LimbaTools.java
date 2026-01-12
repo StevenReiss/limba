@@ -53,7 +53,7 @@ public class LimbaTools implements LimbaConstants
 /********************************************************************************/
 
 private LimbaMain       limba_main;
-private LimbaMsg        message_server;
+private LimbaMonitor    message_server;
 private Collection<File> project_files;
 
 /********************************************************************************/
@@ -168,6 +168,8 @@ public List<String> getClassMethods(@P("name of the class") String name)
    List<String> rslt = new ArrayList<>();
    
    IvyLog.logD("LIMBA","Find methods for class " + name);
+   IvyLog.logD("LIMBA","Thread " +  Thread.currentThread().threadId() + " " +
+         Thread.currentThread().getName());
    
    TypeDeclaration td = findClassAst(name,false);
    if (td != null) {
@@ -194,17 +196,20 @@ public List<String> getClassMethods(@P("name of the class") String name)
 /********************************************************************************/
 
 @Tool("Return the source code for a method with line numbers. Each source line " +
-      "is prefixed by its line number and a tab")
+      "is prefixed by its line number and a tab.  This only works for user code, " +
+      "not for system code.  It will return null if the method can't be found.")
 public List<String> getSourceCodeWithLineNumbers(
       @P("full name of the method") String name0)
 {
    String name = name0;
    
+   IvyLog.logD("LIMBA","Get source code with line numbers for " + name);
+   
    if (message_server != null) {
       try {
          Element xml = message_server.findMethod(name); 
-         if (xml != null && IvyXml.isElement(xml,"RESULT")) {
-            Element xml1 = IvyXml.getChild(xml,"MATCH");
+         Element xml1 = IvyXml.getChild(xml,"MATCH");
+         if (xml1 != null && IvyXml.isElement(xml,"RESULT")) {
             int soff = IvyXml.getAttrInt(xml1,"STARTOFFSET");
             int eoff = IvyXml.getAttrInt(xml1,"ENDOFFSET");  
             String fnm = IvyXml.getAttrString(xml1,"FILE");

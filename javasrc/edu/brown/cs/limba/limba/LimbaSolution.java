@@ -74,7 +74,7 @@ private double          solution_score;
 /*										*/
 /********************************************************************************/
 
-LimbaSolution(LimbaFinder lf,String name,String text) throws LimbaException
+LimbaSolution(LimbaFinder lf,String name,String text0) throws LimbaException
 {
    limba_finder = lf;
    tests_passed = null;
@@ -87,6 +87,24 @@ LimbaSolution(LimbaFinder lf,String name,String text) throws LimbaException
    end_offset = -1;
    solution_name = name;
    solution_score = 0;
+   
+   String text = text0;
+   if (!text.contains("class") && !text.contains("interface") && !text.contains("enum")) {
+      int idx0 = text.indexOf("package ");
+      int idx1 = text.lastIndexOf("import ");
+      int idx = Math.max(idx0,idx1);
+      if (idx >= 0) {
+         idx = text.indexOf("\n",idx) + 1;
+       }
+      StringBuffer buf = new StringBuffer();
+      if (idx > 0) {
+         buf.append(text.substring(0,idx));
+       }
+      buf.append("\nclass DummyClass {\n\n");
+      buf.append(text.substring(idx));
+      buf.append("\n\n}\n");
+      text = buf.toString();
+    }
 
    if (text.contains("class")) {
       try {

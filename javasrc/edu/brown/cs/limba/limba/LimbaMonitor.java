@@ -45,7 +45,7 @@ import edu.brown.cs.ivy.mint.MintConstants.MintSyncMode;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
-class LimbaMsg implements LimbaConstants
+class LimbaMonitor implements LimbaConstants
 {
 
 
@@ -67,7 +67,7 @@ private static Random   random_gen = new Random();
 /*                                                                              */
 /********************************************************************************/
 
-LimbaMsg(LimbaMain lm,String mintid)
+LimbaMonitor(LimbaMain lm,String mintid)
 {
    limba_main = lm;
    mint_control = MintControl.create(mintid,MintSyncMode.ONLY_REPLIES);
@@ -77,6 +77,19 @@ LimbaMsg(LimbaMain lm,String mintid)
    
    IvyLog.logD("LIMBA","Listening for messages on " + mintid);
 }
+
+
+/********************************************************************************/
+/*                                                                              */
+/*       Access methods                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+MintControl getMintControl()
+{
+   return mint_control;
+}
+
 
 
 /********************************************************************************/

@@ -37,6 +37,7 @@ import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import edu.brown.cs.ivy.file.IvyFile;
 import edu.brown.cs.ivy.file.IvyLog;
+import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import io.github.ollama4j.OllamaAPI;
@@ -398,17 +399,33 @@ private class CommandClear extends CommandBase {
 /*                                                                              */
 /********************************************************************************/
 
-private class CommandQuery extends CommandBase {
+private final class CommandQuery extends CommandBase {
    
    private String programmer_prompt;
    private String command_name;
    private String query_text;
+   private 
    
    CommandQuery(String nm,String prompt,Element xml) {
       super(xml);
       command_name = nm;
       programmer_prompt = prompt;
       query_text = IvyXml.getTextElement(xml,"CONTENTS");
+      CommandArgs ctx = null;
+      for (Element ctxelt : IvyXml.children(xml,"CONTEXT")) {
+         String k = IvyXml.getAttrString(ctxelt,"KEY");
+         String v = IvyXml.getAttrString(ctxelt,"VALUE");
+         if (v == null) v = IvyXml.getText(ctxelt);
+         if (k != null && v != null) {
+            if (ctx == null) {
+               ctx = new CommandArgs(k,v);
+             }
+            else {
+               ctx.put(k,v);
+             }
+          }
+       }
+      limba_main.getQueryContext().set(ctx);
     }
    
    @Override public String getCommandName()             { return command_name; }
