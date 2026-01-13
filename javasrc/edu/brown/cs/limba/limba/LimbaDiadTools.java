@@ -39,6 +39,7 @@ import java.util.Map;
 
 import org.w3c.dom.Element;
 
+import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.mint.MintControl;
@@ -86,11 +87,113 @@ LimbaDiadTools(LimbaMain lm)
       "is a JSON object representing a stack frame, with the 0 element being " +
       "the current user frame and the subsequent elements being the calling " +
       "frames.  Each frame object contains the class, method, line number, " +
-      "full method name, and method signature")
+      "full method name, method signature, and a JSON array of local variables " +
+      "given as JSON objects with the variable name, its data type, and its value.")
 public String getStackFrames()
 {
    CommandArgs args = new CommandArgs("FORMAT","JSON");
    Element rslt = sendToDiad("Q_STACK",args,null);
+   if (rslt != null) {
+      String json = IvyXml.getTextElement(rslt,"JSON");
+      return json;
+    }
+   
+   return null;
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Access to initial fault localization                                   */
+/*                                                                              */
+/********************************************************************************/
+
+@Tool("Return a list of locations that can affect the problematic symptom and " +
+      "thus might be faulty and that are executed. This is returned as a string " +
+      "representing a JSON array where " +
+      "each element represents a method with its full name and then a JSON array of line " +
+      "numbers for the identified lines in that method.")
+public String getFaultLocations()
+{
+   CommandArgs args = new CommandArgs("FORMAT","JSON","ALL",false);
+   Element rslt = sendToDiad("Q_LOCATIONS",args,null);
+   if (rslt != null) {
+      String json = IvyXml.getTextElement(rslt,"JSON");
+      return json;
+    }
+   
+   return null;
+}
+
+
+@Tool("Return a list of locations that can affect the problematic symptom and " +
+      "thus might be faulty even if not executed. This is returned as a string " +
+      "representing a JSON array where " +
+      "each element represents a method with its full name and then a JSON array of line " +
+      "numbers for the identified lines in that method.")
+public String getAllFaultLocations()
+{
+   CommandArgs args = new CommandArgs("FORMAT","JSON","ALL",true);
+   Element rslt = sendToDiad("Q_LOCATIONS",args,null);
+   if (rslt != null) {
+      String json = IvyXml.getTextElement(rslt,"JSON");
+      return json;
+    }
+   
+   return null;
+}
+
+
+
+@Tool("Return the call tree of the execution leading to the problematic symptom. " +
+      "This returns a string representing a JSONObject containing the top level call. " + 
+      "Each call object contains " +
+      "the method, and ID, the start and end times, and a list of call objects called by " +
+      "this method.  The IDs can be used to get details of the exeuction of this call " +
+      "including line numbers and variable values")
+public String getExecutionTrace()
+{
+   CommandArgs args = new CommandArgs("FORMAT","JSON");
+   Element rslt = sendToDiad("Q_EXECTRACE",args,null);
+   if (rslt != null) {
+      String json = IvyXml.getTextElement(rslt,"JSON");
+      return json;
+    }
+   
+   return null;
+}
+
+
+@Tool("Return the sequence of line numbers executed in a particular call frame " +
+      "along with their times.  This returns a string representing a JSONArray that " +
+      "contains a JSONObject for each line along with the time stamps for that line.")
+public String getLineNumberTrace(
+      @P("ID of the particular call (from getExecutionTrace)") String callid)
+{
+   CommandArgs args = new CommandArgs("FORMAT","JSON",
+         "CALLID",callid);
+   Element rslt = sendToDiad("Q_LINETRACE",args,null);
+   if (rslt != null) {
+      String json = IvyXml.getTextElement(rslt,"JSON");
+      return json;
+    }
+   
+   return null;
+}
+     
+
+@Tool("Return the history of a variable during the execution of a particular " +
+"method or call.  This takes the call id of the call frame as well as the name " +
+"of the variable in question.  It returns a string representing a JSONObject " +
+"that gives information about the variable as well as all value changes.")
+public String getVariableTrace(
+      @P("ID of the particular call (from getExecutionTrace)") String callid,
+      @P("Name of the variable") String variable) 
+{
+   CommandArgs args = new CommandArgs("FORMAT","JSON",
+         "CALLID",callid,"VARIABLE",variable);
+   Element rslt = sendToDiad("Q_VARTRACE",args,null);
    if (rslt != null) {
       String json = IvyXml.getTextElement(rslt,"JSON");
       return json;
