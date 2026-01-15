@@ -185,7 +185,7 @@ public String getLineNumberTrace(
 
 @Tool("Return the history of a variable during the execution of a particular " +
 "method or call.  This takes the call id of the call frame as well as the name " +
-"of the variable in question.  It returns a string representing a JSONObject " +
+"of the variable in question.  It returns a string representing a JSON Object " +
 "that gives information about the variable as well as all value changes.")
 public String getVariableTrace(
       @P("ID of the particular call (from getExecutionTrace)") String callid,
@@ -193,6 +193,23 @@ public String getVariableTrace(
 {
    CommandArgs args = new CommandArgs("FORMAT","JSON",
          "CALLID",callid,"VARIABLE",variable);
+   Element rslt = sendToDiad("Q_VARTRACE",args,null);
+   if (rslt != null) {
+      String json = IvyXml.getTextElement(rslt,"JSON");
+      return json;
+    }
+   
+   return null;
+}
+
+
+
+@Tool("Return the value returned by the given call as a string representating a " +
+"JSON Object")
+public String getReturnValue(@P("ID of the particular call (from getExecutionTrace)") String callid)
+{
+   CommandArgs args = new CommandArgs("FORMAT","JSON",
+         "CALLID",callid,"VARIABLE","*RETURNS*");
    Element rslt = sendToDiad("Q_VARTRACE",args,null);
    if (rslt != null) {
       String json = IvyXml.getTextElement(rslt,"JSON");
