@@ -205,7 +205,7 @@ public String getVariableTrace(
 
 
 @Tool("Return the value returned by the given call as a string representating a " +
-"JSON Object")
+      "JSON Object")
 public String getReturnValue(@P("ID of the particular call (from getExecutionTrace)") String callid)
 {
    CommandArgs args = new CommandArgs("FORMAT","JSON",
@@ -221,6 +221,56 @@ public String getReturnValue(@P("ID of the particular call (from getExecutionTra
 
 
 
+@Tool("Return the value of a given variable at a given time.  The time is based on " +
+      "the execution trace.  A local variable is given by its name; a field is specified " +
+      "by name?field_name; an array element is specified by name?[index].  The time can be " +
+      "given either by the execution trace time or the line number (or both).  The returned " +
+      "value is a string representing a JSONObject containing the VALUE at the time.")
+public String getVariableValue(
+      @P("ID of the particular call (from getExecutionTrace)") String callid,
+      @P("Name of the variable, using ? for subelements") String variable,
+      @P("Optional line number use 0 if not known") int line,
+      @P("Optional execution time; use -1 if not known") long time)
+{
+   CommandArgs args = new CommandArgs("FORMAT","JSON",
+         "CALLID",callid,"VARIABLE",variable);
+   if (line > 0) args.put("LINE",line);
+   if (time >= 0) args.put("TIME",time);
+   Element rslt = sendToDiad("Q_VARVALUE",args,null);
+   if (rslt != null) {
+      String json = IvyXml.getTextElement(rslt,"JSON");
+      return json;
+    }
+   
+   return null;
+}    
+
+
+@Tool("Return a graph showing how a variable got its value at a given time.  The time " +
+      "is based on the execution trace. A local variable is given by its name; a " +
+      "field is specified " +
+      "by name?field_name; an array element is specified by name?[index].  The time can be " +
+      "given either by the execution trace time or the line number (or both).  The " +
+      "returned value is a sgtring representing a JSONObject which represents a graph " +
+      "with nodes representing change points and arcs showing the temporal relation.")
+public String getVariableHistory(
+            @P("ID of the particular call (from getExecutionTrace)") String callid,
+            @P("Name of the variable, using ? for subelements") String variable,
+            @P("Optional line number use 0 if not known") int line,
+            @P("Optional execution time; use -1 if not known") long time)
+{
+   CommandArgs args = new CommandArgs("FORMAT","JSON",
+         "CALLID",callid,"VARIABLE",variable);
+   if (line > 0) args.put("LINE",line);
+   if (time >= 0) args.put("TIME",time);
+   Element rslt = sendToDiad("Q_VARHISTORY",args,null);
+   if (rslt != null) {
+      String json = IvyXml.getTextElement(rslt,"JSON");
+      return json;
+    }
+   
+   return null;
+}    
 /********************************************************************************/
 /*                                                                              */
 /*      Send reqeust to diad                                                    */
