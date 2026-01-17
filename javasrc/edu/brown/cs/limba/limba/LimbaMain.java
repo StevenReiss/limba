@@ -579,6 +579,7 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history) throws Exception
 private LimbaChatter getChain(ChatMemory mem,boolean usectx)
 {
    if (chat_interface != null) return chat_interface;
+   // chat_interface should be dependent on the tool set
    
    OllamaChatModel chat = OllamaChatModel.builder()
       .baseUrl(getUrl())
@@ -602,6 +603,7 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx)
       bldr.chatMemory(mem);
     }
    
+   // should pass in tool set and save chat_interface for those tools
    if (use_tools) {
       List<Object> tools = new ArrayList<>();
       tools.add(new LimbaTools(this,rag_model.getFiles()));
