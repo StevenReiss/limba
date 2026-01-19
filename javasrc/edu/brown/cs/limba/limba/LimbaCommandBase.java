@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpTimeoutException;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -404,14 +405,16 @@ private final class CommandQuery extends CommandBase {
    private String programmer_prompt;
    private String command_name;
    private String query_text;
-   private 
+   private EnumSet<LimbaToolSet> tool_set;
    
    CommandQuery(String nm,String prompt,Element xml) {
       super(xml);
       command_name = nm;
       programmer_prompt = prompt;
       query_text = IvyXml.getTextElement(xml,"CONTENTS");
-      CommandArgs ctx = null;
+      CommandArgs ctx = null; 
+      tool_set = IvyXml.getAttrEnumSet(xml,"TOOLS",
+            LimbaToolSet.class,LimbaToolSet.PROJECT);
       for (Element ctxelt : IvyXml.children(xml,"CONTEXT")) {
          String k = IvyXml.getAttrString(ctxelt,"KEY");
          String v = IvyXml.getAttrString(ctxelt,"VALUE");
@@ -447,7 +450,8 @@ private final class CommandQuery extends CommandBase {
           }
        } 
        
-      String resp = limba_main.askOllama(cmd,usectx,history);  
+      String resp = limba_main.askOllama(cmd,usectx,
+            history,tool_set);  
       
       xw.cdataElement("RESPONSE",resp);
       List<String> jcodes = LimbaMain.getJavaCode(resp);

@@ -24,6 +24,7 @@ package edu.brown.cs.limba.limba;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -220,7 +221,8 @@ void process(IvyXmlWriter xw) throws Exception
          pbuf.append(addendum + ".\n");
        }
       
-      String resp = limba_main.askOllama(pbuf.toString(),use_context,history);
+      String resp = limba_main.askOllama(pbuf.toString(),
+            use_context,history,EnumSet.of(LimbaToolSet.PROJECT));
       List<String> code = LimbaMain.getJavaCode(resp);
       
       List<LimbaSolution> tocheck = getSolutions(code);

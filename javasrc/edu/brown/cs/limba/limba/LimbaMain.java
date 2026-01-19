@@ -26,8 +26,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,8 +105,7 @@ private String user_context;
 private String inited_model;
 private String workspace_name;
 private boolean use_tools;
-private LimbaChatter chat_interface;
-private Collection<Object> agent_objects;
+private Map<String,LimbaChatter> chat_interfaces;
 private ThreadLocal<Map<String,?>> query_context;
 
 private static final String SPLIT_PATTERN;
@@ -156,8 +155,7 @@ private LimbaMain(String [] args)
    ollama_api = null;
    inited_model = null;
    use_tools = true;
-   chat_interface = null;
-   agent_objects = new ArrayList<>();
+   chat_interfaces = new HashMap<>();
    query_context = new ThreadLocal<>();
    
    scanArgs(args);
@@ -258,17 +256,13 @@ boolean setModel(String model)
     }
    
    ollama_model = model;
-   chat_interface = null;
+   chat_interfaces.clear();
    
    return true;
 }
 
 
-void addAgentObject(Object o)
-{
-   agent_objects.add(o);
-   chat_interface = null;
-}
+
 
 
 public ThreadLocal<Map<String,?>> getQueryContext()
@@ -416,7 +410,7 @@ private void process()
     }
    
    rag_model = null;
-   chat_interface = null;
+   chat_interfaces.clear();
     
    command_factory = new LimbaCommandFactory(this);
    
@@ -541,11 +535,12 @@ void setupRag()
 
 String askOllama(String cmd0,boolean usectx) throws Exception 
 {
-   return askOllama(cmd0,usectx,null);
+   return askOllama(cmd0,usectx,null,null);
 }
 
 
-String askOllama(String cmd0,boolean usectx,ChatMemory history) throws Exception
+String askOllama(String cmd0,boolean usectx,ChatMemory history,EnumSet<LimbaToolSet> tools) 
+   throws Exception
 {
    String cmd = cmd0;
    if (user_style != null) {
@@ -564,7 +559,7 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history) throws Exception
    
    try {
       // might need to add to history
-      String resp = getChain(history,usectx).chat(cmd);
+      String resp = getChain(history,usectx,tools).chat(cmd);
       IvyLog.logD("LIMBA","Context Response: " + resp);
       IvyLog.logD("LIMBA","\n------------------------\n\n");
       return resp;
@@ -576,11 +571,16 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history) throws Exception
 }
 
 
-private LimbaChatter getChain(ChatMemory mem,boolean usectx)
+private LimbaChatter getChain(ChatMemory mem,boolean usectx,EnumSet<LimbaToolSet> toolids)
 {
-   if (chat_interface != null) return chat_interface;
-   // chat_interface should be dependent on the tool set
+   if (toolids == null) {
+      toolids = EnumSet.of(LimbaToolSet.PROJECT);
+    }
+   String key = toolids.toString();
    
+   LimbaChatter rslt = chat_interfaces.get(key);
+   if (rslt != null) return rslt;
+ 
    OllamaChatModel chat = OllamaChatModel.builder()
       .baseUrl(getUrl())
       .maxRetries(3)
@@ -603,11 +603,20 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx)
       bldr.chatMemory(mem);
     }
    
+   if (!toolids.isEmpty()) {
+      List<Object> tools = new ArrayList<>();
+      if (toolids.contains(LimbaToolSet.PROJECT)) {
+         tools.add(new LimbaTools(this,rag_model.getFiles()));
+       }
+      if (toolids.contains(LimbaToolSet.DEBUG)) {
+         tools.add(new LimbaDiadTools(this));
+       }
+    }
+
    // should pass in tool set and save chat_interface for those tools
    if (use_tools) {
       List<Object> tools = new ArrayList<>();
       tools.add(new LimbaTools(this,rag_model.getFiles()));
-      if (agent_objects != null) tools.addAll(agent_objects);
       AiServices<LimbaAssistant> aib = AiServices.builder(LimbaAssistant.class)
          .chatModel(chat)
          .tools(tools) 
@@ -617,14 +626,16 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx)
        }
       LimbaAssistant la = aib.build();
       IvyLog.logD("LIMBA","Built limba assistant " + la);
-      chat_interface = la;
+      rslt = la;
     }
    else {
       ConversationalRetrievalChain chain = bldr.build();
-      chat_interface = new ChainChatter(chain);
+      rslt = new ChainChatter(chain);
     }
    
-   return chat_interface;
+   chat_interfaces.put(key,rslt);
+   
+   return rslt;
 }
 
 

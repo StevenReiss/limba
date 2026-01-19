@@ -65,6 +65,12 @@ enum LimbaSolutionFlag {
 };
 
 
+enum LimbaToolSet {
+   PROJECT,             // limba tools for the current project
+   DEBUG,               // debugging
+}
+
+
 /********************************************************************************/
 /*                                                                              */
 /*      Testing definitions                                                     */
