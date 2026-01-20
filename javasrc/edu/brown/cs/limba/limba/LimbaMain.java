@@ -104,7 +104,6 @@ private String user_style;
 private String user_context;
 private String inited_model;
 private String workspace_name;
-private boolean use_tools;
 private Map<String,LimbaChatter> chat_interfaces;
 private ThreadLocal<Map<String,?>> query_context;
 
@@ -154,7 +153,6 @@ private LimbaMain(String [] args)
    user_context = "";
    ollama_api = null;
    inited_model = null;
-   use_tools = true;
    chat_interfaces = new HashMap<>();
    query_context = new ThreadLocal<>();
    
@@ -555,6 +553,7 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,EnumSet<LimbaTool
    
    IvyLog.logD("LIMBA","Query " + usectx + " " + getModel() + " " +
          rag_model + " " + Thread.currentThread().threadId() + " " + 
+         tools + " " +
          Thread.currentThread().getName() + ":\n" + cmd);
    
    try {
@@ -603,10 +602,18 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,EnumSet<LimbaToolSet
       bldr.chatMemory(mem);
     }
    
+   List<Object> tools = new ArrayList<>();
    if (!toolids.isEmpty()) {
-      List<Object> tools = new ArrayList<>();
       if (toolids.contains(LimbaToolSet.PROJECT)) {
-         tools.add(new LimbaTools(this,rag_model.getFiles()));
+         if (rag_model == null) {
+            setupRag();
+          }
+         if (rag_model != null) {
+            tools.add(new LimbaTools(this,rag_model.getFiles()));
+          }
+         else {
+            IvyLog.logE("LIMBA","no project found");
+          }
        }
       if (toolids.contains(LimbaToolSet.DEBUG)) {
          tools.add(new LimbaDiadTools(this));
@@ -614,9 +621,7 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,EnumSet<LimbaToolSet
     }
 
    // should pass in tool set and save chat_interface for those tools
-   if (use_tools) {
-      List<Object> tools = new ArrayList<>();
-      tools.add(new LimbaTools(this,rag_model.getFiles()));
+   if (!tools.isEmpty()) {
       AiServices<LimbaAssistant> aib = AiServices.builder(LimbaAssistant.class)
          .chatModel(chat)
          .tools(tools) 

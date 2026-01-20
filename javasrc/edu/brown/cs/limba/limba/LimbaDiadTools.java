@@ -92,13 +92,14 @@ LimbaDiadTools(LimbaMain lm)
 public String getStackFrames()
 {
    CommandArgs args = new CommandArgs("FORMAT","JSON");
+   
    Element rslt = sendToDiad("Q_STACK",args,null);
    if (rslt != null) {
       String json = IvyXml.getTextElement(rslt,"JSON");
       return json;
     }
    
-   return null;
+   return "{ error: 'No debugid given' }";
 }
 
 
@@ -282,7 +283,10 @@ private Element sendToDiad(final String what,final CommandArgs args0,String cnts
    CommandArgs args = args0;
    MintDefaultReply rply = new MintDefaultReply();
    
+   IvyLog.logD("LIMBA","Diad thread id " + Thread.currentThread().threadId());
+   
    Map<String,?> ctx = limba_main.getQueryContext().get();
+   IvyLog.logD("LIMBA","Query context " + ctx);
    if (ctx != null) {
       for (Map.Entry<String,?> ent : ctx.entrySet()) {
          String key = ent.getKey();

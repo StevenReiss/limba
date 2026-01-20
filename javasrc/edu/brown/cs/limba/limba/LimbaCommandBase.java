@@ -429,6 +429,9 @@ private final class CommandQuery extends CommandBase {
           }
        }
       limba_main.getQueryContext().set(ctx);
+      
+      IvyLog.logD("LIMBA","Query " + nm + " " + tool_set + " " +
+            Thread.currentThread().threadId() + " " + ctx);
     }
    
    @Override public String getCommandName()             { return command_name; }
