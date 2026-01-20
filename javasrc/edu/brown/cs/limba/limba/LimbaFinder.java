@@ -222,7 +222,7 @@ void process(IvyXmlWriter xw) throws Exception
        }
       
       String resp = limba_main.askOllama(pbuf.toString(),
-            use_context,history,EnumSet.of(LimbaToolSet.PROJECT));
+            use_context,history,EnumSet.of(LimbaToolSet.PROJECT),null);
       List<String> code = LimbaMain.getJavaCode(resp);
       
       List<LimbaSolution> tocheck = getSolutions(code);

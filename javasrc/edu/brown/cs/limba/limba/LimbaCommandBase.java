@@ -22,11 +22,9 @@
 
 package edu.brown.cs.limba.limba;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpTimeoutException;
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -131,8 +129,8 @@ LimbaCommand createCommand(Element xml)
          return new CommandTests(prompt,xml);
       case "SETUPBUBBLES" :
          return new CommandSetupBubbles(xml);
-      case "AGENT" :
-         return new CommandAgent(xml);
+      case "DEBUGREMOVE" :
+         return new CommandDebugRemove(xml);
       case "EXIT" :
          System.exit(0);
     }
@@ -406,13 +404,14 @@ private final class CommandQuery extends CommandBase {
    private String command_name;
    private String query_text;
    private EnumSet<LimbaToolSet> tool_set;
+   private CommandArgs query_context;
    
    CommandQuery(String nm,String prompt,Element xml) {
       super(xml);
       command_name = nm;
       programmer_prompt = prompt;
       query_text = IvyXml.getTextElement(xml,"CONTENTS");
-      CommandArgs ctx = null; 
+      query_context = null; 
       tool_set = IvyXml.getAttrEnumSet(xml,"TOOLS",
             LimbaToolSet.class,LimbaToolSet.PROJECT);
       for (Element ctxelt : IvyXml.children(xml,"CONTEXT")) {
@@ -420,18 +419,17 @@ private final class CommandQuery extends CommandBase {
          String v = IvyXml.getAttrString(ctxelt,"VALUE");
          if (v == null) v = IvyXml.getText(ctxelt);
          if (k != null && v != null) {
-            if (ctx == null) {
-               ctx = new CommandArgs(k,v);
+            if (query_context == null) {
+               query_context = new CommandArgs(k,v);
              }
             else {
-               ctx.put(k,v);
+               query_context.put(k,v);
              }
           }
        }
-      limba_main.getQueryContext().set(ctx);
       
       IvyLog.logD("LIMBA","Query " + nm + " " + tool_set + " " +
-            Thread.currentThread().threadId() + " " + ctx);
+            query_context);
     }
    
    @Override public String getCommandName()             { return command_name; }
@@ -454,7 +452,7 @@ private final class CommandQuery extends CommandBase {
        } 
        
       String resp = limba_main.askOllama(cmd,usectx,
-            history,tool_set);  
+            history,tool_set,query_context);   
       
       xw.cdataElement("RESPONSE",resp);
       List<String> jcodes = LimbaMain.getJavaCode(resp);
@@ -605,42 +603,28 @@ private class CommandTests extends CommandBase {
 
 /********************************************************************************/
 /*                                                                              */
-/*      AGENT command to load agents                                            */
+/*      DEBUG REMOVE command to clean up unneeded contexts                      */
 /*                                                                              */
 /********************************************************************************/
 
-private class CommandAgent extends CommandBase {
-
-   private File jar_file;
-   private List<String> class_names;
+private class CommandDebugRemove extends CommandBase {
+ 
+   private String debug_id;
    
-   CommandAgent(Element xml) {
+   CommandDebugRemove(Element xml) {
       super(xml);
-      String jfnm = IvyXml.getAttrString(xml,"JARFILE");
-      if (jfnm == null) jar_file = null;
-      else jar_file = new File(jfnm);
-      class_names = new ArrayList<>();
-      for (Element cxml : IvyXml.children(xml,"CLASS")) {
-         class_names.add(IvyXml.getText(cxml));
-       }
+      debug_id = IvyXml.getAttrString(xml,"DEBUGID");
     }
    
+   @Override public String getCommandName()             { return "DEBUGREMOVE"; }
    
-   @Override public String getCommandName()             { return "AGENT"; }
-   
-   @Override public void localProcess(IvyXmlWriter xw) throws Exception {
-      IvyLog.logD("LIMBA","Load jar file " + jar_file + " with dependencies if needed");
-      // load jar file and its dependencies (see BemaMain.setupPackage)
-      // for each class in class_names
-      //        find the class and instantiate
-      //        call limba_main.addAgent(resultant object)
-      // But only load a jar file once, even it used multiple times
-      // And only add a class once if it is used multiple times
-      // Possibly do this in a separate class
-      // Might want to do this message-based and pass in the parameters for messaging
+   @Override public void localProcess(IvyXmlWriter xw) { 
+      limba_main.removeDebugContext(debug_id);
     }
-   
-}       // end of inner class CommandAgent
+
+}
+
+
 
 
 }       // end of class LimbaCommandBase

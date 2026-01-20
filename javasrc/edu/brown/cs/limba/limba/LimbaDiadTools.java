@@ -58,8 +58,8 @@ public class LimbaDiadTools implements LimbaConstants
 /*                                                                              */
 /********************************************************************************/
 
-private LimbaMain       limba_main;
 private MintControl     mint_control;
+private Map<String,?>   query_context;
 
 
 
@@ -69,9 +69,9 @@ private MintControl     mint_control;
 /*                                                                              */
 /********************************************************************************/
 
-LimbaDiadTools(LimbaMain lm)
+LimbaDiadTools(LimbaMain lm,Map<String,?> context)
 {
-   limba_main = lm;
+   query_context = context;
    mint_control = lm.getMintControl();
 }
 
@@ -86,9 +86,11 @@ LimbaDiadTools(LimbaMain lm)
       "This returns a string representing a JSON array where each element " +
       "is a JSON object representing a stack frame, with the 0 element being " +
       "the current user frame and the subsequent elements being the calling " +
-      "frames.  Each frame object contains the class, method, line number, " +
-      "full method name, method signature, and a JSON array of local variables " +
-      "given as JSON objects with the variable name, its data type, and its value.")
+      "frames.  Each frame object contains the method name which includes " +
+      "the class, method name and signature (key METHOD); the line number " +
+      "in that method (key LINE); and a list of local variables (key LOCALS). " +
+      "Each local includes its data type (key TYPE), its name (key NAME), and " +
+      "its value if it is a string or a primitive (key VALUE). ")
 public String getStackFrames()
 {
    CommandArgs args = new CommandArgs("FORMAT","JSON");
@@ -113,8 +115,9 @@ public String getStackFrames()
 @Tool("Return a list of locations that can affect the problematic symptom and " +
       "thus might be faulty and that are executed. This is returned as a string " +
       "representing a JSON array where " +
-      "each element represents a method with its full name and then a JSON array of line " +
-      "numbers for the identified lines in that method.")
+      "each element represents a method with its full name (key METHOD) " +
+      "and an array of lines in the method that might " +
+      "be problematic (key LINES).")
 public String getFaultLocations()
 {
    CommandArgs args = new CommandArgs("FORMAT","JSON","ALL",false);
@@ -124,7 +127,7 @@ public String getFaultLocations()
       return json;
     }
    
-   return null;
+   return "{ error: 'No debugid given' }";
 }
 
 
@@ -142,7 +145,7 @@ public String getAllFaultLocations()
       return json;
     }
    
-   return null;
+   return "{ error: 'No debugid given' }";
 }
 
 
@@ -162,7 +165,7 @@ public String getExecutionTrace()
       return json;
     }
    
-   return null;
+   return "{ error: 'No debugid given' }";
 }
 
 
@@ -180,7 +183,7 @@ public String getLineNumberTrace(
       return json;
     }
    
-   return null;
+   return "{ error: 'No debugid given' }";
 }
      
 
@@ -200,7 +203,7 @@ public String getVariableTrace(
       return json;
     }
    
-   return null;
+   return "{ error: 'No debugid given' }";
 }
 
 
@@ -217,7 +220,7 @@ public String getReturnValue(@P("ID of the particular call (from getExecutionTra
       return json;
     }
    
-   return null;
+   return "{ error: 'No debugid given' }";
 }
 
 
@@ -243,7 +246,7 @@ public String getVariableValue(
       return json;
     }
    
-   return null;
+   return "{ error: 'No debugid given' }";
 }    
 
 
@@ -270,8 +273,11 @@ public String getVariableHistory(
       return json;
     }
    
-   return null;
-}    
+   return "{ error: 'No debugid given' }";
+}  
+
+
+
 /********************************************************************************/
 /*                                                                              */
 /*      Send reqeust to diad                                                    */
@@ -283,12 +289,9 @@ private Element sendToDiad(final String what,final CommandArgs args0,String cnts
    CommandArgs args = args0;
    MintDefaultReply rply = new MintDefaultReply();
    
-   IvyLog.logD("LIMBA","Diad thread id " + Thread.currentThread().threadId());
-   
-   Map<String,?> ctx = limba_main.getQueryContext().get();
-   IvyLog.logD("LIMBA","Query context " + ctx);
-   if (ctx != null) {
-      for (Map.Entry<String,?> ent : ctx.entrySet()) {
+   IvyLog.logD("LIMBA","Query context " + query_context);
+   if (query_context != null) {
+      for (Map.Entry<String,?> ent : query_context.entrySet()) {
          String key = ent.getKey();
          if (args == null) args = new CommandArgs();
          else if (args.containsKey(key)) ;
@@ -317,7 +320,7 @@ private Element sendToDiad(final String what,final CommandArgs args0,String cnts
    
    Element rslt = rply.waitForXml(0);
    
-   IvyLog.logD("DICONTROL","Reply from DIAD: " + IvyXml.convertXmlToString(rslt));
+   IvyLog.logD("LIMBA","Reply from DIAD: " + IvyXml.convertXmlToString(rslt));
    
    return rslt;
 }

@@ -205,19 +205,24 @@ public List<String> getSourceCodeWithLineNumbers(
    
    IvyLog.logD("LIMBA","Get source code with line numbers for " + name);
    
+   List<String> lines = null;
    if (message_server != null) {
       try {
          Element xml = message_server.findMethod(name); 
-         Element xml1 = IvyXml.getChild(xml,"MATCH");
-         if (xml1 != null && IvyXml.isElement(xml,"RESULT")) {
-            int soff = IvyXml.getAttrInt(xml1,"STARTOFFSET");
-            int eoff = IvyXml.getAttrInt(xml1,"ENDOFFSET");  
-            String fnm = IvyXml.getAttrString(xml1,"FILE");
+         for (Element xml1 : IvyXml.children(xml,"MATCH")) {
+            Element xml2 = IvyXml.getChild(xml1,"ITEM");
+            if (xml2 == null) xml2 = xml1;
+            int soff = IvyXml.getAttrInt(xml2,"STARTOFFSET");
+            int eoff = IvyXml.getAttrInt(xml2,"ENDOFFSET");  
+            String fnm = IvyXml.getAttrString(xml2,"PATH");
+            if (fnm == null) fnm = IvyXml.getAttrString(xml1,"FILE");
             String cnds = IvyFile.loadFile(new File(fnm));
-            List<String> lines = getLineNumbersAndText(cnds,soff,eoff);
-            IvyLog.logD("LIMBA","Found source for method " + name0 + " " + lines);
-            return lines;
+            List<String> lines0 = getLineNumbersAndText(cnds,soff,eoff);
+            if (lines == null) lines = lines0;
+            else lines.addAll(lines0);
           }
+         IvyLog.logD("LIMBA","Found source for method " + name0 + " " + lines);
+         return lines;
        }
       catch (Throwable t) {
          IvyLog.logE("LIMBA","Problem getting source lines",t);

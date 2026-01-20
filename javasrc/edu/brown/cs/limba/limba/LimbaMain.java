@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -105,7 +106,6 @@ private String user_context;
 private String inited_model;
 private String workspace_name;
 private Map<String,LimbaChatter> chat_interfaces;
-private ThreadLocal<Map<String,?>> query_context;
 
 private static final String SPLIT_PATTERN;
 private static boolean http_log = false;
@@ -154,7 +154,6 @@ private LimbaMain(String [] args)
    ollama_api = null;
    inited_model = null;
    chat_interfaces = new HashMap<>();
-   query_context = new ThreadLocal<>();
    
    scanArgs(args);
 }
@@ -257,15 +256,6 @@ boolean setModel(String model)
    chat_interfaces.clear();
    
    return true;
-}
-
-
-
-
-
-public ThreadLocal<Map<String,?>> getQueryContext()
-{
-   return query_context;
 }
 
 
@@ -533,11 +523,12 @@ void setupRag()
 
 String askOllama(String cmd0,boolean usectx) throws Exception 
 {
-   return askOllama(cmd0,usectx,null,null);
+   return askOllama(cmd0,usectx,null,null,null);
 }
 
 
-String askOllama(String cmd0,boolean usectx,ChatMemory history,EnumSet<LimbaToolSet> tools) 
+String askOllama(String cmd0,boolean usectx,ChatMemory history,
+      EnumSet<LimbaToolSet> tools,Map<String,?> context) 
    throws Exception
 {
    String cmd = cmd0;
@@ -558,7 +549,7 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,EnumSet<LimbaTool
    
    try {
       // might need to add to history
-      String resp = getChain(history,usectx,tools).chat(cmd);
+      String resp = getChain(history,usectx,tools,context).chat(cmd);
       IvyLog.logD("LIMBA","Context Response: " + resp);
       IvyLog.logD("LIMBA","\n------------------------\n\n");
       return resp;
@@ -570,12 +561,13 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,EnumSet<LimbaTool
 }
 
 
-private LimbaChatter getChain(ChatMemory mem,boolean usectx,EnumSet<LimbaToolSet> toolids)
+private LimbaChatter getChain(ChatMemory mem,boolean usectx,
+      EnumSet<LimbaToolSet> toolids,Map<String,?> context)
 {
    if (toolids == null) {
       toolids = EnumSet.of(LimbaToolSet.PROJECT);
     }
-   String key = toolids.toString();
+   String key = getKey(toolids,context);
    
    LimbaChatter rslt = chat_interfaces.get(key);
    if (rslt != null) return rslt;
@@ -590,13 +582,18 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,EnumSet<LimbaToolSet
       .build();
    ConversationalRetrievalChain.Builder bldr = ConversationalRetrievalChain.builder();
    bldr.chatModel(chat);
+   
    ContentRetriever cr = null;
+   if (rag_model == null) {
+      setupRag();
+    }
    if (rag_model != null && usectx) {
       cr = rag_model.getContentRetriever();
     }
    if (cr == null) {
       cr = new EmptyContentRetriever();
     }
+   
    bldr.contentRetriever(cr);
    if (mem != null) {
       bldr.chatMemory(mem);
@@ -605,9 +602,6 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,EnumSet<LimbaToolSet
    List<Object> tools = new ArrayList<>();
    if (!toolids.isEmpty()) {
       if (toolids.contains(LimbaToolSet.PROJECT)) {
-         if (rag_model == null) {
-            setupRag();
-          }
          if (rag_model != null) {
             tools.add(new LimbaTools(this,rag_model.getFiles()));
           }
@@ -616,7 +610,7 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,EnumSet<LimbaToolSet
           }
        }
       if (toolids.contains(LimbaToolSet.DEBUG)) {
-         tools.add(new LimbaDiadTools(this));
+         tools.add(new LimbaDiadTools(this,context));
        }
     }
 
@@ -641,6 +635,29 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,EnumSet<LimbaToolSet
    chat_interfaces.put(key,rslt);
    
    return rslt;
+}
+
+
+private String getKey(EnumSet<LimbaToolSet> tools,Map<String,?> context)
+{
+   if (tools.isEmpty()) return "*";
+   
+   String k = tools.toString();
+   if (tools.contains(LimbaToolSet.DEBUG)) {
+      k += "." + context.get("DEBUGID") + ".";
+    }
+   
+   return k;
+}
+
+void removeDebugContext(String debugid)
+{
+   for (Iterator<String> it = chat_interfaces.keySet().iterator(); it.hasNext(); ) {
+      String key = it.next();
+      if (key.contains("DEBUG") && key.contains(debugid + ".")) {
+         it.remove();
+       }
+    }
 }
 
 
