@@ -253,6 +253,8 @@ Element findClass(String name)
 Element findMethod(final String name0)
 {
    String name = name0;
+   if (name == null) return null;
+   
    // fix constructors
    String what = "METHOD";
    if (name.contains(".<init>")) {

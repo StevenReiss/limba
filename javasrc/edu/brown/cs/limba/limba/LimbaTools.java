@@ -36,6 +36,7 @@ import org.w3c.dom.Element;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import edu.brown.cs.ivy.file.IvyFile;
+import edu.brown.cs.ivy.file.IvyFormat;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.jcomp.JcompControl;
@@ -111,8 +112,10 @@ public List<String> getConstructorsForClass(@P("name of the class") String name)
 /********************************************************************************/
 
 @Tool("return the signature and javadoc describing a method")
-public String getMethodInformation(@P("full name of the method") String name)
+public String getMethodInformation(@P("full name of the method") String name0)
 {
+   String name = normalizeMethodName(name0);
+   
    int idx = name.indexOf("(");
    int idx1 = 0;
    if (idx1 > 0) {
@@ -197,16 +200,17 @@ public List<String> getClassMethods(@P("name of the class") String name)
 
 @Tool("Return the source code for a method with line numbers. Each source line " +
       "is prefixed by its line number and a tab.  This only works for user code, " +
-      "not for system code.  It will return null if the method can't be found.")
-public List<String> getSourceCodeWithLineNumbers(
+      "not for system code.  The full method name should be provided as the " +
+      "parameter. It will return an empty list if the method can't be found.")
+public List<String> getSourceCode(
       @P("full name of the method") String name0)
 {
-   String name = name0;
+   String name = normalizeMethodName(name0);
    
    IvyLog.logD("LIMBA","Get source code with line numbers for " + name);
    
-   List<String> lines = null;
-   if (message_server != null) {
+   List<String> lines = new ArrayList<>();
+   if (message_server != null && name != null) {
       try {
          Element xml = message_server.findMethod(name); 
          for (Element xml1 : IvyXml.children(xml,"MATCH")) {
@@ -218,8 +222,7 @@ public List<String> getSourceCodeWithLineNumbers(
             if (fnm == null) fnm = IvyXml.getAttrString(xml1,"FILE");
             String cnds = IvyFile.loadFile(new File(fnm));
             List<String> lines0 = getLineNumbersAndText(cnds,soff,eoff);
-            if (lines == null) lines = lines0;
-            else lines.addAll(lines0);
+            lines.addAll(lines0);
           }
          IvyLog.logD("LIMBA","Found source for method " + name0 + " " + lines);
          return lines;
@@ -229,7 +232,45 @@ public List<String> getSourceCodeWithLineNumbers(
        }
     }
    
-   return null;
+   return lines;
+}
+
+
+@Tool("Return the source code for a given line in a method.  The parameters are " +
+"the full method name and the line number.  The tool returns the given line as a string.")
+public String getSourceLine(
+      @P("full name of the method") String name0,
+      @P("line number") int linenumber)
+{
+   String name = normalizeMethodName(name0);
+   
+   IvyLog.logD("LIMBA","Get source line for " + name + " " + linenumber);
+   
+   if (message_server != null && name != null) {
+      try {
+         Element xml = message_server.findMethod(name); 
+         for (Element xml1 : IvyXml.children(xml,"MATCH")) {
+            Element xml2 = IvyXml.getChild(xml1,"ITEM");
+            if (xml2 == null) xml2 = xml1;
+            int soff = IvyXml.getAttrInt(xml2,"STARTOFFSET");
+            int eoff = IvyXml.getAttrInt(xml2,"ENDOFFSET");  
+            String fnm = IvyXml.getAttrString(xml2,"PATH");
+            if (fnm == null) fnm = IvyXml.getAttrString(xml1,"FILE");
+            String cnds = IvyFile.loadFile(new File(fnm));
+            String lines0 = getLineText(cnds,soff,eoff,linenumber);
+            if (lines0 != null && !lines0.isEmpty()) {
+               IvyLog.logD("LIMBA","Result: " + lines0);
+               return lines0;
+             }
+          }
+         return "";
+       }
+      catch (Throwable t) {
+         IvyLog.logE("LIMBA","Problem getting source lines",t);
+       }
+    }
+   
+   return "";
 }
 
 
@@ -433,6 +474,76 @@ private static ArrayList<String> getLineNumbersAndText(String src,
    return lines;
 }
 
+
+private static String getLineText(String src,
+      int startOffset, int endOffset,int lno) {
+   
+   // sanity checks
+   if (src == null || src.isEmpty()) return "";
+   if (startOffset < 0) startOffset = 0;
+   if (endOffset > src.length()) endOffset = src.length();
+   if (startOffset >= endOffset) return "";
+   
+   int lineno = 1;				   // humanbQreadable line count
+   int pos   = 0;
+   
+   while (pos < src.length() && pos <= startOffset) {
+      // skip leading whitespace before the requested range starts
+      if (!Character.isWhitespace(src.charAt(pos))) break;
+      if (src.charAt(pos++) == '\n') ++lineno;     // still in prebQrange area
+    }
+   
+   int lineStart = -1;				   // position of current line start
+   
+   for (int i = pos; i < src.length(); ) {
+      // detect the beginning of a new line
+      // need to handle \r as EOL terminator?
+      if (src.charAt(i) == '\n') {                // \n is always used as line terminator here
+	 if (lineStart >= 0) {		
+            if (lineno == lno) {
+               String txt = src.substring(lineStart, i);
+               return txt;
+             }
+	  }
+	 ++lineno;				 // next line
+	 lineStart = i + 1;			 // after the \n character
+       }
+      
+      if (i == endOffset - 1 || i == src.length() - 1) {
+	 // last requested line bS capture it even if it does not end with '\n'
+         if (lineno == lno) {
+            String txt = src.substring(lineStart, i + 1);
+            return txt;
+          }
+       }
+      
+      ++i;
+    }
+   
+   return "";
+}
+
+
+private String normalizeMethodName(String name0)
+{
+   if (name0 == null) return null;
+   
+   String name = name0;
+   if (name.contains(":(")) name = name.replace(":(","(");
+   if (name.contains("(")) {
+      int idx0 = name.indexOf("(");
+      int idx1 = name.lastIndexOf(")");
+      String args0 = name.substring(idx0,idx1);
+      String args1 = IvyFormat.formatTypeName(args0);
+      name = name.substring(0,idx0) + args1;
+    }
+   
+   if (!name0.equals(name)) {
+      IvyLog.logD("LIMBA","Normalize " + name0 + " = " + name);
+    }
+   
+   return name;
+}
 
 
 

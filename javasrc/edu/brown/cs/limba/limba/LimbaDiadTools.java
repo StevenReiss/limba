@@ -117,7 +117,8 @@ public String getStackFrames()
       "representing a JSON array where " +
       "each element represents a method with its full name (key METHOD) " +
       "and an array of lines in the method that might " +
-      "be problematic (key LINES).")
+      "be problematic (key LINES).  The source code for these lines can be " +
+      "found using the tool getSourceCode")
 public String getFaultLocations()
 {
    CommandArgs args = new CommandArgs("FORMAT","JSON","ALL",false);
@@ -150,15 +151,41 @@ public String getAllFaultLocations()
 
 
 
-@Tool("Return the call tree of the execution leading to the problematic symptom. " +
-      "This returns a string representing a JSONObject containing the top level call. " + 
-      "Each call object contains " +
-      "the method, and ID, the start and end times, and a list of call objects called by " +
-      "this method.  The IDs can be used to get details of the exeuction of this call " +
-      "including line numbers and variable values")
-public String getExecutionTrace()
+// @Tool("Return the call tree of the execution leading to the problematic symptom. " +
+//    "This returns a string representing a JSONObject containing the top level call. " + 
+//    "Each call object contains " +
+//    "the method, and ID, the start and end times, and a list of call objects called by " +
+//    "this method.  The IDs can be used to get details of the exeuction of this call " +
+//    "including line numbers and variable values")
+String getExecutionTrace()
 {
+   IvyLog.logD("LIMBA","Get Full Execution Trace called");
    CommandArgs args = new CommandArgs("FORMAT","JSON");
+   Element rslt = sendToDiad("Q_EXECTRACE",args,null);
+   if (rslt != null) {
+      String json = IvyXml.getTextElement(rslt,"JSON");
+      return json;
+    }
+   
+   return "{ error: 'No debugid given' }";
+}
+
+
+
+@Tool("Return information about one call in the execution trace leading to a problem. " +
+"The call is identified by the callid parameter which can be 0 to indicate the " +
+"top-level call.  The tool returns a string representing a JSON object containing " +
+"the context id of the call (key ID), the full name of the method being executed " +
+"(key METHOD), the start time of the method execution (key START_TIME), the end " +
+"time of the method execution (key END_TIME), and a JSON array of the methods called " +
+"directly from this method.  Each call contains its callid (key ID), its full method " +
+"name (key METHOD), and its start and end time (keys START_TIME and END_TIME).  Additional " +
+"information about that call can be obtained by using this tool again or by using the " +
+"getLineNubmerTrace or getVariableTrace tools.")
+public String getCallTrace(String callid)
+{
+   CommandArgs args = new CommandArgs("FORMAT","JSON",
+         "CALLID",callid);
    Element rslt = sendToDiad("Q_EXECTRACE",args,null);
    if (rslt != null) {
       String json = IvyXml.getTextElement(rslt,"JSON");
@@ -173,7 +200,7 @@ public String getExecutionTrace()
       "along with their times.  This returns a string representing a JSONArray that " +
       "contains a JSONObject for each line along with the time stamps for that line.")
 public String getLineNumberTrace(
-      @P("ID of the particular call (from getExecutionTrace)") String callid)
+      @P("ID of the particular call (from getCallTrace)") String callid)
 {
    CommandArgs args = new CommandArgs("FORMAT","JSON",
          "CALLID",callid);
@@ -192,7 +219,7 @@ public String getLineNumberTrace(
 "of the variable in question.  It returns a string representing a JSON Object " +
 "that gives information about the variable as well as all value changes.")
 public String getVariableTrace(
-      @P("ID of the particular call (from getExecutionTrace)") String callid,
+      @P("ID of the particular call (from getCallTrace)") String callid,
       @P("Name of the variable") String variable) 
 {
    CommandArgs args = new CommandArgs("FORMAT","JSON",
@@ -210,7 +237,7 @@ public String getVariableTrace(
 
 @Tool("Return the value returned by the given call as a string representating a " +
       "JSON Object")
-public String getReturnValue(@P("ID of the particular call (from getExecutionTrace)") String callid)
+public String getReturnValue(@P("ID of the particular call (from getCallTrace)") String callid)
 {
    CommandArgs args = new CommandArgs("FORMAT","JSON",
          "CALLID",callid,"VARIABLE","*RETURNS*");
@@ -231,7 +258,7 @@ public String getReturnValue(@P("ID of the particular call (from getExecutionTra
       "given either by the execution trace time or the line number (or both).  The returned " +
       "value is a string representing a JSONObject containing the VALUE at the time.")
 public String getVariableValue(
-      @P("ID of the particular call (from getExecutionTrace)") String callid,
+      @P("ID of the particular call (from getCallTrace)") String callid,
       @P("Name of the variable, using ? for subelements") String variable,
       @P("Optional line number use 0 if not known") int line,
       @P("Optional execution time; use -1 if not known") long time)
@@ -258,7 +285,7 @@ public String getVariableValue(
       "returned value is a sgtring representing a JSONObject which represents a graph " +
       "with nodes representing change points and arcs showing the temporal relation.")
 public String getVariableHistory(
-            @P("ID of the particular call (from getExecutionTrace)") String callid,
+            @P("ID of the particular call (from getCallTrace)") String callid,
             @P("Name of the variable, using ? for subelements") String variable,
             @P("Optional line number use 0 if not known") int line,
             @P("Optional execution time; use -1 if not known") long time)
@@ -289,7 +316,8 @@ private Element sendToDiad(final String what,final CommandArgs args0,String cnts
    CommandArgs args = args0;
    MintDefaultReply rply = new MintDefaultReply();
    
-   IvyLog.logD("LIMBA","Query context " + query_context);
+   IvyLog.logD("LIMBA","Query context " + query_context + " " + 
+         Thread.currentThread().threadId());
    if (query_context != null) {
       for (Map.Entry<String,?> ent : query_context.entrySet()) {
          String key = ent.getKey();
