@@ -620,6 +620,7 @@ private class CommandDebugRemove extends CommandBase {
    
    @Override public void localProcess(IvyXmlWriter xw) { 
       limba_main.removeDebugContext(debug_id);
+      memory_map.remove(debug_id);
     }
 
 }

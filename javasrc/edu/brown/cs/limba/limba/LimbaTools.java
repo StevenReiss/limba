@@ -207,7 +207,7 @@ public List<String> getSourceCode(
 {
    String name = normalizeMethodName(name0);
    
-   IvyLog.logD("LIMBA","Get source code with line numbers for " + name);
+   IvyLog.logD("LIMBA","GET SOURCE CODE with line numbers for " + name);
    
    List<String> lines = new ArrayList<>();
    if (message_server != null && name != null) {
@@ -224,7 +224,7 @@ public List<String> getSourceCode(
             List<String> lines0 = getLineNumbersAndText(cnds,soff,eoff);
             lines.addAll(lines0);
           }
-         IvyLog.logD("LIMBA","Found source for method " + name0 + " " + lines);
+         IvyLog.logD("LIMBA","FOUND source for method " + name0 + " " + lines);
          return lines;
        }
       catch (Throwable t) {
@@ -234,6 +234,20 @@ public List<String> getSourceCode(
    
    return lines;
 }
+
+
+@Tool("Return the source code for a method with line numbers. Each source line " +
+      "is prefixed by its line number and a tab.  This only works for user code, " +
+      "not for system code.  The full method name should be provided as the " +
+      "parameter. It will return an empty list if the method can't be found.  "+
+      "this is an alias for getSourceCode")
+public List<String> getMethodSource(
+            @P("full name of the method") String name)
+{
+   return getSourceCode(name);
+}
+
+
 
 
 @Tool("Return the source code for a given line in a method.  The parameters are " +
@@ -270,7 +284,7 @@ public String getSourceLine(
        }
     }
    
-   return "";
+   return "// NO SUCH LINE OR EMPTY LINE";
 }
 
 
@@ -463,7 +477,7 @@ private static ArrayList<String> getLineNumbersAndText(String src,
 	 lineStart = i + 1;			 // after the \n character
        }
       
-      if (i == endOffset - 1 || i == src.length() - 1) {
+      if (i == endOffset - 1) {
 	 // last requested line bS capture it even if it does not end with '\n'
 	 String txt = src.substring(lineStart, i + 1);
 	 lines.add(String.format("%d\t%s", lineNo, txt));
@@ -533,9 +547,24 @@ private String normalizeMethodName(String name0)
    if (name.contains("(")) {
       int idx0 = name.indexOf("(");
       int idx1 = name.lastIndexOf(")");
-      String args0 = name.substring(idx0,idx1);
-      String args1 = IvyFormat.formatTypeName(args0);
-      name = name.substring(0,idx0) + args1;
+      String args0 = name.substring(idx0,idx1+1);
+      if (args0.contains(" ")) args0 = args0.replace(" ","");
+      else {
+         String args1 = IvyFormat.formatTypeName(args0);
+         if (!args1.contains(",,")) args0 = args1;
+       }
+      name = name.substring(0,idx0) + args0;
+    }
+   if (name.contains(":")) {
+      name = name.replace(":\\d+","");
+    }
+   int idx2 = name.lastIndexOf(".");
+   if (idx2 > 0) {
+      String mnm = name.substring(idx2+1);
+      String match = mnm + "." + mnm;
+      if (name.equals(match) || name.endsWith("." + match)) {
+         name = name.substring(0,idx2) + ".<init>";
+       }
     }
    
    if (!name0.equals(name)) {

@@ -179,7 +179,9 @@ String getExecutionTrace()
 "(key METHOD), the start time of the method execution (key START_TIME), the end " +
 "time of the method execution (key END_TIME), and a JSON array of the methods called " +
 "directly from this method.  Each call contains its callid (key ID), its full method " +
-"name (key METHOD), and its start and end time (keys START_TIME and END_TIME).  Additional " +
+"name (key METHOD), and its start and end time (keys START_TIME and END_TIME). " +
+"It can also include a key EXCEPTION which indicates the call exited by throwing " +
+"an exception; if this is not present the call returned normally. Additional " +
 "information about that call can be obtained by using this tool again or by using the " +
 "getLineNubmerTrace or getVariableTrace tools.")
 public String getCallTrace(String callid)

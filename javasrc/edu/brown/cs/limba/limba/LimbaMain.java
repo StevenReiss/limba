@@ -575,7 +575,7 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
    OllamaChatModel chat = OllamaChatModel.builder()
       .baseUrl(getUrl())
       .maxRetries(3)
-      .timeout(Duration.ofMinutes(10))
+      .timeout(Duration.ofMinutes(15))
       .logRequests(http_log)
       .logResponses(http_log)
       .modelName(getModel())
