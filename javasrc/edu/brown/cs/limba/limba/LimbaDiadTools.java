@@ -258,7 +258,8 @@ public String getReturnValue(@P("ID of the particular call (from getCallTrace)")
       "the execution trace.  A local variable is given by its name; a field is specified " +
       "by name?field_name; an array element is specified by name?[index].  The time can be " +
       "given either by the execution trace time or the line number (or both).  The returned " +
-      "value is a string representing a JSONObject containing the VALUE at the time.")
+      "value is a string representing a JSONObject containing the VALUE at the time. " +
+      "Note that the variable cannot be a call or expression.")
 public String getVariableValue(
       @P("ID of the particular call (from getCallTrace)") String callid,
       @P("Name of the variable, using ? for subelements") String variable,
@@ -268,7 +269,7 @@ public String getVariableValue(
    CommandArgs args = new CommandArgs("FORMAT","JSON",
          "CALLID",callid,"VARIABLE",variable);
    if (line > 0) args.put("LINE",line);
-   if (time >= 0) args.put("TIME",time);
+   if (time >= 0) args.put("WHEN",time);
    Element rslt = sendToDiad("Q_VARVALUE",args,null);
    if (rslt != null) {
       String json = IvyXml.getTextElement(rslt,"JSON");
