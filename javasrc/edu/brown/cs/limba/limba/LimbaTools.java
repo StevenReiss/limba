@@ -153,11 +153,20 @@ public String getMethodInformation(@P("full name of the method") String name0)
       // handle case where only method is given -- if msg server is available
     }
    
+   if (rslt == null) rslt = "*ERROR*";
+   
    IvyLog.logD("LIMBA","Return " + rslt);
 
    return rslt;
 }
 
+
+@Tool("return the signature and javadoc describing a method.  Alias for " +
+   "getMethodInformation")
+public String getMethodSignature(@P("full name of the method") String name)
+{
+  return getMethodInformation(name);
+} 
 
 /********************************************************************************/
 /*                                                                              */
@@ -165,7 +174,8 @@ public String getMethodInformation(@P("full name of the method") String name0)
 /*                                                                              */
 /********************************************************************************/
 
-@Tool("return the set of methods of a class")
+@Tool("return the set of methods of a class.  Will return an empty list if " +
+      "the class does not exist.")
 public List<String> getClassMethods(@P("name of the class") String name)
 {
    List<String> rslt = new ArrayList<>();
@@ -201,7 +211,7 @@ public List<String> getClassMethods(@P("name of the class") String name)
 @Tool("Return the source code for a method with line numbers. Each source line " +
       "is prefixed by its line number and a tab.  This only works for user code, " +
       "not for system code.  The full method name should be provided as the " +
-      "parameter. It will return an empty list if the method can't be found.")
+      "parameter. It will return an empty list if the method or class can't be found.")
 public List<String> getSourceCode(
       @P("full name of the method") String name0)
 {

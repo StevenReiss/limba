@@ -256,16 +256,20 @@ public String getReturnValue(@P("ID of the particular call (from getCallTrace)")
 
 @Tool("Return the value of a given variable at a given time.  The time is based on " +
       "the execution trace.  A local variable is given by its name; a field is specified " +
-      "by name?field_name; an array element is specified by name?[index].  The time can be " +
+      "by name?field_name; an array element is specified by name?[index].  It cannot " +
+      "be an expression such as a call or a field reference.  The time can be " +
       "given either by the execution trace time or the line number (or both).  The returned " +
-      "value is a string representing a JSONObject containing the VALUE at the time. " +
-      "Note that the variable cannot be a call or expression.")
+      "value is a string representing a JSONObject containing the VALUE at the time. ")
 public String getVariableValue(
       @P("ID of the particular call (from getCallTrace)") String callid,
       @P("Name of the variable, using ? for subelements") String variable,
       @P("Optional line number use 0 if not known") int line,
       @P("Optional execution time; use -1 if not known") long time)
 {
+   if (variable.contains("(")) {
+      return "{ 'ERROR': 'Expression given; only variables allowed' }";
+    }
+   
    CommandArgs args = new CommandArgs("FORMAT","JSON",
          "CALLID",callid,"VARIABLE",variable);
    if (line > 0) args.put("LINE",line);
@@ -276,7 +280,7 @@ public String getVariableValue(
       return json;
     }
    
-   return "{ error: 'No debugid given' }";
+   return "{ 'ERROR': 'No debugid given' }";
 }    
 
 
@@ -296,7 +300,7 @@ public String getVariableHistory(
    CommandArgs args = new CommandArgs("FORMAT","JSON",
          "CALLID",callid,"VARIABLE",variable);
    if (line > 0) args.put("LINE",line);
-   if (time >= 0) args.put("TIME",time);
+   if (time >= 0) args.put("WHEN",time);
    Element rslt = sendToDiad("Q_VARHISTORY",args,null);
    if (rslt != null) {
       String json = IvyXml.getTextElement(rslt,"JSON");
