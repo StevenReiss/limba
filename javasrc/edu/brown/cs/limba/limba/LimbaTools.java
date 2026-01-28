@@ -215,6 +215,7 @@ public List<String> getClassMethods(@P("name of the class") String name)
 public List<String> getSourceCode(
       @P("full name of the method") String name0)
 {
+   long start = System.currentTimeMillis();
    String name = normalizeMethodName(name0);
    
    IvyLog.logD("LIMBA","GET SOURCE CODE with line numbers for " + name);
@@ -241,6 +242,10 @@ public List<String> getSourceCode(
          IvyLog.logE("LIMBA","Problem getting source lines",t);
        }
     }
+   
+   long time = System.currentTimeMillis() - start;
+   
+   IvyLog.logI("LIMBA","Time for get source code: " + time);
    
    return lines;
 }
