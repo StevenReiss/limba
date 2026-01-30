@@ -507,7 +507,7 @@ private static ArrayList<String> getLineNumbersAndText(String src,
       if (i == endOffset - 1) {
 	 // last requested line bS capture it even if it does not end with '\n'
 	 String txt = src.substring(lineStart, i + 1);
-	 lines.add(String.format("%d\t%s", lineNo, txt));
+	 lines.add(String.format("%d\t%s", lineNo+1, txt));
        }
       
       ++i;
