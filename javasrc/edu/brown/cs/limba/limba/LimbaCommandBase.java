@@ -429,7 +429,8 @@ private final class CommandQuery extends CommandBase {
        }
       
       IvyLog.logD("LIMBA","Query " + nm + " " + tool_set + " " +
-            query_context);
+            query_context + " " + command_id);
+
     }
    
    @Override public String getCommandName()             { return command_name; }
@@ -446,9 +447,10 @@ private final class CommandQuery extends CommandBase {
          history = memory_map.get(command_id);
          if (history == null) {
             history = MessageWindowChatMemory.builder()
-               .maxMessages(10)
+               .maxMessages(20)
                .build();
           }
+         IvyLog.logD("LIMBA","Use history " + command_id + " " + history);
        } 
        
       String resp = limba_main.askOllama(cmd,usectx,

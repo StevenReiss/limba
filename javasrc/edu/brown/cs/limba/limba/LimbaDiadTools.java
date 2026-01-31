@@ -261,7 +261,7 @@ public String getReturnValue(@P("ID of the particular call (from getCallTrace)")
       "given either by the execution trace time or the line number (or both).  The returned " +
       "value is a string representing a JSONObject containing the VALUE at the time. ")
 public String getVariableValue(
-      @P("ID of the particular call (from getCallTrace)") String callid,
+      @P("Numeric ID of the particular call (from getCallTrace)") String callid,
       @P("Name of the variable, using ? for subelements") String variable,
       @P("Optional line number use 0 if not known") int line,
       @P("Optional execution time; use -1 if not known") long time)

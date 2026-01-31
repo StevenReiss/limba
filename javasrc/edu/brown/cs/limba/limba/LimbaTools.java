@@ -29,8 +29,12 @@ import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
+import org.eclipse.jdt.core.dom.IExtendedModifier;
+import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.w3c.dom.Element;
 
 import dev.langchain4j.agent.tool.P;
@@ -168,6 +172,7 @@ public String getMethodSignature(@P("full name of the method") String name)
   return getMethodInformation(name);
 } 
 
+
 /********************************************************************************/
 /*                                                                              */
 /*      Tool to return information about a class                                */
@@ -191,6 +196,36 @@ public List<String> getClassMethods(@P("name of the class") String name)
             MethodDeclaration md = (MethodDeclaration) o1;
             String txt = getMethodDescription(md);
             rslt.add(txt);
+          }
+       }
+    }
+   
+   IvyLog.logD("LIMBA","Result is " + rslt);
+   
+   return rslt;
+}
+
+
+@Tool("return the set of fields of a class.  Will return an empty list if " +
+      "the class does not exist.")
+public List<String> getClassFields(@P("name of the class") String name)
+{
+   List<String> rslt = new ArrayList<>();
+   
+   IvyLog.logD("LIMBA","FIND FIELDS for class " + name);
+   IvyLog.logD("LIMBA","Thread " +  Thread.currentThread().threadId() + " " +
+         Thread.currentThread().getName());
+   
+   TypeDeclaration td = findClassAst(name,false);
+   if (td != null) {
+      for (Object o1 : td.bodyDeclarations()) {
+         if (o1 instanceof FieldDeclaration) {
+            FieldDeclaration fd = (FieldDeclaration) o1;
+            for (Object o2 : fd.fragments()) {
+               VariableDeclarationFragment vdf = (VariableDeclarationFragment) o2;
+               String txt = getFieldDescription(fd,vdf);
+               rslt.add(txt);
+             }
           }
        }
     }
@@ -285,7 +320,7 @@ public String getSourceLine(
 {
    String name = normalizeMethodName(name0);
    
-   IvyLog.logD("LIMBA","Get source line for " + name + " " + linenumber);
+   IvyLog.logD("LIMBA","GET SOURCE LINE for " + name + " " + linenumber);
    
    if (message_server != null && name != null) {
       try {
@@ -304,7 +339,7 @@ public String getSourceLine(
                return lines0;
              }
           }
-         return "";
+         return "// NO SUCH LINE OR EMPTY LINE";
        }
       catch (Throwable t) {
          IvyLog.logE("LIMBA","Problem getting source lines",t);
@@ -453,6 +488,28 @@ private String getMethodDescription(MethodDeclaration md)
 }
 
 
+private String getFieldDescription(FieldDeclaration fd,VariableDeclarationFragment vdf)
+{
+   StringBuffer buf = new StringBuffer();
+   Javadoc jd = fd.getJavadoc();
+   if (jd != null) buf.append(jd);
+   
+   for (Object o1 : fd.modifiers()) {
+      IExtendedModifier mod = (IExtendedModifier) o1;
+      if (!buf.isEmpty()) buf.append(" ");
+      buf.append(mod.toString());
+    }
+   
+   if (!buf.isEmpty()) buf.append(" "); 
+   buf.append(fd.getType().toString());
+   buf.append(" ");
+   buf.append(vdf.toString());
+   buf.append(";");
+   
+   return buf.toString();
+}
+
+
 /********************************************************************************/
 /*                                                                              */
 /*      Get source lines with line numbers                                      */
@@ -468,50 +525,47 @@ private String getMethodDescription(MethodDeclaration md)
  * @param endOffset	    Exclusive ending offset (b	$ length of src).
  * @return		    An ArrayList<String> with "lineNumber<TAB>line".
  */
-private static ArrayList<String> getLineNumbersAndText(String src,
-      int startOffset, int endOffset) {
+private static List<String> getLineNumbersAndText(String src,
+      int startOffset, int endOffset) 
+{
+   List<String> lines = new ArrayList<String>();
    
    // sanity checks
-   if (src == null || src.isEmpty()) return new ArrayList<>();
+   if (src == null || src.isEmpty()) return lines;
    if (startOffset < 0) startOffset = 0;
    if (endOffset > src.length()) endOffset = src.length();
-   if (startOffset >= endOffset) return new ArrayList<>();
+   if (startOffset >= endOffset) return lines;
    
-   var lines = new ArrayList<String>();
-   int lineNo = 1;				   // humanbQreadable line count
+   int lineno = 1;				   // humanbQreadable line count
    int pos   = 0;
-   
-   while (pos < src.length() && pos <= startOffset) {
-      // skip leading whitespace before the requested range starts
-      if (!Character.isWhitespace(src.charAt(pos))) break;
-      if (src.charAt(pos++) == '\n') ++lineNo;     // still in prebQrange area
-    }
-   
-   int lineStart = -1;				   // position of current line start
+   int linestart = -1;				   // position of current line start
    
    for (int i = pos; i < src.length(); ) {
       // detect the beginning of a new line
       // need to handle \r as EOL terminator?
       if (src.charAt(i) == '\n') {                // \n is always used as line terminator here
-	 if (lineStart >= 0) {			  // we already have a complete line before it
-	    String txt = src.substring(lineStart, i);
-	    int relPos = startOffset - lineStart;
+	 if (linestart >= 0) {			  // we already have a complete line before it
+	    String txt = src.substring(linestart, i);
+	    int relPos = startOffset - linestart;
 	    if (relPos < txt.length() && i <= endOffset) {
-	       lines.add(String.format("%d\t%s", lineNo, txt));
+	       lines.add(String.format("%d\t%s", lineno, txt));
 	     }
 	  }
-	 ++lineNo;				 // next line
-	 lineStart = i + 1;			 // after the \n character
+	 ++lineno;				 // next line
+	 linestart = i + 1;			 // after the \n character
        }
       
       if (i == endOffset - 1) {
-	 // last requested line bS capture it even if it does not end with '\n'
-	 String txt = src.substring(lineStart, i + 1);
-	 lines.add(String.format("%d\t%s", lineNo+1, txt));
+	 // last requested line  capture it even if it does not end with '\n'
+	 String txt = src.substring(linestart, i + 1);
+	 lines.add(String.format("%d\t%s", lineno, txt));
+         linestart = -1;
+         break;
        }
       
       ++i;
     }
+   
    return lines;
 }
 
@@ -525,15 +579,8 @@ private static String getLineText(String src,
    if (endOffset > src.length()) endOffset = src.length();
    if (startOffset >= endOffset) return "";
    
-   int lineno = 1;				   // humanbQreadable line count
+   int lineno = 1;				   // human-readable line count
    int pos   = 0;
-   
-   while (pos < src.length() && pos <= startOffset) {
-      // skip leading whitespace before the requested range starts
-      if (!Character.isWhitespace(src.charAt(pos))) break;
-      if (src.charAt(pos++) == '\n') ++lineno;     // still in prebQrange area
-    }
-   
    int lineStart = -1;				   // position of current line start
    
    for (int i = pos; i < src.length(); ) {
