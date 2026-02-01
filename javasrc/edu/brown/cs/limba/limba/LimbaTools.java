@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*                                                                              */
-/*              LimbaTools.java                                                 */
-/*                                                                              */
-/*      Tools for use in program-related queries                                */
-/*                                                                              */
+/*										*/
+/*		LimbaTools.java 						*/
+/*										*/
+/*	Tools for use in program-related queries				*/
+/*										*/
 /********************************************************************************/
-/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
+/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.                            *
- *                                                                               *
- *                        All Rights Reserved                                    *
- *                                                                               *
- * This program and the accompanying materials are made available under the      *
+ *  Copyright 2011, Brown University, Providence, RI.				 *
+ *										 *
+ *			  All Rights Reserved					 *
+ *										 *
+ * This program and the accompanying materials are made available under the	 *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at                                                           *
- *      http://www.eclipse.org/legal/epl-v10.html                                *
- *                                                                               *
+ * and is available at								 *
+ *	http://www.eclipse.org/legal/epl-v10.html				 *
+ *										 *
  ********************************************************************************/
 
 
@@ -52,19 +52,19 @@ public class LimbaTools implements LimbaConstants
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Private Storage                                                         */
-/*                                                                              */
+/*										*/
+/*	Private Storage 							*/
+/*										*/
 /********************************************************************************/
 
-private LimbaMain       limba_main;
-private LimbaMonitor    message_server;
+private LimbaMain	limba_main;
+private LimbaMonitor	message_server;
 private Collection<File> project_files;
 
 /********************************************************************************/
-/*                                                                              */
-/*      Constructors                                                            */
-/*                                                                              */
+/*										*/
+/*	Constructors								*/
+/*										*/
 /********************************************************************************/
 
 LimbaTools(LimbaMain lm,Collection<File> files)
@@ -77,49 +77,49 @@ LimbaTools(LimbaMain lm,Collection<File> files)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Tool to return constructor information                                  */
-/*                                                                              */
+/*										*/
+/*	Tool to return constructor information					*/
+/*										*/
 /********************************************************************************/
 
 @Tool("returns the set of available constructors for a given class")
 public List<String> getConstructorsForClass(@P("name of the class") String name)
 {
    List<String> rslt = new ArrayList<>();
-   
+
    TypeDeclaration td = findClassAst(name,false);
-   
+
    IvyLog.logD("LIMBA","Find constructors for class " + name);
-   
+
    if (td != null) {
       for (Object o1 : td.bodyDeclarations()) {
-         if (o1 instanceof MethodDeclaration) {
-            MethodDeclaration md = (MethodDeclaration) o1;
-            if (!md.isConstructor()) continue;
-            String txt = getMethodDescription(md);
-            rslt.add(txt);
-          }
+	 if (o1 instanceof MethodDeclaration) {
+	    MethodDeclaration md = (MethodDeclaration) o1;
+	    if (!md.isConstructor()) continue;
+	    String txt = getMethodDescription(md);
+	    rslt.add(txt);
+	  }
        }
     }
-   
+
    IvyLog.logD("LIMBA","Result is " + rslt);
-   
+
    return rslt;
 }
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Tool to return information about a method                               */
-/*                                                                              */
+/*										*/
+/*	Tool to return information about a method				*/
+/*										*/
 /********************************************************************************/
 
 @Tool("return the signature and javadoc describing a method")
 public String getMethodInformation(@P("full name of the method") String name0)
 {
    String name = normalizeMethodName(name0);
-   
+
    int idx = name.indexOf("(");
    int idx1 = 0;
    if (idx1 > 0) {
@@ -134,31 +134,31 @@ public String getMethodInformation(@P("full name of the method") String name0)
       cnm = name.substring(0,idx1);
       mnm = name.substring(idx1+1);
     }
-   
+
    IvyLog.logD("LIMBA","Get info for class " + cnm + " and method " + mnm);
-   
+
    String rslt = name;
-   
+
    if (cnm != null) {
       TypeDeclaration td = findClassAst(cnm,false);
       if (td != null) {
-         for (Object o1 : td.bodyDeclarations()) {
-            if (o1 instanceof MethodDeclaration) {
-               MethodDeclaration md = (MethodDeclaration) o1;
-               if (md.getName().getIdentifier().equals(mnm)) {
-                  rslt = getMethodDescription(md);
-                  break;
-                }
-             }
-          }
+	 for (Object o1 : td.bodyDeclarations()) {
+	    if (o1 instanceof MethodDeclaration) {
+	       MethodDeclaration md = (MethodDeclaration) o1;
+	       if (md.getName().getIdentifier().equals(mnm)) {
+		  rslt = getMethodDescription(md);
+		  break;
+		}
+	     }
+	  }
        }
     }
    else {
       // handle case where only method is given -- if msg server is available
     }
-   
+
    if (rslt == null) rslt = "*ERROR*";
-   
+
    IvyLog.logD("LIMBA","Return " + rslt);
 
    return rslt;
@@ -170,13 +170,13 @@ public String getMethodInformation(@P("full name of the method") String name0)
 public String getMethodSignature(@P("full name of the method") String name)
 {
   return getMethodInformation(name);
-} 
+}
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Tool to return information about a class                                */
-/*                                                                              */
+/*										*/
+/*	Tool to return information about a class				*/
+/*										*/
 /********************************************************************************/
 
 @Tool("return the set of methods of a class.  Will return an empty list if " +
@@ -184,24 +184,24 @@ public String getMethodSignature(@P("full name of the method") String name)
 public List<String> getClassMethods(@P("name of the class") String name)
 {
    List<String> rslt = new ArrayList<>();
-   
+
    IvyLog.logD("LIMBA","Find methods for class " + name);
-   IvyLog.logD("LIMBA","Thread " +  Thread.currentThread().threadId() + " " +
-         Thread.currentThread().getName());
-   
+   IvyLog.logD("LIMBA","Thread " +  Thread.currentThread().hashCode() + " " +
+	 Thread.currentThread().getName());
+
    TypeDeclaration td = findClassAst(name,false);
    if (td != null) {
       for (Object o1 : td.bodyDeclarations()) {
-         if (o1 instanceof MethodDeclaration) {
-            MethodDeclaration md = (MethodDeclaration) o1;
-            String txt = getMethodDescription(md);
-            rslt.add(txt);
-          }
+	 if (o1 instanceof MethodDeclaration) {
+	    MethodDeclaration md = (MethodDeclaration) o1;
+	    String txt = getMethodDescription(md);
+	    rslt.add(txt);
+	  }
        }
     }
-   
+
    IvyLog.logD("LIMBA","Result is " + rslt);
-   
+
    return rslt;
 }
 
@@ -211,36 +211,36 @@ public List<String> getClassMethods(@P("name of the class") String name)
 public List<String> getClassFields(@P("name of the class") String name)
 {
    List<String> rslt = new ArrayList<>();
-   
+
    IvyLog.logD("LIMBA","FIND FIELDS for class " + name);
-   IvyLog.logD("LIMBA","Thread " +  Thread.currentThread().threadId() + " " +
-         Thread.currentThread().getName());
-   
+   IvyLog.logD("LIMBA","Thread " +  Thread.currentThread().hashCode() + " " +
+	 Thread.currentThread().getName());
+
    TypeDeclaration td = findClassAst(name,false);
    if (td != null) {
       for (Object o1 : td.bodyDeclarations()) {
-         if (o1 instanceof FieldDeclaration) {
-            FieldDeclaration fd = (FieldDeclaration) o1;
-            for (Object o2 : fd.fragments()) {
-               VariableDeclarationFragment vdf = (VariableDeclarationFragment) o2;
-               String txt = getFieldDescription(fd,vdf);
-               rslt.add(txt);
-             }
-          }
+	 if (o1 instanceof FieldDeclaration) {
+	    FieldDeclaration fd = (FieldDeclaration) o1;
+	    for (Object o2 : fd.fragments()) {
+	       VariableDeclarationFragment vdf = (VariableDeclarationFragment) o2;
+	       String txt = getFieldDescription(fd,vdf);
+	       rslt.add(txt);
+	     }
+	  }
        }
     }
-   
+
    IvyLog.logD("LIMBA","Result is " + rslt);
-   
+
    return rslt;
 }
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Return the code of a method with line numbers                           */
-/*                                                                              */
+/*										*/
+/*	Return the code of a method with line numbers				*/
+/*										*/
 /********************************************************************************/
 
 @Tool("Return the source code for a method with line numbers. Each source line " +
@@ -252,36 +252,36 @@ public List<String> getSourceCode(
 {
    long start = System.currentTimeMillis();
    String name = normalizeMethodName(name0);
-   
+
    IvyLog.logD("LIMBA","GET SOURCE CODE with line numbers for " + name);
-   
+
    List<String> lines = new ArrayList<>();
    if (message_server != null && name != null) {
       try {
-         Element xml = message_server.findMethod(name); 
-         for (Element xml1 : IvyXml.children(xml,"MATCH")) {
-            Element xml2 = IvyXml.getChild(xml1,"ITEM");
-            if (xml2 == null) xml2 = xml1;
-            int soff = IvyXml.getAttrInt(xml2,"STARTOFFSET");
-            int eoff = IvyXml.getAttrInt(xml2,"ENDOFFSET");  
-            String fnm = IvyXml.getAttrString(xml2,"PATH");
-            if (fnm == null) fnm = IvyXml.getAttrString(xml1,"FILE");
-            String cnds = IvyFile.loadFile(new File(fnm));
-            List<String> lines0 = getLineNumbersAndText(cnds,soff,eoff);
-            lines.addAll(lines0);
-          }
-         IvyLog.logD("LIMBA","FOUND source for method " + name0 + " " + lines);
-         return lines;
+	 Element xml = message_server.findMethod(name);
+	 for (Element xml1 : IvyXml.children(xml,"MATCH")) {
+	    Element xml2 = IvyXml.getChild(xml1,"ITEM");
+	    if (xml2 == null) xml2 = xml1;
+	    int soff = IvyXml.getAttrInt(xml2,"STARTOFFSET");
+	    int eoff = IvyXml.getAttrInt(xml2,"ENDOFFSET");
+	    String fnm = IvyXml.getAttrString(xml2,"PATH");
+	    if (fnm == null) fnm = IvyXml.getAttrString(xml1,"FILE");
+	    String cnds = IvyFile.loadFile(new File(fnm));
+	    List<String> lines0 = getLineNumbersAndText(cnds,soff,eoff);
+	    lines.addAll(lines0);
+	  }
+	 IvyLog.logD("LIMBA","FOUND source for method " + name0 + " " + lines);
+	 return lines;
        }
       catch (Throwable t) {
-         IvyLog.logE("LIMBA","Problem getting source lines",t);
+	 IvyLog.logE("LIMBA","Problem getting source lines",t);
        }
     }
-   
+
    long time = System.currentTimeMillis() - start;
-   
+
    IvyLog.logI("LIMBA","Time for get source code: " + time);
-   
+
    return lines;
 }
 
@@ -292,11 +292,11 @@ public List<String> getSourceCode(
       "not for system code.  The full method name should be provided as the " +
       "parameter. It will return an empty list if the method can't be found.")
 public List<String> getSourceLines(
-            @P("full name of the method") String name)
+	    @P("full name of the method") String name)
 {
    return getSourceCode(name);
 }
-      
+
 
 @Tool("Return the source code for a method with line numbers. Each source line " +
       "is prefixed by its line number and a tab.  This only works for user code, " +
@@ -304,7 +304,7 @@ public List<String> getSourceLines(
       "parameter. It will return an empty list if the method can't be found.  "+
       "this is an alias for getSourceCode")
 public List<String> getMethodSource(
-            @P("full name of the method") String name)
+	    @P("full name of the method") String name)
 {
    return getSourceCode(name);
 }
@@ -319,33 +319,33 @@ public String getSourceLine(
       @P("line number") int linenumber)
 {
    String name = normalizeMethodName(name0);
-   
+
    IvyLog.logD("LIMBA","GET SOURCE LINE for " + name + " " + linenumber);
-   
+
    if (message_server != null && name != null) {
       try {
-         Element xml = message_server.findMethod(name); 
-         for (Element xml1 : IvyXml.children(xml,"MATCH")) {
-            Element xml2 = IvyXml.getChild(xml1,"ITEM");
-            if (xml2 == null) xml2 = xml1;
-            int soff = IvyXml.getAttrInt(xml2,"STARTOFFSET");
-            int eoff = IvyXml.getAttrInt(xml2,"ENDOFFSET");  
-            String fnm = IvyXml.getAttrString(xml2,"PATH");
-            if (fnm == null) fnm = IvyXml.getAttrString(xml1,"FILE");
-            String cnds = IvyFile.loadFile(new File(fnm));
-            String lines0 = getLineText(cnds,soff,eoff,linenumber);
-            if (lines0 != null && !lines0.isEmpty()) {
-               IvyLog.logD("LIMBA","Result: " + lines0);
-               return lines0;
-             }
-          }
-         return "// NO SUCH LINE OR EMPTY LINE";
+	 Element xml = message_server.findMethod(name);
+	 for (Element xml1 : IvyXml.children(xml,"MATCH")) {
+	    Element xml2 = IvyXml.getChild(xml1,"ITEM");
+	    if (xml2 == null) xml2 = xml1;
+	    int soff = IvyXml.getAttrInt(xml2,"STARTOFFSET");
+	    int eoff = IvyXml.getAttrInt(xml2,"ENDOFFSET");
+	    String fnm = IvyXml.getAttrString(xml2,"PATH");
+	    if (fnm == null) fnm = IvyXml.getAttrString(xml1,"FILE");
+	    String cnds = IvyFile.loadFile(new File(fnm));
+	    String lines0 = getLineText(cnds,soff,eoff,linenumber);
+	    if (lines0 != null && !lines0.isEmpty()) {
+	       IvyLog.logD("LIMBA","Result: " + lines0);
+	       return lines0;
+	     }
+	  }
+	 return "// NO SUCH LINE OR EMPTY LINE";
        }
       catch (Throwable t) {
-         IvyLog.logE("LIMBA","Problem getting source lines",t);
+	 IvyLog.logE("LIMBA","Problem getting source lines",t);
        }
     }
-   
+
    return "// NO SUCH LINE OR EMPTY LINE";
 }
 
@@ -353,33 +353,33 @@ public String getSourceLine(
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Helper methods                                                          */
-/*                                                                              */
+/*										*/
+/*	Helper methods								*/
+/*										*/
 /********************************************************************************/
 
 private TypeDeclaration findClassAst(String name,boolean resolve)
 {
    File f1 = findClassFile(name);
    if (f1 == null) return null;
-   
+
    String cnts = null;
    try {
       cnts = IvyFile.loadFile(f1);
     }
    catch (IOException e) { }
    if (cnts == null || cnts.isEmpty()) return null;
-   
-   CompilationUnit cu = JcompAst.parseSourceFile(cnts); 
-   
+
+   CompilationUnit cu = JcompAst.parseSourceFile(cnts);
+
    if (resolve) {
-      JcompControl jcomp = limba_main.getJcompControl();  
+      JcompControl jcomp = limba_main.getJcompControl();
       JcompProject jp = JcompAst.getResolvedAst(jcomp,cu,null);
       if (jp == null) {
-         IvyLog.logD("LIMBA","Unable to resolve AST for tools " + name);
+	 IvyLog.logD("LIMBA","Unable to resolve AST for tools " + name);
        }
     }
-   
+
    String cnm = f1.getName();
    int idx = cnm.lastIndexOf(".");
    cnm = cnm.substring(0,idx);
@@ -389,16 +389,16 @@ private TypeDeclaration findClassAst(String name,boolean resolve)
    if (idx1 > 0) {
       subnm = name1.substring(idx1+1);
     }
-   
+
    for (Object o1 : cu.types()) {
       TypeDeclaration td = (TypeDeclaration) o1;
       String tnm = td.getName().getIdentifier();
       if (tnm.equals(cnm)) {
-         if (subnm == null) return td;
-         return findInnerType(td,subnm);
+	 if (subnm == null) return td;
+	 return findInnerType(td,subnm);
        }
     }
-   
+
    return null;
 }
 
@@ -412,33 +412,33 @@ private TypeDeclaration findInnerType(TypeDeclaration td,String name)
       subnm = name1.substring(idx1+1);
       name1 = name1.substring(0,idx1);
     }
-   
+
    for (Object o1 : td.bodyDeclarations()) {
       if (o1 instanceof TypeDeclaration) {
-         TypeDeclaration intd = (TypeDeclaration) o1;
-         if (td.getName().getIdentifier().equals(name1)) {
-            if (subnm == null) return intd;
-            return findInnerType(intd,subnm);
-          }
+	 TypeDeclaration intd = (TypeDeclaration) o1;
+	 if (td.getName().getIdentifier().equals(name1)) {
+	    if (subnm == null) return intd;
+	    return findInnerType(intd,subnm);
+	  }
        }
     }
    return null;
 }
 
 
-private File findClassFile(String name) 
+private File findClassFile(String name)
 {
    if (message_server != null) {
       Element xml = message_server.findClass(name);
       if (xml != null && IvyXml.isElement(xml,"RESULT")) {
-         Element xml1 = IvyXml.getChild(xml,"MATCH");
-         String f = IvyXml.getAttrString(xml1,"FILE");
-         if (f != null) {
-            return new File(f);
-          }
+	 Element xml1 = IvyXml.getChild(xml,"MATCH");
+	 String f = IvyXml.getAttrString(xml1,"FILE");
+	 if (f != null) {
+	    return new File(f);
+	  }
        }
     }
-   
+
    List<String> possibles = new ArrayList<>();
    String n1 = name;
    int idx = n1.indexOf("$");
@@ -453,25 +453,25 @@ private File findClassFile(String name)
       if (idx < 0) break;
       n1 = n1.substring(0,idx1);
     }
-   
+
    for (File f : project_files) {
       String pnm = f.getPath();
       for (String n3 : possibles) {
-         if (pnm.endsWith(n3)) {
-            return f;
-          }
+	 if (pnm.endsWith(n3)) {
+	    return f;
+	  }
        }
     }
-   
+
    return null;
 }
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Get method description                                                  */
-/*                                                                              */
+/*										*/
+/*	Get method description							*/
+/*										*/
 /********************************************************************************/
 
 private String getMethodDescription(MethodDeclaration md)
@@ -483,7 +483,7 @@ private String getMethodDescription(MethodDeclaration md)
    if (idx2 < 0) idx2 = mtxt.indexOf(";",idx3);
    if (idx2 > 0) mtxt = mtxt.substring(0,idx2);
    mtxt = mtxt.trim();
-   
+
    return mtxt;
 }
 
@@ -493,27 +493,27 @@ private String getFieldDescription(FieldDeclaration fd,VariableDeclarationFragme
    StringBuffer buf = new StringBuffer();
    Javadoc jd = fd.getJavadoc();
    if (jd != null) buf.append(jd);
-   
+
    for (Object o1 : fd.modifiers()) {
       IExtendedModifier mod = (IExtendedModifier) o1;
       if (!buf.isEmpty()) buf.append(" ");
       buf.append(mod.toString());
     }
-   
-   if (!buf.isEmpty()) buf.append(" "); 
+
+   if (!buf.isEmpty()) buf.append(" ");
    buf.append(fd.getType().toString());
    buf.append(" ");
    buf.append(vdf.toString());
    buf.append(";");
-   
+
    return buf.toString();
 }
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Get source lines with line numbers                                      */
-/*                                                                              */
+/*										*/
+/*	Get source lines with line numbers					*/
+/*										*/
 /********************************************************************************/
 
 /**
@@ -526,20 +526,20 @@ private String getFieldDescription(FieldDeclaration fd,VariableDeclarationFragme
  * @return		    An ArrayList<String> with "lineNumber<TAB>line".
  */
 private static List<String> getLineNumbersAndText(String src,
-      int startOffset, int endOffset) 
+      int startOffset, int endOffset)
 {
    List<String> lines = new ArrayList<String>();
-   
+
    // sanity checks
    if (src == null || src.isEmpty()) return lines;
    if (startOffset < 0) startOffset = 0;
    if (endOffset > src.length()) endOffset = src.length();
    if (startOffset >= endOffset) return lines;
-   
+
    int lineno = 1;				   // humanbQreadable line count
    int pos   = 0;
    int linestart = -1;				   // position of current line start
-   
+
    for (int i = pos; i < src.length(); ) {
       // detect the beginning of a new line
       // need to handle \r as EOL terminator?
@@ -554,60 +554,60 @@ private static List<String> getLineNumbersAndText(String src,
 	 ++lineno;				 // next line
 	 linestart = i + 1;			 // after the \n character
        }
-      
+
       if (i == endOffset - 1) {
 	 // last requested line  capture it even if it does not end with '\n'
 	 String txt = src.substring(linestart, i + 1);
 	 lines.add(String.format("%d\t%s", lineno, txt));
-         linestart = -1;
-         break;
+	 linestart = -1;
+	 break;
        }
-      
+
       ++i;
     }
-   
+
    return lines;
 }
 
 
 private static String getLineText(String src,
       int startOffset, int endOffset,int lno) {
-   
+
    // sanity checks
    if (src == null || src.isEmpty()) return "";
    if (startOffset < 0) startOffset = 0;
    if (endOffset > src.length()) endOffset = src.length();
    if (startOffset >= endOffset) return "";
-   
+
    int lineno = 1;				   // human-readable line count
    int pos   = 0;
    int lineStart = -1;				   // position of current line start
-   
+
    for (int i = pos; i < src.length(); ) {
       // detect the beginning of a new line
       // need to handle \r as EOL terminator?
       if (src.charAt(i) == '\n') {                // \n is always used as line terminator here
-	 if (lineStart >= 0) {		
-            if (lineno == lno) {
-               String txt = src.substring(lineStart, i);
-               return txt;
-             }
+	 if (lineStart >= 0) {	
+	    if (lineno == lno) {
+	       String txt = src.substring(lineStart, i);
+	       return txt;
+	     }
 	  }
 	 ++lineno;				 // next line
 	 lineStart = i + 1;			 // after the \n character
        }
-      
+
       if (i == endOffset - 1 || i == src.length() - 1) {
 	 // last requested line bS capture it even if it does not end with '\n'
-         if (lineno == lno) {
-            String txt = src.substring(lineStart, i + 1);
-            return txt;
-          }
+	 if (lineno == lno) {
+	    String txt = src.substring(lineStart, i + 1);
+	    return txt;
+	  }
        }
-      
+
       ++i;
     }
-   
+
    return "";
 }
 
@@ -615,7 +615,7 @@ private static String getLineText(String src,
 private String normalizeMethodName(String name0)
 {
    if (name0 == null) return null;
-   
+
    String name = name0;
    if (name.contains(":(")) name = name.replace(":(","(");
    if (name.contains("(")) {
@@ -624,8 +624,8 @@ private String normalizeMethodName(String name0)
       String args0 = name.substring(idx0,idx1+1);
       if (args0.contains(" ")) args0 = args0.replace(" ","");
       else {
-         String args1 = IvyFormat.formatTypeName(args0);
-         if (!args1.contains(",,")) args0 = args1;
+	 String args1 = IvyFormat.formatTypeName(args0);
+	 if (!args1.contains(",,")) args0 = args1;
        }
       name = name.substring(0,idx0) + args0;
     }
@@ -637,20 +637,20 @@ private String normalizeMethodName(String name0)
       String mnm = name.substring(idx2+1);
       String match = mnm + "." + mnm;
       if (name.equals(match) || name.endsWith("." + match)) {
-         name = name.substring(0,idx2) + ".<init>";
+	 name = name.substring(0,idx2) + ".<init>";
        }
     }
-   
+
    if (!name0.equals(name)) {
       IvyLog.logD("LIMBA","Normalize " + name0 + " = " + name);
     }
-   
+
    return name;
 }
 
 
 
-}       // end of class LimbaTools
+}	// end of class LimbaTools
 
 
 

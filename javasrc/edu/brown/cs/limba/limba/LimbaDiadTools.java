@@ -1,34 +1,34 @@
 /********************************************************************************/
-/*                                                                              */
-/*              LimbaDiadTools.java                                             */
-/*                                                                              */
-/*      Debugging assistant tools                                               */
-/*                                                                              */
+/*										*/
+/*		LimbaDiadTools.java						*/
+/*										*/
+/*	Debugging assistant tools						*/
+/*										*/
 /********************************************************************************/
-/*      Copyright 2025 Brown University -- Steven P. Reiss                    */
+/*	Copyright 2025 Brown University -- Steven P. Reiss		      */
 /*********************************************************************************
- *  Copyright 2025, Brown University, Providence, RI.                            *
- *                                                                               *
- *                        All Rights Reserved                                    *
- *                                                                               *
- *  Permission to use, copy, modify, and distribute this software and its        *
- *  documentation for any purpose other than its incorporation into a            *
- *  commercial product is hereby granted without fee, provided that the          *
- *  above copyright notice appear in all copies and that both that               *
- *  copyright notice and this permission notice appear in supporting             *
- *  documentation, and that the name of Brown University not be used in          *
- *  advertising or publicity pertaining to distribution of the software          *
- *  without specific, written prior permission.                                  *
- *                                                                               *
- *  BROWN UNIVERSITY DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS                *
- *  SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND            *
- *  FITNESS FOR ANY PARTICULAR PURPOSE.  IN NO EVENT SHALL BROWN UNIVERSITY      *
- *  BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY          *
- *  DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,              *
- *  WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS               *
- *  ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE          *
- *  OF THIS SOFTWARE.                                                            *
- *                                                                               *
+ *  Copyright 2025, Brown University, Providence, RI.				 *
+ *										 *
+ *			  All Rights Reserved					 *
+ *										 *
+ *  Permission to use, copy, modify, and distribute this software and its	 *
+ *  documentation for any purpose other than its incorporation into a		 *
+ *  commercial product is hereby granted without fee, provided that the 	 *
+ *  above copyright notice appear in all copies and that both that		 *
+ *  copyright notice and this permission notice appear in supporting		 *
+ *  documentation, and that the name of Brown University not be used in 	 *
+ *  advertising or publicity pertaining to distribution of the software 	 *
+ *  without specific, written prior permission. 				 *
+ *										 *
+ *  BROWN UNIVERSITY DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS		 *
+ *  SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND		 *
+ *  FITNESS FOR ANY PARTICULAR PURPOSE.  IN NO EVENT SHALL BROWN UNIVERSITY	 *
+ *  BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY 	 *
+ *  DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,		 *
+ *  WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS		 *
+ *  ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 	 *
+ *  OF THIS SOFTWARE.								 *
+ *										 *
  ********************************************************************************/
 
 
@@ -53,20 +53,20 @@ public class LimbaDiadTools implements LimbaConstants
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Private Storage                                                         */
-/*                                                                              */
+/*										*/
+/*	Private Storage 							*/
+/*										*/
 /********************************************************************************/
 
-private MintControl     mint_control;
-private Map<String,?>   query_context;
+private MintControl	mint_control;
+private Map<String,?>	query_context;
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Constructors                                                            */
-/*                                                                              */
+/*										*/
+/*	Constructors								*/
+/*										*/
 /********************************************************************************/
 
 LimbaDiadTools(LimbaMain lm,Map<String,?> context)
@@ -77,9 +77,9 @@ LimbaDiadTools(LimbaMain lm,Map<String,?> context)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Access to the debugger stack                                            */
-/*                                                                              */
+/*										*/
+/*	Access to the debugger stack						*/
+/*										*/
 /********************************************************************************/
 
 @Tool("Return a list of the frames on the current execution stack. " +
@@ -94,22 +94,22 @@ LimbaDiadTools(LimbaMain lm,Map<String,?> context)
 public String getStackFrames()
 {
    CommandArgs args = new CommandArgs("FORMAT","JSON");
-   
+
    Element rslt = sendToDiad("Q_STACK",args,null);
    if (rslt != null) {
       String json = IvyXml.getTextElement(rslt,"JSON");
       return json;
     }
-   
+
    return "{ error: 'No debugid given' }";
 }
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Access to initial fault localization                                   */
-/*                                                                              */
+/*										*/
+/*	Access to initial fault localization				       */
+/*										*/
 /********************************************************************************/
 
 @Tool("Return a list of locations that can affect the problematic symptom and " +
@@ -127,7 +127,7 @@ public String getFaultLocations()
       String json = IvyXml.getTextElement(rslt,"JSON");
       return json;
     }
-   
+
    return "{ error: 'No debugid given' }";
 }
 
@@ -145,14 +145,14 @@ public String getAllFaultLocations()
       String json = IvyXml.getTextElement(rslt,"JSON");
       return json;
     }
-   
+
    return "{ error: 'No debugid given' }";
 }
 
 
 
 // @Tool("Return the call tree of the execution leading to the problematic symptom. " +
-//    "This returns a string representing a JSONObject containing the top level call. " + 
+//    "This returns a string representing a JSONObject containing the top level call. " +
 //    "Each call object contains " +
 //    "the method, and ID, the start and end times, and a list of call objects called by " +
 //    "this method.  The IDs can be used to get details of the exeuction of this call " +
@@ -166,7 +166,7 @@ String getExecutionTrace()
       String json = IvyXml.getTextElement(rslt,"JSON");
       return json;
     }
-   
+
    return "{ error: 'No debugid given' }";
 }
 
@@ -187,13 +187,13 @@ String getExecutionTrace()
 public String getCallTrace(String callid)
 {
    CommandArgs args = new CommandArgs("FORMAT","JSON",
-         "CALLID",callid);
+	 "CALLID",callid);
    Element rslt = sendToDiad("Q_EXECTRACE",args,null);
    if (rslt != null) {
       String json = IvyXml.getTextElement(rslt,"JSON");
       return json;
     }
-   
+
    return "{ error: 'No debugid given' }";
 }
 
@@ -205,16 +205,16 @@ public String getLineNumberTrace(
       @P("ID of the particular call (from getCallTrace)") String callid)
 {
    CommandArgs args = new CommandArgs("FORMAT","JSON",
-         "CALLID",callid);
+	 "CALLID",callid);
    Element rslt = sendToDiad("Q_LINETRACE",args,null);
    if (rslt != null) {
       String json = IvyXml.getTextElement(rslt,"JSON");
       return json;
     }
-   
+
    return "{ error: 'No debugid given' }";
 }
-     
+
 
 @Tool("Return the history of a variable during the execution of a particular " +
 "method or call.  This takes the call id of the call frame as well as the name " +
@@ -222,16 +222,16 @@ public String getLineNumberTrace(
 "that gives information about the variable as well as all value changes.")
 public String getVariableTrace(
       @P("ID of the particular call (from getCallTrace)") String callid,
-      @P("Name of the variable") String variable) 
+      @P("Name of the variable") String variable)
 {
    CommandArgs args = new CommandArgs("FORMAT","JSON",
-         "CALLID",callid,"VARIABLE",variable);
+	 "CALLID",callid,"VARIABLE",variable);
    Element rslt = sendToDiad("Q_VARTRACE",args,null);
    if (rslt != null) {
       String json = IvyXml.getTextElement(rslt,"JSON");
       return json;
     }
-   
+
    return "{ error: 'No debugid given' }";
 }
 
@@ -242,13 +242,13 @@ public String getVariableTrace(
 public String getReturnValue(@P("ID of the particular call (from getCallTrace)") String callid)
 {
    CommandArgs args = new CommandArgs("FORMAT","JSON",
-         "CALLID",callid,"VARIABLE","*RETURNS*");
+	 "CALLID",callid,"VARIABLE","*RETURNS*");
    Element rslt = sendToDiad("Q_VARTRACE",args,null);
    if (rslt != null) {
       String json = IvyXml.getTextElement(rslt,"JSON");
       return json;
     }
-   
+
    return "{ error: 'No debugid given' }";
 }
 
@@ -269,9 +269,9 @@ public String getVariableValue(
    if (variable.contains("(")) {
       return "{ 'ERROR': 'Expression given; only variables allowed' }";
     }
-   
+
    CommandArgs args = new CommandArgs("FORMAT","JSON",
-         "CALLID",callid,"VARIABLE",variable);
+	 "CALLID",callid,"VARIABLE",variable);
    if (line > 0) args.put("LINE",line);
    if (time >= 0) args.put("WHEN",time);
    Element rslt = sendToDiad("Q_VARVALUE",args,null);
@@ -279,9 +279,9 @@ public String getVariableValue(
       String json = IvyXml.getTextElement(rslt,"JSON");
       return json;
     }
-   
+
    return "{ 'ERROR': 'No debugid given' }";
-}    
+}
 
 
 @Tool("Return a graph showing how a variable got its value at a given time.  The time " +
@@ -292,13 +292,13 @@ public String getVariableValue(
       "returned value is a sgtring representing a JSONObject which represents a graph " +
       "with nodes representing change points and arcs showing the temporal relation.")
 public String getVariableHistory(
-            @P("ID of the particular call (from getCallTrace)") String callid,
-            @P("Name of the variable, using ? for subelements") String variable,
-            @P("Optional line number use 0 if not known") int line,
-            @P("Optional execution time; use -1 if not known") long time)
+	    @P("ID of the particular call (from getCallTrace)") String callid,
+	    @P("Name of the variable, using ? for subelements") String variable,
+	    @P("Optional line number use 0 if not known") int line,
+	    @P("Optional execution time; use -1 if not known") long time)
 {
    CommandArgs args = new CommandArgs("FORMAT","JSON",
-         "CALLID",callid,"VARIABLE",variable);
+	 "CALLID",callid,"VARIABLE",variable);
    if (line > 0) args.put("LINE",line);
    if (time >= 0) args.put("WHEN",time);
    Element rslt = sendToDiad("Q_VARHISTORY",args,null);
@@ -306,40 +306,40 @@ public String getVariableHistory(
       String json = IvyXml.getTextElement(rslt,"JSON");
       return json;
     }
-   
+
    return "{ error: 'No debugid given' }";
-}  
+}
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Send reqeust to diad                                                    */
-/*                                                                              */
+/*										*/
+/*	Send reqeust to diad							*/
+/*										*/
 /********************************************************************************/
 
 private Element sendToDiad(final String what,final CommandArgs args0,String cnts)
 {
    CommandArgs args = args0;
    MintDefaultReply rply = new MintDefaultReply();
-   
-   IvyLog.logD("LIMBA","Query context " + query_context + " " + 
-         Thread.currentThread().threadId());
+
+   IvyLog.logD("LIMBA","Query context " + query_context + " " +
+	 Thread.currentThread().hashCode());
    if (query_context != null) {
       for (Map.Entry<String,?> ent : query_context.entrySet()) {
-         String key = ent.getKey();
-         if (args == null) args = new CommandArgs();
-         else if (args.containsKey(key)) ;
-         else args.put(key,ent.getValue());
+	 String key = ent.getKey();
+	 if (args == null) args = new CommandArgs();
+	 else if (args.containsKey(key)) ;
+	 else args.put(key,ent.getValue());
        }
     }
-   
+
    IvyXmlWriter xw = new IvyXmlWriter();
    xw.begin("DIAD");
    xw.field("DO",what);
    if (args != null) {
       for (Map.Entry<String,?> ent : args.entrySet()) {
-         xw.field(ent.getKey(),ent.getValue());
+	 xw.field(ent.getKey(),ent.getValue());
        }
     }
    if (cnts != null) {
@@ -348,20 +348,20 @@ private Element sendToDiad(final String what,final CommandArgs args0,String cnts
    xw.end("DIAD");
    String msg = xw.toString();
    xw.close();
-   
+
    IvyLog.logD("LIMBA","Send to DIAD: " + msg);
-   
+
    mint_control.send(msg,rply,MintControl.MINT_MSG_FIRST_NON_NULL);
-   
+
    Element rslt = rply.waitForXml(0);
-   
+
    IvyLog.logD("LIMBA","Reply from DIAD: " + IvyXml.convertXmlToString(rslt));
-   
+
    return rslt;
 }
 
 
-}       // end of class LimbaDiadTools
+}	// end of class LimbaDiadTools
 
 
 
