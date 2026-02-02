@@ -23,7 +23,9 @@ package edu.brown.cs.limba.limba;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
@@ -106,6 +108,7 @@ private String user_context;
 private String inited_model;
 private String workspace_name;
 private Map<String,LimbaChatter> chat_interfaces;
+private PrintWriter limba_transcript;
 
 private static final String SPLIT_PATTERN;
 private static boolean http_log = false;
@@ -154,6 +157,7 @@ private LimbaMain(String [] args)
    ollama_api = null;
    inited_model = null;
    chat_interfaces = new HashMap<>();
+   limba_transcript = null;
 
    scanArgs(args);
 }
@@ -178,7 +182,6 @@ String getUrl()
 {
    return "http://" + ollama_host + ":" + ollama_port;
 }
-
 
 
 Map<String,String> getKeyMap()		{ return key_map; }
@@ -321,6 +324,10 @@ private void scanArgs(String [] args)
 	       log_file = new File(args[++i]);
 	       continue;
 	     }
+            else if (args[i].startsWith("-T")) {                // -Transcript <file>
+               startTranscript(args[++i]);
+               continue;
+             }
 	  }
 	 if (args[i].startsWith("-")) {
 	    if (args[i].startsWith("-remote")) {                // -remoteFileAccess
@@ -432,6 +439,98 @@ private void process()
     }
 }
 
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Transcript methods                                                      */
+/*                                                                              */
+/********************************************************************************/
+
+private void startTranscript(String nm)
+{
+   IvyLog.logD("LIMBA","Start transcript " + nm);
+   File ft = new File(nm);
+   boolean fg = ft.exists();
+   try {
+      limba_transcript = new PrintWriter(new FileWriter(ft,true),true);
+      if (fg) {
+         transcript("<html>");
+       }
+      transcript("<br><div align='center'><p><font color='green'>" + 
+            (new Date().toString()) + "</font></p></div><br>");
+    }
+   catch (IOException e) {
+      IvyLog.logE("LIMBA","Can't open transcript file " + ft);
+    }
+}
+
+
+
+void transcript(String cnts)
+{
+   if (limba_transcript == null) return;
+   
+   limba_transcript.println(cnts);
+}
+
+
+void transcriptResponse(String cnts)
+{
+   if (limba_transcript == null) return;
+   
+   String text = formatText(cnts);
+   String disp = "<div align='left'><p><font color='black'>" + text +
+         "</font></p></div>";
+   transcript(disp);
+   
+   transcript("<br><hl><br>");
+}
+
+
+void transcriptRequest(String cnts)
+{
+   if (limba_transcript == null) return;
+   
+   String text = formatText(cnts);
+   String disp = "<div align='right'><p style='text-indent: 50px;'><font color='blue'>" + text + 
+         "</font></p></div>";
+   transcript(disp);
+}
+
+
+private String formatText(String text)
+{
+   String ntext = text;
+   if (ntext == null) ntext = "<No Response>";
+   ntext = ntext.replace("<","&lt;");
+   ntext = ntext.replace(">","&gt;");
+   
+   for ( ; ; ) {
+      int idx0 = ntext.indexOf("```");
+      if (idx0 < 0) break;
+      int idx1 = ntext.indexOf("\n",idx0);
+      int idx2 = ntext.indexOf("```",idx1);
+      int idx3 = ntext.length();
+      if (idx2 < 0) {
+         idx2 = ntext.length();
+       }
+      else {
+         idx3 = ntext.indexOf("\n",idx2);
+         if (idx3 < 0) {
+            ntext += "\n";
+            idx3 = ntext.length();
+          }
+       }
+      
+      String quote = ntext.substring(idx1,idx2);
+      String pre = ntext.substring(0,idx0);
+      String post = ntext.substring(idx3);
+      ntext = pre + "<pre><code>\n" + quote + "\n" + post;
+    }
+   
+   return ntext;
+}
 
 
 
@@ -546,12 +645,15 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
 	 rag_model + " " + Thread.currentThread().hashCode() + " " +
 	 tools + " " +
 	 Thread.currentThread().getName() + ":\n" + cmd);
+   
+   transcriptRequest(cmd);
 
    try {
       // might need to add to history
       String resp = getChain(history,usectx,tools,context).chat(cmd);
       IvyLog.logD("LIMBA","Context Response: " + resp);
       IvyLog.logD("LIMBA","\n------------------------\n\n");
+      transcriptResponse(resp);
       return resp;
     }
    catch (Throwable t) {

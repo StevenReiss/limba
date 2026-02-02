@@ -105,6 +105,22 @@ public String getStackFrames()
 }
 
 
+@Tool("Alias for getStackFrames. Return a list of the frames on the " + 
+      "current execution stack. " +
+      "This returns a string representing a JSON array where each element " +
+      "is a JSON object representing a stack frame, with the 0 element being " +
+      "the current user frame and the subsequent elements being the calling " +
+      "frames.  Each frame object contains the method name which includes " +
+      "the class, method name and signature (key METHOD); the line number " +
+      "in that method (key LINE); and a list of local variables (key LOCALS). " +
+      "Each local includes its data type (key TYPE), its name (key NAME), and " +
+      "its value if it is a string or a primitive (key VALUE). ")
+public String getCallStack()
+{
+   return getStackFrames();
+}
+
+
 
 /********************************************************************************/
 /*										*/
