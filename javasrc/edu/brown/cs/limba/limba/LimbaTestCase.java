@@ -65,9 +65,9 @@ static LimbaTestCase createTestCase(Element xml) throws LimbaException
 /*                                                                              */
 /********************************************************************************/
 
-private String		test_name;
-private boolean 	is_optional;
-protected boolean	user_input;
+private String          test_name;
+private boolean         is_optional;
+protected boolean       user_input;
 private String          test_description;
 
 
@@ -92,22 +92,22 @@ protected LimbaTestCase(Element xml) throws LimbaException
 
 
 /********************************************************************************/
-/*										*/
-/*	Access methods								*/
-/*										*/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
 /********************************************************************************/
 
-String getName() 			{ return test_name; }
+String getName()                        { return test_name; }
 
 String getDescription()                 { return test_description; }
 
-boolean isOptional()			{ return is_optional; }
+boolean isOptional()                    { return is_optional; }
 
 abstract LimbaTestType getTestType();
 
-String getUserCode()			{ return null; }
+String getUserCode()                    { return null; }
 
-List<CallTest> getCalls()		{ return Collections.emptyList(); }
+List<CallTest> getCalls()               { return Collections.emptyList(); }
 
 String getJunitClass()                  { return null; }
 String getJunitName()                   { return null; }
@@ -117,9 +117,9 @@ Collection<String> getImports()         { return null; }
 
 
 /********************************************************************************/
-/*										*/
-/*	UserCodeTest -- test case where user defines the whole method		*/
-/*										*/
+/*                                                                              */
+/*      UserCodeTest -- test case where user defines the whole method           */
+/*                                                                              */
 /********************************************************************************/
 
 private static class UserCodeTest extends LimbaTestCase {
@@ -131,11 +131,11 @@ private static class UserCodeTest extends LimbaTestCase {
       user_code = IvyXml.getTextElement(xml,"CODE");
     }
    
-   @Override LimbaTestType getTestType()	{ return LimbaTestType.USERCODE; } 
+   @Override LimbaTestType getTestType()        { return LimbaTestType.USERCODE; } 
    
-   @Override String getUserCode()		{ return user_code; }
+   @Override String getUserCode()               { return user_code; }
    
-}	// end of subclass UserCodeTest
+}       // end of subclass UserCodeTest
 
 
 
@@ -171,9 +171,9 @@ private static class UserJunitTest extends LimbaTestCase {
 
 
 /********************************************************************************/
-/*										*/
-/*	CallSetTest -- test where user provides input and output		*/
-/*										*/
+/*                                                                              */
+/*      CallSetTest -- test where user provides input and output                */
+/*                                                                              */
 /********************************************************************************/
 
 private static class CallSetTest extends LimbaTestCase {
@@ -192,12 +192,12 @@ private static class CallSetTest extends LimbaTestCase {
       setup_code = IvyXml.getTextElement(xml,"CODE");
     }
    
-    @Override LimbaTestType getTestType()	{ return LimbaTestType.CALLS; }
-    @Override String getUserCode()		{ return setup_code; }
+    @Override LimbaTestType getTestType()       { return LimbaTestType.CALLS; }
+    @Override String getUserCode()              { return setup_code; }
    
-    @Override List<CallTest> getCalls()	{ return call_set; }
+    @Override List<CallTest> getCalls() { return call_set; }
    
-}	// end of subclass CallSetTest
+}       // end of subclass CallSetTest
 
 
 private static boolean isValidCallTest(Element e)
@@ -215,11 +215,11 @@ static class CallTest {
    
    private String       call_name;
    private List<CallArg> call_args;
-   private CallArg	result_code;
-   private boolean	is_new;
-   private LimbaTestOp	test_op; 
-   private String	throw_type;
-   private boolean	is_access;
+   private CallArg      result_code;
+   private boolean      is_new;
+   private LimbaTestOp  test_op; 
+   private String       throw_type;
+   private boolean      is_access;
    
    CallTest(Element xml) throws LimbaException {
       result_code = null;
@@ -250,16 +250,16 @@ static class CallTest {
       throw_type = IvyXml.getTextElement(xml,"THROW");
     }
    
-   String getMethod()			        { return call_name; }
-   List<CallArg> getArguments()		{ return call_args; }
-   CallArg getReturnValue()		        { return result_code; }
-   boolean isConstructor()	          	{ return is_new; }
-   LimbaTestOp getOperator()		        { return test_op; }
-   String getThrows()			        { return throw_type; }
-   boolean isAccess()		        	{ return is_access; }
+   String getMethod()                           { return call_name; }
+   List<CallArg> getArguments()         { return call_args; }
+   CallArg getReturnValue()                     { return result_code; }
+   boolean isConstructor()                      { return is_new; }
+   LimbaTestOp getOperator()                    { return test_op; }
+   String getThrows()                           { return throw_type; }
+   boolean isAccess()                           { return is_access; }
    
    
-}	// end of subclass CallTest
+}       // end of subclass CallTest
 
 
 
@@ -276,11 +276,11 @@ static class CallArg {
       if (arg_value == null) arg_value = IvyXml.getText(xml);
     }
    
-   LimbaTestArgType getArgType()		{ return arg_type; }
-   String getArgValue()			{ return arg_value; }
-   String getArgCode()			        { return arg_code; }
+   LimbaTestArgType getArgType()                { return arg_type; }
+   String getArgValue()                 { return arg_value; }
+   String getArgCode()                          { return arg_code; }
    
-}	// end of subclass CallArg
+}       // end of subclass CallArg
 
 
 }       // end of class LimbaTestCase

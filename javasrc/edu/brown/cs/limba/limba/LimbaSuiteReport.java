@@ -203,7 +203,7 @@ private static class TestReport {
       test_passed = false;
     }
    
-   boolean getPassed()			{ return test_passed; }
+   boolean getPassed()                  { return test_passed; }
    
    void setReport(double time,String errmsg,boolean iserr) {
       if (errmsg != null && errmsg.startsWith("Throws java.lang.AssertionError: ")) {
@@ -217,7 +217,7 @@ private static class TestReport {
        }
     }
    
-}	// end of subclass TestReport
+}       // end of subclass TestReport
 
 
 

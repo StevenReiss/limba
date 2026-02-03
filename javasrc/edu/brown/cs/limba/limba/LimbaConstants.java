@@ -40,10 +40,10 @@ enum LimbaTestOp {
 
 
 enum LimbaTestArgType {
-   LITERAL,		// value should match literal
-   STRING,		// value should match string
-   VARIABLE,		// value should match contents of variable
-   SAVE 		// store value in variable, no checking
+   LITERAL,             // value should match literal
+   STRING,              // value should match string
+   VARIABLE,            // value should match contents of variable
+   SAVE                 // store value in variable, no checking
 }
 
 enum LimbaFindType {
@@ -59,9 +59,9 @@ interface LimbaCommand {
 
 
 enum LimbaSolutionFlag {
-   FAIL,		// the solution failed tests
-   PASS,		// the solution passed tests
-   NONE 		// dummy flag
+   FAIL,                // the solution failed tests
+   PASS,                // the solution passed tests
+   NONE                 // dummy flag
 };
 
 

@@ -237,9 +237,9 @@ private void setupTestPackage(Map<String,String> idmap) throws LimbaException
 // try {
 //    PrintWriter fw = new PrintWriter(new FileWriter(sf1));
 //    try {
-// 	 fw.println(src.getDisplayName());
-// 	 fw.println(src.getUserName());
-// 	 fw.println(src.getProjectId()); 
+//       fw.println(src.getDisplayName());
+//       fw.println(src.getUserName());
+//       fw.println(src.getProjectId()); 
 //     }
 //    catch (Throwable t) { }
 //    fw.close();
@@ -263,13 +263,13 @@ private void setupTestPackage(Map<String,String> idmap) throws LimbaException
 
 
 /********************************************************************************/
-/*										*/
-/*	Methods to generate the searched for code				*/
-/*										*/
+/*                                                                              */
+/*      Methods to generate the searched for code                               */
+/*                                                                              */
 /********************************************************************************/
 
 private void setupCode(Map<String,String> idmap)
-{	
+{       
    String gencode = "";
    gencode = for_solution.getText();
    
@@ -283,9 +283,9 @@ private void setupCode(Map<String,String> idmap)
 
 
 /********************************************************************************/
-/*										*/
-/*	Methods to actually generate test code					*/
-/*										*/
+/*                                                                              */
+/*      Methods to actually generate test code                                  */
+/*                                                                              */
 /********************************************************************************/
 
 private void setupTests(Map<String,String> idmap) throws LimbaException
@@ -302,8 +302,8 @@ private void setupTests(Map<String,String> idmap) throws LimbaException
    boolean havetest = false;
    for (LimbaTestCase tc : limba_finder.getTestCases()) { 
       if (tc.getTestType() == LimbaTestType.JUNIT) {
-	 handleJunitTest(tc,idmap);
-	 continue;
+         handleJunitTest(tc,idmap);
+         continue;
        }
       havetest = true;
       String fnm = tc.getName();
@@ -314,15 +314,15 @@ private void setupTests(Map<String,String> idmap) throws LimbaException
       buf.append(create);
       
       switch (tc.getTestType()) {
-	 case USERCODE :
-	    generateUserTest(tc,idmap,buf);
-	    break;
-	 case CALLS :
-	    generateCallsTest(tc,idmap,buf);
-	    break;
-	 case JUNIT :
-	    // shouldn't get here
-	    break;
+         case USERCODE :
+            generateUserTest(tc,idmap,buf);
+            break;
+         case CALLS :
+            generateCallsTest(tc,idmap,buf);
+            break;
+         case JUNIT :
+            // shouldn't get here
+            break;
        }
       
       buf.append("}\n");
@@ -352,16 +352,16 @@ private void setupSourceFile(Map<String,String> idmap)
 //    while (jt.isParameterizedType()) jt = jt.getBaseType();
 //    boolean fnd = false;
 //    for (Object o : cu.imports()) {
-// 	 ImportDeclaration id = (ImportDeclaration) o;
-// 	 if (id.isOnDemand()) continue;
-// 	 String nm = id.getName().getFullyQualifiedName();
-// 	 if (nm.equals(jt.getName())) fnd = true;
+//       ImportDeclaration id = (ImportDeclaration) o;
+//       if (id.isOnDemand()) continue;
+//       String nm = id.getName().getFullyQualifiedName();
+//       if (nm.equals(jt.getName())) fnd = true;
 //     }
 //    if (!fnd) {
-// 	 AST ast = cu.getAST();
-// 	 ImportDeclaration id = ast.newImportDeclaration();
-// 	 id.setName(JavaAst.getQualifiedName(ast,jt.getName()));
-// 	 cu.imports().add(id);
+//       AST ast = cu.getAST();
+//       ImportDeclaration id = ast.newImportDeclaration();
+//       id.setName(JavaAst.getQualifiedName(ast,jt.getName()));
+//       cu.imports().add(id);
 //     }
 //  }
 // 
@@ -376,20 +376,20 @@ private void setupSourceFile(Map<String,String> idmap)
 // LimbaRequest.MethodSignature msg = null;
 // switch (for_request.getSearchType()) {
 //    case METHOD :
-// 	 msg = (LimbaRequest.MethodSignature) for_request.getSignature();
-// 	 break;
+//       msg = (LimbaRequest.MethodSignature) for_request.getSignature();
+//       break;
 //    default :
-// 	 break;
+//       break;
 //  }
 // 
 // List<ASTNode> decls = typ.bodyDeclarations();
 // for (Iterator<ASTNode> it = decls.iterator(); it.hasNext(); ) {
 //    ASTNode hn = it.next();
 //    if (hn.getNodeType() == ASTNode.METHOD_DECLARATION && msg !=  null) {
-// 	 MethodDeclaration md = (MethodDeclaration) hn;
-// 	 String nm = md.getName().getIdentifier();
-// 	 if (nm.equals(msg.getName())) {
-// 	    it.remove();
+//       MethodDeclaration md = (MethodDeclaration) hn;
+//       String nm = md.getName().getIdentifier();
+//       if (nm.equals(msg.getName())) {
+//          it.remove();
 //        }
 //     }
 //  }
@@ -430,101 +430,101 @@ private void generateCallsTest(LimbaTestCase tc,Map<String,String> idmap,StringB
    
    for (LimbaTestCase.CallTest ct : tc.getCalls()) {
       for (LimbaTestCase.CallArg ca : ct.getArguments()) {
-	 String s = ca.getArgCode();
-	 if (s != null) buf.append(expandCode(s,idmap));
+         String s = ca.getArgCode();
+         if (s != null) buf.append(expandCode(s,idmap));
        }
       LimbaTestCase.CallArg cr = ct.getReturnValue();
       if (cr != null && cr.getArgCode() != null) {
-	 buf.append(cr.getArgCode());
-	 buf.append("\n");
+         buf.append(cr.getArgCode());
+         buf.append("\n");
        }
       
       LimbaTestOp op = ct.getOperator();
       switch (op) {
-	 case SAVE :
-	    if (cr != null) {
-	       buf.append(cr.getArgValue());
-	       buf.append(" = ");
-	     }
-	    break;
-	 case NONE :
-	 case IGNORE :
-	    break;
-	 case EQL :
-	    buf.append("limbaAssertEquals(\"Result of call\",");
-	    buf.append(codeString(cr));
-	    buf.append(",");
-	    break;
-	 case NEQ :
-	    buf.append("limbaAssertNotEquals(\"Result of call\",");
-	    buf.append(codeString(cr));
-	    buf.append(",");
-	    break;
-	 case SAME :
-	    buf.append("assertSame(");
-	    buf.append(codeString(cr));
-	    buf.append(",");
-	    break;
-	 case DIFF :
-	    buf.append("assertNotSame(");
-	    buf.append(codeString(cr));
-	    buf.append(",");
-	    break;
-	 case THROW :
-	    buf.append("try {\n");
-	    break;
+         case SAVE :
+            if (cr != null) {
+               buf.append(cr.getArgValue());
+               buf.append(" = ");
+             }
+            break;
+         case NONE :
+         case IGNORE :
+            break;
+         case EQL :
+            buf.append("limbaAssertEquals(\"Result of call\",");
+            buf.append(codeString(cr));
+            buf.append(",");
+            break;
+         case NEQ :
+            buf.append("limbaAssertNotEquals(\"Result of call\",");
+            buf.append(codeString(cr));
+            buf.append(",");
+            break;
+         case SAME :
+            buf.append("assertSame(");
+            buf.append(codeString(cr));
+            buf.append(",");
+            break;
+         case DIFF :
+            buf.append("assertNotSame(");
+            buf.append(codeString(cr));
+            buf.append(",");
+            break;
+         case THROW :
+            buf.append("try {\n");
+            break;
        }
       
       String mthd = ct.getMethod();
       String fld = null;
       if (ct.isConstructor()) buf.append("new ");
       else if (ct.isAccess()) {
-	 fld = mthd;
-	 mthd = null;
-	 if (fld == null) fld = "$(PREFIX)";
-	 fld = expandCode(fld,idmap);
+         fld = mthd;
+         mthd = null;
+         if (fld == null) fld = "$(PREFIX)";
+         fld = expandCode(fld,idmap);
        }
       else {
-	 int idx = mthd.indexOf(".");
-	 if (idx < 0) mthd = "$(PREFIX)." + mthd;
-	 mthd = expandCode(mthd,idmap);
+         int idx = mthd.indexOf(".");
+         if (idx < 0) mthd = "$(PREFIX)." + mthd;
+         mthd = expandCode(mthd,idmap);
        }
       if (mthd != null) {
-	 buf.append(mthd);
-	 buf.append("(");
-	 int i = 0;
-	 for (LimbaTestCase.CallArg ca : ct.getArguments()) {
-	    if (i++ != 0) buf.append(",");
-	    buf.append(codeString(ca));
-	  }
-	 buf.append(")");
+         buf.append(mthd);
+         buf.append("(");
+         int i = 0;
+         for (LimbaTestCase.CallArg ca : ct.getArguments()) {
+            if (i++ != 0) buf.append(",");
+            buf.append(codeString(ca));
+          }
+         buf.append(")");
        }
       else {
-	 if (fld != null) buf.append("(" + fld + ")");
-	 for (LimbaTestCase.CallArg ca : ct.getArguments()) {
-	    buf.append(",");
-	    buf.append(codeString(ca));
-	  }
+         if (fld != null) buf.append("(" + fld + ")");
+         for (LimbaTestCase.CallArg ca : ct.getArguments()) {
+            buf.append(",");
+            buf.append(codeString(ca));
+          }
        }
       
       switch (op) {
-	 default :
-	    buf.append(";\n");
-	    break;
-	 case EQL :
-	 case NEQ :
-	 case SAME :
-	 case DIFF :
-	    buf.append(");\n");
-	    break;
-	 case THROW :
-	    String ex = ct.getThrows();
-	    if (ex == null) ex = "java.lang.Throwable";
-	    buf.append(";\nfail(\"Exception " + ex + " expected\");\n");
-	    buf.append("}\n");
-	    buf.append("catch (junit.framework.AssertionFailedError __e) { throw __e; }\n");
-	    buf.append("catch (" + ex + " __e) { }\n");
-	    break;
+         default :
+            buf.append(";\n");
+            break;
+         case EQL :
+         case NEQ :
+         case SAME :
+         case DIFF :
+            buf.append(");\n");
+            break;
+         case THROW :
+            String ex = ct.getThrows();
+            if (ex == null) ex = "java.lang.Throwable";
+            buf.append(";\nfail(\"Exception " + ex + " expected\");\n");
+            buf.append("}\n");
+            buf.append("catch (junit.framework.AssertionFailedError __e) { throw __e; }\n");
+            buf.append("catch (" + ex + " __e) { }\n");
+            break;
        }
     }
 }
@@ -559,25 +559,25 @@ private String codeString(LimbaTestCase.CallArg ca)
       case LITERAL :
       case VARIABLE :
       case SAVE :
-	 r = ca.getArgValue();
-	 break;
+         r = ca.getArgValue();
+         break;
       case STRING :
-	 String s = ca.getArgValue();
-	 if (s == null) s = "";
-	 StringBuffer buf = new StringBuffer();
-	 buf.append("\"");
-	 for (int i = 0; i < s.length(); ++i) {
-	    char c = s.charAt(i);
-	    if (c == '\n') buf.append("\\n");
-	    else if (c == '\t') buf.append("\\t");
-	    else {
-	       if (c == '"') buf.append("\\");
-	       buf.append(c);
-	     }
-	  }
-	 buf.append("\"");
-	 r = buf.toString();
-	 break;
+         String s = ca.getArgValue();
+         if (s == null) s = "";
+         StringBuffer buf = new StringBuffer();
+         buf.append("\"");
+         for (int i = 0; i < s.length(); ++i) {
+            char c = s.charAt(i);
+            if (c == '\n') buf.append("\\n");
+            else if (c == '\t') buf.append("\\t");
+            else {
+               if (c == '"') buf.append("\\");
+               buf.append(c);
+             }
+          }
+         buf.append("\"");
+         r = buf.toString();
+         break;
     }
    
    return r;
@@ -607,7 +607,7 @@ private LimbaSuiteReport runJunitTest(Map<String,String> idmap)
    try {
       produceTestFile(idmap);
       produceSourceFile(idmap);
-      produceAntFile(idmap);		// should be last
+      produceAntFile(idmap);            // should be last
       compileAndRunTestFile(idmap);
       LimbaSuiteReport sr = readTestStatus(idmap);
       sr.addMessages(for_solution); 
@@ -618,10 +618,10 @@ private LimbaSuiteReport runJunitTest(Map<String,String> idmap)
     }
    finally {
 //    if (pkgfix != null) {
-// 	 JavaAst.mapPackageNames(java_fragment.getAstNode(),idmap.get("PACKAGE"),pkgfix);
+//       JavaAst.mapPackageNames(java_fragment.getAstNode(),idmap.get("PACKAGE"),pkgfix);
 //     }
 //    else {
-// 	 if (cn != null) cn.resetClassName();
+//       if (cn != null) cn.resetClassName();
 //     }
       clear(idmap);
       for_solution.clearResolve(); 
@@ -714,9 +714,9 @@ private void produceAntFile(Map<String,String> idmap) throws LimbaException
 
 
 /********************************************************************************/
-/*										*/
-/*	Methods for using ant to run junit					*/
-/*										*/
+/*                                                                              */
+/*      Methods for using ant to run junit                                      */
+/*                                                                              */
 /********************************************************************************/
 
 private void compileAndRunTestFile(Map<String,String> idmap) throws LimbaException

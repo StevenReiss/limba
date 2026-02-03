@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*										*/
-/*		LimbaSolution.java						*/
-/*										*/
-/*	Hold a potential FIND solution						*/
-/*										*/
+/*                                                                              */
+/*              LimbaSolution.java                                              */
+/*                                                                              */
+/*      Hold a potential FIND solution                                          */
+/*                                                                              */
 /********************************************************************************/
-/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
+/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.				 *
- *										 *
- *			  All Rights Reserved					 *
- *										 *
- * This program and the accompanying materials are made available under the	 *
+ *  Copyright 2011, Brown University, Providence, RI.                            *
+ *                                                                               *
+ *                        All Rights Reserved                                    *
+ *                                                                               *
+ * This program and the accompanying materials are made available under the      *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at								 *
- *	http://www.eclipse.org/legal/epl-v10.html				 *
- *										 *
+ * and is available at                                                           *
+ *      http://www.eclipse.org/legal/epl-v10.html                                *
+ *                                                                               *
  ********************************************************************************/
 
 
@@ -48,18 +48,18 @@ class LimbaSolution implements LimbaConstants, Comparable<LimbaSolution>
 
 
 /********************************************************************************/
-/*										*/
-/*	Private Storage 							*/
-/*										*/
+/*                                                                              */
+/*      Private Storage                                                         */
+/*                                                                              */
 /********************************************************************************/
 
-private LimbaFinder	limba_finder;
+private LimbaFinder     limba_finder;
 private CompilationUnit base_ast;
-private ASTNode 	main_node;
-private List<ASTNode>	helper_nodes;
-private boolean 	use_constructor;
+private ASTNode         main_node;
+private List<ASTNode>   helper_nodes;
+private boolean         use_constructor;
 private Set<String> import_set;
-private Boolean 	tests_passed;
+private Boolean         tests_passed;
 private List<JcompMessage> compilation_errors;
 private List<String>    fail_messages;
 private int             line_offset;
@@ -69,9 +69,9 @@ private double          solution_score;
 
 
 /********************************************************************************/
-/*										*/
-/*	Constructors								*/
-/*										*/
+/*                                                                              */
+/*      Constructors                                                            */
+/*                                                                              */
 /********************************************************************************/
 
 LimbaSolution(LimbaFinder lf,String name,String text0) throws LimbaException
@@ -158,16 +158,16 @@ LimbaSolution(LimbaFinder lf,String name,String text0) throws LimbaException
     }
 
    // then we might want to clean it up -- isolate imports, remove class,
-   //	isolate tests (and add to our test suite), identify primary method and
-   //	ordered helpers
+   //   isolate tests (and add to our test suite), identify primary method and
+   //   ordered helpers
 }
 
 
 
 /********************************************************************************/
-/*										*/
-/*	Access methods								*/
-/*										*/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
 /********************************************************************************/
 
 Set<String> getImportTypes()
@@ -176,14 +176,14 @@ Set<String> getImportTypes()
 }
 
 
-ASTNode getAstNode()			{ return main_node; }
+ASTNode getAstNode()                    { return main_node; }
 
 boolean getUseConstructor()
 {
    return use_constructor;
 }
 
-String getText()	
+String getText()        
 {
    if (main_node == null) return null;
    
@@ -200,7 +200,7 @@ String getText()
 }
 
 
-LimbaFindType getFindType()		{ return LimbaFindType.METHOD; }
+LimbaFindType getFindType()             { return LimbaFindType.METHOD; }
 
 synchronized void setTestsPassed(boolean fg)
 {
@@ -212,7 +212,7 @@ synchronized boolean waitForTesting()
 {
    while (tests_passed == null) {
       try {
-	 wait(3000);
+         wait(3000);
        }
       catch (InterruptedException e) { }
     }
@@ -301,9 +301,9 @@ void setScore(double s)                         { solution_score = s; }
 
 
 /********************************************************************************/
-/*										*/
-/*	Setup methods to parse result						*/
-/*										*/
+/*                                                                              */
+/*      Setup methods to parse result                                           */
+/*                                                                              */
 /********************************************************************************/
 
 private void setupCompilationUnit(CompilationUnit cu)
@@ -323,9 +323,9 @@ private void setupCompilationUnit(CompilationUnit cu)
    for (Object o : cu.types()) {
       TypeDeclaration td = (TypeDeclaration) o;
       if (limba_finder.getFindType() == LimbaFindType.CLASS) {
-	 if (td.getName().getIdentifier().equals(tgtend)) {
-	    main_node = td;
-	  }
+         if (td.getName().getIdentifier().equals(tgtend)) {
+            main_node = td;
+          }
          else {
             for (Object o1 : td.bodyDeclarations()) {
                if (o1 instanceof TypeDeclaration) {
@@ -338,33 +338,33 @@ private void setupCompilationUnit(CompilationUnit cu)
           }
        }
       else if (limba_finder.getFindType() == LimbaFindType.METHOD) {
-	 for (Object o1 : td.bodyDeclarations()) {
-	    if (o1 instanceof MethodDeclaration) {
-	       MethodDeclaration md = (MethodDeclaration) o1;
-	       if (md.getName().getIdentifier().equals(tgtend)) {
-		  main_node = md;
-		  if (!Modifier.isStatic(md.getModifiers())) use_constructor = true;
-		}
-	       else if (md.getName().getIdentifier().equals("main")) {
-		  IvyLog.logD("LIMBA","Extract tests from main method");
-		}
-	       else {
-		  helper_nodes.add(md);
-		}
-	     }
-	    else {
-	       helper_nodes.add((ASTNode) o1);
-	     }
-	  }
+         for (Object o1 : td.bodyDeclarations()) {
+            if (o1 instanceof MethodDeclaration) {
+               MethodDeclaration md = (MethodDeclaration) o1;
+               if (md.getName().getIdentifier().equals(tgtend)) {
+                  main_node = md;
+                  if (!Modifier.isStatic(md.getModifiers())) use_constructor = true;
+                }
+               else if (md.getName().getIdentifier().equals("main")) {
+                  IvyLog.logD("LIMBA","Extract tests from main method");
+                }
+               else {
+                  helper_nodes.add(md);
+                }
+             }
+            else {
+               helper_nodes.add((ASTNode) o1);
+             }
+          }
        }
     }
 }
 
 
 /********************************************************************************/
-/*										*/
-/*	Ouptut methods								*/
-/*										*/
+/*                                                                              */
+/*      Ouptut methods                                                          */
+/*                                                                              */
 /********************************************************************************/
 
 void output(IvyXmlWriter xw)
@@ -396,21 +396,21 @@ private int getCodeLines(String code)
       String lin = tok.nextToken();
       boolean hascode = false;
       for (int i = 0; i < lin.length() && !hascode; ++i) {
-	 int ch = lin.charAt(i);
-	 if (Character.isWhitespace(ch)) continue;
-	 if (incmmt) {
-	    if (ch == '*' && i+1 < lin.length() && lin.charAt(i+1) == '/') {
-	       ++i;
-	       incmmt = false;
-	     }
-	  }
-	 else if (ch == '/' && i+1 < lin.length()) {
-	    if (lin.charAt(i+1) == '/') break;
-	    else if (lin.charAt(i+1) == '*') {
-	       incmmt = true;
-	     }
-	  }
-	 else hascode = true;
+         int ch = lin.charAt(i);
+         if (Character.isWhitespace(ch)) continue;
+         if (incmmt) {
+            if (ch == '*' && i+1 < lin.length() && lin.charAt(i+1) == '/') {
+               ++i;
+               incmmt = false;
+             }
+          }
+         else if (ch == '/' && i+1 < lin.length()) {
+            if (lin.charAt(i+1) == '/') break;
+            else if (lin.charAt(i+1) == '*') {
+               incmmt = true;
+             }
+          }
+         else hascode = true;
        }
       if (hascode) ++codelines;
     }
@@ -419,7 +419,7 @@ private int getCodeLines(String code)
 }
 
 
-}	// end of class LimbaSolution
+}       // end of class LimbaSolution
 
 
 

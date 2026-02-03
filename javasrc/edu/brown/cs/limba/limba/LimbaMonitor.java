@@ -163,7 +163,7 @@ Element sendBubblesMessage(String cmd,CommandArgs args,String cnts)
    xw.field("DO",cmd);
    if (args != null) {
       for (Map.Entry<String,Object> ent : args.entrySet()) {
-	 xw.field(ent.getKey(),ent.getValue());
+         xw.field(ent.getKey(),ent.getValue());
        }
     }
    if (cnts != null) {
@@ -219,9 +219,9 @@ List<File> getSources()
       mint_control.send(pmsg,prply,MintControl.MINT_MSG_FIRST_NON_NULL);
       Element pr = prply.waitForXml();
       if (!IvyXml.isElement(pr,"RESULT")) {
-	 IvyLog.logI("LIMBA","Problem opening project " + pnm + ": " +
+         IvyLog.logI("LIMBA","Problem opening project " + pnm + ": " +
                IvyXml.convertXmlToString(pr));
-	 continue;
+         continue;
        }
       Element ppr = IvyXml.getChild(pr,"PROJECT");
       Element files = IvyXml.getChild(ppr,"FILES");
@@ -389,7 +389,7 @@ private final class ExitHandler implements MintHandler {
       System.exit(0);
     }
 
-}	// end of inner class ExitHandler
+}       // end of inner class ExitHandler
 
 
 private final class BubblesPingHandler implements MintHandler {
@@ -398,7 +398,7 @@ private final class BubblesPingHandler implements MintHandler {
       msg.replyTo("<PONG/>");
     }
 
-}	// end of inner class ExitHandler
+}       // end of inner class ExitHandler
 
 
 
