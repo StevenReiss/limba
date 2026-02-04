@@ -298,6 +298,18 @@ public List<String> getSourceLines(
 }
 
 
+@Tool("Alias for getSourceCode. " +
+      "Return the source code for a method with line numbers. Each source line " +
+      "is prefixed by its line number and a tab.  This only works for user code, " +
+      "not for system code.  The full method name should be provided as the " +
+      "parameter. It will return an empty list if the method can't be found.")
+public List<String> getSourceCodeForMethod(
+      @P("full name of the method") String name)
+{
+   return getSourceCode(name);
+}
+
+
 @Tool("Return the source code for a method with line numbers. Each source line " +
       "is prefixed by its line number and a tab.  This only works for user code, " +
       "not for system code.  The full method name should be provided as the " +
