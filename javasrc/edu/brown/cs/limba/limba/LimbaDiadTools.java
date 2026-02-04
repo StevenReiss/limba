@@ -328,6 +328,29 @@ public String getVariableHistory(
 
 
 
+@Tool("Return a stromg representation of a JSONArray of call for a particular " +
+      "method.  Each element of the JSONArray is a JSONObject containing the " +
+      "CALLID and the START and END times of the invocation.  If the method is never " +
+      "called, the array is empty.  Otherwise callid inforamtion for all instances " +
+      "of the particular method are returned.")
+public String getCallIdsForMethod(
+      @P("Name of the method") String method0)
+{
+   String method = LimbaTools.normalizeMethodName(method0); 
+   
+   CommandArgs args = new CommandArgs("FORMAT","JSON",
+         "METHOD",method);
+   
+   Element rslt = sendToDiad("Q_METHODCALLS",args,null);
+   if (rslt != null) {
+      String json = IvyXml.getTextElement(rslt,"JSON");
+      return json;
+    }
+   
+   return "[ ]";
+}     
+
+
 /********************************************************************************/
 /*                                                                              */
 /*      Send reqeust to diad                                                    */

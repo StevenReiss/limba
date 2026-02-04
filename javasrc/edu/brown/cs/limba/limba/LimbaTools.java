@@ -629,7 +629,7 @@ private static String getLineText(String src,
 }
 
 
-private String normalizeMethodName(String name0)
+static String normalizeMethodName(String name0)
 {
    if (name0 == null) return null;
 
