@@ -91,6 +91,7 @@ public List<String> getConstructorsForClass(@P("name of the class") String name)
    TypeDeclaration td = findClassAst(name,false);
 
    IvyLog.logD("LIMBA","Find constructors for class " + name);
+   limba_main.transcriptNote("Get constructors for " + name); 
 
    if (td != null) {
       for (Object o1 : td.bodyDeclarations()) {
@@ -137,7 +138,8 @@ public String getMethodInformation(@P("full name of the method") String name0)
     }
 
    IvyLog.logD("LIMBA","Get info for class " + cnm + " and method " + mnm);
-
+   limba_main.transcriptNote("Get method information for " + name); 
+   
    String rslt = name;
 
    if (cnm != null) {
@@ -187,9 +189,8 @@ public List<String> getClassMethods(@P("name of the class") String name)
    List<String> rslt = new ArrayList<>();
 
    IvyLog.logD("LIMBA","Find methods for class " + name);
-   IvyLog.logD("LIMBA","Thread " +  Thread.currentThread().hashCode() + " " +
-         Thread.currentThread().getName());
-
+   limba_main.transcriptNote("Get class methods for " + name); 
+   
    TypeDeclaration td = findClassAst(name,false);
    if (td != null) {
       for (Object o1 : td.bodyDeclarations()) {
@@ -214,9 +215,8 @@ public List<String> getClassFields(@P("name of the class") String name)
    List<String> rslt = new ArrayList<>();
 
    IvyLog.logD("LIMBA","FIND FIELDS for class " + name);
-   IvyLog.logD("LIMBA","Thread " +  Thread.currentThread().hashCode() + " " +
-         Thread.currentThread().getName());
-
+   limba_main.transcriptNote("Get class fields for " + name); 
+   
    TypeDeclaration td = findClassAst(name,false);
    if (td != null) {
       for (Object o1 : td.bodyDeclarations()) {
@@ -255,7 +255,8 @@ public List<String> getSourceCode(
    String name = normalizeMethodName(name0);
 
    IvyLog.logD("LIMBA","GET SOURCE CODE with line numbers for " + name);
-
+   limba_main.transcriptNote("Get source code for " + name); 
+   
    List<String> lines = new ArrayList<>();
    if (message_server != null && name != null) {
       try {
@@ -330,10 +331,12 @@ public String getSourceLine(
       @P("full name of the method") String name0,
       @P("line number") int linenumber)
 {
+   long start = System.currentTimeMillis();
    String name = normalizeMethodName(name0);
 
    IvyLog.logD("LIMBA","GET SOURCE LINE for " + name + " " + linenumber);
-
+   limba_main.transcriptNote("Get source code for " + name + " " + linenumber); 
+   
    if (message_server != null && name != null) {
       try {
          Element xml = getMethodMatches(name);
@@ -348,9 +351,12 @@ public String getSourceLine(
             String lines0 = getLineText(cnds,soff,eoff,linenumber);
             if (lines0 != null && !lines0.isEmpty()) {
                IvyLog.logD("LIMBA","Result: " + lines0);
+               long time = System.currentTimeMillis() - start;
+               IvyLog.logI("LIMBA","Time for get source code: " + time);
                return lines0;
              }
           }
+         
          return "// NO SUCH LINE OR EMPTY LINE";
        }
       catch (Throwable t) {

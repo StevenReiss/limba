@@ -58,6 +58,7 @@ public class LimbaDiadTools implements LimbaConstants
 /*                                                                              */
 /********************************************************************************/
 
+private LimbaMain       limba_main;
 private MintControl     mint_control;
 private Map<String,?>   query_context;
 
@@ -71,6 +72,7 @@ private Map<String,?>   query_context;
 
 LimbaDiadTools(LimbaMain lm,Map<String,?> context)
 {
+   limba_main = lm;
    query_context = context;
    mint_control = lm.getMintControl();
 }
@@ -93,6 +95,8 @@ LimbaDiadTools(LimbaMain lm,Map<String,?> context)
       "its value if it is a string or a primitive (key VALUE). ")
 public String getStackFrames()
 {
+   limba_main.transcriptNote("Get stack frames"); 
+   
    CommandArgs args = new CommandArgs("FORMAT","JSON");
 
    Element rslt = sendToDiad("Q_STACK",args,null);
@@ -137,6 +141,8 @@ public String getCallStack()
       "found using the tool getSourceCode")
 public String getFaultLocations()
 {
+   limba_main.transcriptNote("Get fault locations"); 
+   
    CommandArgs args = new CommandArgs("FORMAT","JSON","ALL",false);
    Element rslt = sendToDiad("Q_LOCATIONS",args,null);
    if (rslt != null) {
@@ -155,6 +161,8 @@ public String getFaultLocations()
       "numbers for the identified lines in that method.")
 public String getAllFaultLocations()
 {
+   limba_main.transcriptNote("Get all fault locations"); 
+   
    CommandArgs args = new CommandArgs("FORMAT","JSON","ALL",true);
    Element rslt = sendToDiad("Q_LOCATIONS",args,null);
    if (rslt != null) {
@@ -175,7 +183,9 @@ public String getAllFaultLocations()
 //    "including line numbers and variable values")
 String getExecutionTrace()
 {
+   limba_main.transcriptNote("Get execution trace"); 
    IvyLog.logD("LIMBA","Get Full Execution Trace called");
+   
    CommandArgs args = new CommandArgs("FORMAT","JSON");
    Element rslt = sendToDiad("Q_EXECTRACE",args,null);
    if (rslt != null) {
@@ -202,6 +212,8 @@ String getExecutionTrace()
 "getLineNubmerTrace or getVariableTrace tools.")
 public String getCallTrace(String callid)
 {
+   limba_main.transcriptNote("Get call trace for " + callid); 
+   
    CommandArgs args = new CommandArgs("FORMAT","JSON",
          "CALLID",callid);
    Element rslt = sendToDiad("Q_EXECTRACE",args,null);
@@ -220,6 +232,8 @@ public String getCallTrace(String callid)
 public String getLineNumberTrace(
       @P("ID of the particular call (from getCallTrace)") String callid)
 {
+   limba_main.transcriptNote("Get line number trace for " + callid); 
+   
    CommandArgs args = new CommandArgs("FORMAT","JSON",
          "CALLID",callid);
    Element rslt = sendToDiad("Q_LINETRACE",args,null);
@@ -240,6 +254,8 @@ public String getVariableTrace(
       @P("ID of the particular call (from getCallTrace)") String callid,
       @P("Name of the variable") String variable)
 {
+   limba_main.transcriptNote("Get variable trace for " + callid + " " + variable); 
+   
    CommandArgs args = new CommandArgs("FORMAT","JSON",
          "CALLID",callid,"VARIABLE",variable);
    Element rslt = sendToDiad("Q_VARTRACE",args,null);
@@ -257,6 +273,8 @@ public String getVariableTrace(
       "JSON Object")
 public String getReturnValue(@P("ID of the particular call (from getCallTrace)") String callid)
 {
+   limba_main.transcriptNote("Get return value for " + callid); 
+   
    CommandArgs args = new CommandArgs("FORMAT","JSON",
          "CALLID",callid,"VARIABLE","*RETURNS*");
    Element rslt = sendToDiad("Q_VARTRACE",args,null);
@@ -282,6 +300,9 @@ public String getVariableValue(
       @P("Optional line number use 0 if not known") int line,
       @P("Optional execution time; use -1 if not known") long time)
 {
+   limba_main.transcriptNote("Get variable value for " + callid + " " + variable + " " + 
+         line + " " + time); 
+   
    if (variable.contains("(")) {
       return "{ 'ERROR': 'Expression given; only variables allowed' }";
     }
@@ -313,6 +334,9 @@ public String getVariableHistory(
             @P("Optional line number use 0 if not known") int line,
             @P("Optional execution time; use -1 if not known") long time)
 {
+   limba_main.transcriptNote("Get variable history for " + callid + " " + variable +
+         " " + line + " " + time); 
+   
    CommandArgs args = new CommandArgs("FORMAT","JSON",
          "CALLID",callid,"VARIABLE",variable);
    if (line > 0) args.put("LINE",line);
@@ -337,6 +361,8 @@ public String getCallIdsForMethod(
       @P("Name of the method") String method0)
 {
    String method = LimbaTools.normalizeMethodName(method0); 
+   
+   limba_main.transcriptNote("Get callids for method for " + method); 
    
    CommandArgs args = new CommandArgs("FORMAT","JSON",
          "METHOD",method);

@@ -49,6 +49,7 @@ import io.github.ollama4j.models.response.Model;
 import io.github.ollama4j.utils.Options;
 import io.github.ollama4j.utils.OptionsBuilder;
 import edu.brown.cs.ivy.exec.IvyExec;
+import edu.brown.cs.ivy.file.IvyFormat;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.jcomp.JcompControl;
 import edu.brown.cs.ivy.mint.MintControl;
@@ -457,7 +458,7 @@ private void startTranscript(String nm)
       if (fg) {
          transcript("<html>");
        }
-      transcript("<br><div align='center'><p><font color='green'>" + 
+      transcript("<br><div align='center'><p><font color='darkgreen'>" + 
             (new Date().toString()) + "</font></p></div><br>");
     }
    catch (IOException e) {
@@ -479,7 +480,7 @@ void transcriptResponse(String cnts)
 {
    if (limba_transcript == null) return;
    
-   String text = formatText(cnts);
+   String text = IvyFormat.formatText(cnts);
    String disp = "<div align='left'><p><font color='black'>" + text +
          "</font></p></div>";
    transcript(disp);
@@ -492,46 +493,22 @@ void transcriptRequest(String cnts)
 {
    if (limba_transcript == null) return;
    
-   String text = formatText(cnts);
+   String text = IvyFormat.formatText(cnts);
    String disp = "<div align='right'><p style='text-indent: 50px;'><font color='blue'>" + text + 
          "</font></p></div>";
    transcript(disp);
 }
 
 
-private String formatText(String text)
+void transcriptNote(String cnts)
 {
-   String ntext = text;
-   if (ntext == null) ntext = "<No Response>";
-   ntext = ntext.replace("<","&lt;");
-   ntext = ntext.replace(">","&gt;");
+   if (limba_transcript == null) return;
    
-   for ( ; ; ) {
-      int idx0 = ntext.indexOf("```");
-      if (idx0 < 0) break;
-      int idx1 = ntext.indexOf("\n",idx0);
-      int idx2 = ntext.indexOf("```",idx1);
-      int idx3 = ntext.length();
-      if (idx2 < 0) {
-         idx2 = ntext.length();
-       }
-      else {
-         idx3 = ntext.indexOf("\n",idx2);
-         if (idx3 < 0) {
-            ntext += "\n";
-            idx3 = ntext.length();
-          }
-       }
-      
-      String quote = ntext.substring(idx1,idx2);
-      String pre = ntext.substring(0,idx0);
-      String post = ntext.substring(idx3);
-      ntext = pre + "<pre><code>\n" + quote + "\n" + post;
-    }
-   
-   return ntext;
+   String text = IvyFormat.formatText(cnts);
+   String disp = "<br><div align='left'><p><font color='darkmagenta'>AGENT: " + text +
+         "</font></p></div>";
+   transcript(disp);
 }
-
 
 
 /********************************************************************************/

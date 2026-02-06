@@ -439,7 +439,7 @@ private final class CommandQuery extends CommandBase {
       String cmd = query_text;
       boolean usectx = false;
       if (programmer_prompt != null) {
-         cmd = programmer_prompt + "\n" + query_text;
+         cmd = programmer_prompt + "\n\n" + query_text;
          usectx = true;
        }
       ChatMemory history = null;
