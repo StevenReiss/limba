@@ -455,7 +455,7 @@ private void startTranscript(String nm)
    boolean fg = ft.exists();
    try {
       limba_transcript = new PrintWriter(new FileWriter(ft,true),true);
-      if (fg) {
+      if (!fg) {
          transcript("<html>");
        }
       transcript("<br><div align='center'><p><font color='darkgreen'>" + 

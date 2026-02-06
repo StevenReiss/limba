@@ -247,7 +247,8 @@ public List<String> getClassFields(@P("name of the class") String name)
 @Tool("Return the source code for a method with line numbers. Each source line " +
       "is prefixed by its line number and a tab.  This only works for user code, " +
       "not for system code.  The full method name should be provided as the " +
-      "parameter. It will return an empty list if the method or class can't be found.")
+      "parameter. It will return an empty list if the method or class can't be found " +
+      "or if the name is null.")
 public List<String> getSourceCode(
       @P("full name of the method") String name0)
 {
@@ -532,13 +533,13 @@ private Element getMethodMatches(String name)
    if (message_server == null || name == null) return null;
 
    Element xml = message_server.findMethod(name);
-   if (xml != null && IvyXml.getChild(xml, "MATCH") != null) return xml;
+   if (xml != null && IvyXml.getChild(xml, "MATCH") != null) {
+      return xml;
+    }
    
    Element xml1 = message_server.findClass(name);
-   if (xml1 != null && IvyXml.isElement(xml1,"RESULT") && !name.contains("<init>")) {
-      if (IvyXml.getChild(xml1,"MATCH") != null) {
-	 return getMethodMatches(name + ".<init>");
-      }
+   if (xml1 != null && IvyXml.getChild(xml, "MATCH") != null) {
+      return xml;
     }
    
    return xml;
