@@ -182,7 +182,8 @@ public String getMethodSignature(@P("full name of the method") String name)
 /*                                                                              */
 /********************************************************************************/
 
-@Tool("return the set of methods of a class.  Will return an empty list if " +
+@Tool("Return the set of methods of a class.  Each method is returned as " +
+      "its signature and description.  Will return an empty list if " +
       "the class does not exist.")
 public List<String> getClassMethods(@P("name of the class") String name)
 {
@@ -208,7 +209,8 @@ public List<String> getClassMethods(@P("name of the class") String name)
 }
 
 
-@Tool("return the set of fields of a class.  Will return an empty list if " +
+@Tool("Return the set of fields of a class.  Each field is returns with its " +
+      "declaration and its description.  Will return an empty list if " +
       "the class does not exist.")
 public List<String> getClassFields(@P("name of the class") String name)
 {
@@ -668,7 +670,9 @@ static String normalizeMethodName(String name0)
    if (name.contains(":")) {
       name = name.replace(":\\d+","");
     }
-   int idx2 = name.lastIndexOf(".");
+   int idx4 = name.indexOf("(");
+   if (idx4 < 0) idx4 = name.length();
+   int idx2 = name.lastIndexOf(".",idx4);
    if (idx2 > 0) {
       String mnm = name.substring(idx2+1);
       String match = mnm + "." + mnm;
