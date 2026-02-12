@@ -84,7 +84,7 @@ LimbaDiadTools(LimbaMain lm,Map<String,?> context)
 /*                                                                              */
 /********************************************************************************/
 
-@Tool("Return a list of the frames on the current execution stack. " +
+@Tool("This agent returns a list of the frames on the current execution stack. " +
       "This returns a string representing a JSON array where each element " +
       "is a JSON object representing a stack frame, with the 0 element being " +
       "the current user frame and the subsequent elements being the calling " +
@@ -109,7 +109,7 @@ public String getStackFrames()
 }
 
 
-@Tool("Alias for getStackFrames. Return a list of the frames on the " + 
+@Tool("Alias for getStackFrames. This agent returns a list of the frames on the " + 
       "current execution stack. " +
       "This returns a string representing a JSON array where each element " +
       "is a JSON object representing a stack frame, with the 0 element being " +
@@ -132,7 +132,7 @@ public String getCallStack()
 /*                                                                              */
 /********************************************************************************/
 
-@Tool("Return a list of locations that can affect the problematic symptom and " +
+@Tool("This agent returns a list of locations that can affect the problematic symptom and " +
       "thus might be faulty and that are executed. This is returned as a string " +
       "representing a JSON array where " +
       "each element represents a method with its full name (key METHOD) " +
@@ -154,7 +154,7 @@ public String getFaultLocations()
 }
 
 
-@Tool("Return a list of locations that can affect the problematic symptom and " +
+@Tool("This agent returns a list of locations that can affect the problematic symptom and " +
       "thus might be faulty even if not executed. This is returned as a string " +
       "representing a JSON array where " +
       "each element represents a method with its full name and then a JSON array of line " +
@@ -198,7 +198,7 @@ String getExecutionTrace()
 
 
 
-@Tool("Return information about one call in the execution trace leading to a problem. " +
+@Tool("This agent returns information about one call in the execution trace leading to a problem. " +
 "The call is identified by the callid parameter which can be 0 to indicate the " +
 "top-level call.  The tool returns a string representing a JSON object containing " +
 "the context id of the call (key ID), the full name of the method being executed " +
@@ -226,7 +226,7 @@ public String getCallTrace(String callid)
 }
 
 
-@Tool("Return the sequence of line numbers executed in a particular call frame " +
+@Tool("This agent returns the sequence of line numbers executed in a particular call frame " +
       "along with their times.  This returns a string representing a JSONArray that " +
       "contains a JSONObject for each line along with the time stamps for that line.")
 public String getLineNumberTrace(
@@ -246,7 +246,7 @@ public String getLineNumberTrace(
 }
 
 
-@Tool("Return the history of a variable during the execution of a particular " +
+@Tool("This agent returns the history of a variable during the execution of a particular " +
 "method or call.  This takes the call id of the call frame as well as the name " +
 "of the variable in question.  It returns a string representing a JSON Object " +
 "that gives information about the variable as well as all value changes.")
@@ -269,7 +269,7 @@ public String getVariableTrace(
 
 
 
-@Tool("Return the value returned by the given call as a string representating a " +
+@Tool("This agent returns the value returned by the given call as a string representating a " +
       "JSON Object")
 public String getReturnValue(@P("ID of the particular call (from getCallTrace)") String callid)
 {
@@ -288,7 +288,7 @@ public String getReturnValue(@P("ID of the particular call (from getCallTrace)")
 
 
 
-@Tool("Return the value of a given variable at a given time.  The time is based on " +
+@Tool("This agent returns the value of a given variable at a given time.  The time is based on " +
       "the execution trace.  A local variable is given by its name; a field is specified " +
       "by name?field_name; an array element is specified by name?[index].  It cannot " +
       "be an expression such as a call or a field reference.  The time can be " +
@@ -321,7 +321,7 @@ public String getVariableValue(
 }
 
 
-@Tool("Return a graph showing how a variable got its value at a given time.  The time " +
+@Tool("This agent returns a graph showing how a variable got its value at a given time.  The time " +
       "is based on the execution trace. A local variable is given by its name; a " +
       "field is specified " +
       "by name?field_name; an array element is specified by name?[index].  The time can be " +
@@ -352,7 +352,7 @@ public String getVariableHistory(
 
 
 
-@Tool("Return a stromg representation of a JSONArray of call for a particular " +
+@Tool("This agent returns a stromg representation of a JSONArray of call for a particular " +
       "method.  Each element of the JSONArray is a JSONObject containing the " +
       "CALLID and the START and END times of the invocation.  If the method is never " +
       "called, the array is empty.  Otherwise callid inforamtion for all instances " +

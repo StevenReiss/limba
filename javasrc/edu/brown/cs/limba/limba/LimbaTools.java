@@ -83,7 +83,7 @@ LimbaTools(LimbaMain lm,Collection<File> files)
 /*                                                                              */
 /********************************************************************************/
 
-@Tool("returns the set of available constructors for a given class")
+@Tool("This agent returns the set of available constructors for a given class")
 public List<String> getConstructorsForClass(@P("name of the class") String name)
 {
    List<String> rslt = new ArrayList<>();
@@ -117,7 +117,7 @@ public List<String> getConstructorsForClass(@P("name of the class") String name)
 /*                                                                              */
 /********************************************************************************/
 
-@Tool("return the signature and javadoc describing a method")
+@Tool("This agent returns the signature and javadoc describing a method")
 public String getMethodInformation(@P("full name of the method") String name0)
 {
    String name = normalizeMethodName(name0);
@@ -168,7 +168,7 @@ public String getMethodInformation(@P("full name of the method") String name0)
 }
 
 
-@Tool("return the signature and javadoc describing a method.  Alias for " +
+@Tool("This agent returns the signature and javadoc describing a method.  Alias for " +
    "getMethodInformation")
 public String getMethodSignature(@P("full name of the method") String name)
 {
@@ -182,34 +182,34 @@ public String getMethodSignature(@P("full name of the method") String name)
 /*                                                                              */
 /********************************************************************************/
 
-@Tool("Return the set of methods of a class.  Each method is returned as " +
-      "its signature and description.  Will return an empty list if " +
-      "the class does not exist.")
-public List<String> getClassMethods(@P("name of the class") String name)
-{
-   List<String> rslt = new ArrayList<>();
+// @Tool("This agent returns the set of methods of a class.  Each method is returned as " +
+//    "its signature and description.  Will return an empty list if " +
+//    "the class does not exist.")
+// public List<String> getClassMethods(@P("name of the class") String name)
+// {
+// List<String> rslt = new ArrayList<>();
+// 
+// IvyLog.logD("LIMBA","Find methods for class " + name);
+// limba_main.transcriptNote("Get class methods for " + name); 
+// 
+// TypeDeclaration td = findClassAst(name,false);
+// if (td != null) {
+//    for (Object o1 : td.bodyDeclarations()) {
+//       if (o1 instanceof MethodDeclaration) {
+//          MethodDeclaration md = (MethodDeclaration) o1;
+//          String txt = getMethodDescription(md);
+//          rslt.add(txt);
+//        }
+//     }
+//  }
+// 
+// IvyLog.logD("LIMBA","Result is " + rslt);
+// 
+// return rslt;
+// }
 
-   IvyLog.logD("LIMBA","Find methods for class " + name);
-   limba_main.transcriptNote("Get class methods for " + name); 
-   
-   TypeDeclaration td = findClassAst(name,false);
-   if (td != null) {
-      for (Object o1 : td.bodyDeclarations()) {
-         if (o1 instanceof MethodDeclaration) {
-            MethodDeclaration md = (MethodDeclaration) o1;
-            String txt = getMethodDescription(md);
-            rslt.add(txt);
-          }
-       }
-    }
 
-   IvyLog.logD("LIMBA","Result is " + rslt);
-
-   return rslt;
-}
-
-
-@Tool("Return the set of fields of a class.  Each field is returns with its " +
+@Tool("This agent returns the set of fields of a class.  Each field is returns with its " +
       "declaration and its description.  Will return an empty list if " +
       "the class does not exist.")
 public List<String> getClassFields(@P("name of the class") String name)
@@ -246,7 +246,7 @@ public List<String> getClassFields(@P("name of the class") String name)
 /*                                                                              */
 /********************************************************************************/
 
-@Tool("Return the source code for a method with line numbers. Each source line " +
+@Tool("This agent returns the source code for a method with line numbers. Each source line " +
       "is prefixed by its line number and a tab.  This only works for user code, " +
       "not for system code.  The full method name should be provided as the " +
       "parameter. It will return an empty list if the method or class can't be found " +
@@ -291,7 +291,7 @@ public List<String> getSourceCode(
 
 
 @Tool("Alias for getSourceCode. " +
-      "Return the source code for a method with line numbers. Each source line " +
+      "This agent returns the source code for a method with line numbers. Each source line " +
       "is prefixed by its line number and a tab.  This only works for user code, " +
       "not for system code.  The full method name should be provided as the " +
       "parameter. It will return an empty list if the method can't be found.")
@@ -303,7 +303,7 @@ public List<String> getSourceLines(
 
 
 @Tool("Alias for getSourceCode. " +
-      "Return the source code for a method with line numbers. Each source line " +
+      "This agent returns the source code for a method with line numbers. Each source line " +
       "is prefixed by its line number and a tab.  This only works for user code, " +
       "not for system code.  The full method name should be provided as the " +
       "parameter. It will return an empty list if the method can't be found.")
@@ -314,7 +314,7 @@ public List<String> getSourceCodeForMethod(
 }
 
 
-@Tool("Return the source code for a method with line numbers. Each source line " +
+@Tool("This agent returns the source code for a method with line numbers. Each source line " +
       "is prefixed by its line number and a tab.  This only works for user code, " +
       "not for system code.  The full method name should be provided as the " +
       "parameter. It will return an empty list if the method can't be found.  "+
@@ -328,7 +328,7 @@ public List<String> getMethodSource(
 
 
 
-@Tool("Return the source code for a given line in a method.  The parameters are " +
+@Tool("This agent returns the source code for a given line in a method.  The parameters are " +
 "the full method name and the line number.  The tool returns the given line as a string.")
 public String getSourceLine(
       @P("full name of the method") String name0,
