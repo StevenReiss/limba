@@ -413,7 +413,7 @@ private final class CommandQuery extends CommandBase {
       query_text = IvyXml.getTextElement(xml,"CONTENTS");
       query_context = null; 
       tool_set = IvyXml.getAttrEnumSet(xml,"TOOLS",
-            LimbaToolSet.class,LimbaToolSet.PROJECT);
+            LimbaToolSet.class,LimbaToolSet.PROJECT,LimbaToolSet.STRUCTURE);
       for (Element ctxelt : IvyXml.children(xml,"CONTEXT")) {
          String k = IvyXml.getAttrString(ctxelt,"KEY");
          String v = IvyXml.getAttrString(ctxelt,"VALUE");
@@ -430,7 +430,7 @@ private final class CommandQuery extends CommandBase {
       
       IvyLog.logD("LIMBA","Query " + nm + " " + tool_set + " " +
             query_context + " " + command_id);
-
+   
     }
    
    @Override public String getCommandName()             { return command_name; }

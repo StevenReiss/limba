@@ -676,6 +676,7 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
    bldr.contentRetriever(cr);
    if (mem != null) {
       bldr.chatMemory(mem);
+      IvyLog.logD("LIMBA","Using memory " + mem);
     }
 
    List<Object> tools = new ArrayList<>();
@@ -688,8 +689,16 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
             IvyLog.logE("LIMBA","no project found");
           }
        }
+      if (toolids.contains(LimbaToolSet.STRUCTURE)) { 
+         if (rag_model != null) {
+            tools.add(new LimbaToolsStruct(this,rag_model.getFiles()));
+          }
+         else {
+            IvyLog.logE("LIMBA","no project found");
+          }
+       }
       if (toolids.contains(LimbaToolSet.DEBUG)) {
-         tools.add(new LimbaDiadTools(this,context));
+         tools.add(new LimbaToolsDiad(this,context)); 
        }
     }
 

@@ -67,6 +67,7 @@ enum LimbaSolutionFlag {
 
 enum LimbaToolSet {
    PROJECT,             // limba tools for the current project
+   STRUCTURE,           // limba structural tools
    DEBUG,               // debugging
 }
 
