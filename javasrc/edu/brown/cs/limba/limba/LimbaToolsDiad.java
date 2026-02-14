@@ -175,28 +175,6 @@ public String getAllFaultLocations()
 
 
 
-// @Tool("Return the call tree of the execution leading to the problematic symptom. " +
-//    "This returns a string representing a JSONObject containing the top level call. " +
-//    "Each call object contains " +
-//    "the method, and ID, the start and end times, and a list of call objects called by " +
-//    "this method.  The IDs can be used to get details of the exeuction of this call " +
-//    "including line numbers and variable values")
-String getExecutionTrace()
-{
-   limba_main.transcriptNote("Get execution trace"); 
-   IvyLog.logD("LIMBA","Get Full Execution Trace called");
-   
-   CommandArgs args = new CommandArgs("FORMAT","JSON");
-   Element rslt = sendToDiad("Q_EXECTRACE",args,null);
-   if (rslt != null) {
-      String json = IvyXml.getTextElement(rslt,"JSON");
-      return json;
-    }
-
-   return "{ error: 'No debugid given' }";
-}
-
-
 
 @Tool("This agent returns information about one call in the execution trace leading to a problem. " +
 "The call is identified by the callid parameter which can be 0 to indicate the " +

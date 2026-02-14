@@ -222,7 +222,7 @@ public String getSourceLine(
    String name = normalizeMethodName(name0);
 
    IvyLog.logD("LIMBA","GET SOURCE LINE for " + name + " " + linenumber);
-   limba_main.transcriptNote("Get source code for " + name + " " + linenumber); 
+   limba_main.transcriptNote("Get source code for line " + linenumber + " in " + name); 
    
    if (message_server != null && name != null) {
       try {
