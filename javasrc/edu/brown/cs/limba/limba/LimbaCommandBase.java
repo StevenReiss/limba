@@ -405,6 +405,7 @@ private final class CommandQuery extends CommandBase {
    private String query_text;
    private EnumSet<LimbaToolSet> tool_set;
    private CommandArgs query_context;
+   private boolean no_history;
    
    CommandQuery(String nm,String prompt,Element xml) {
       super(xml);
@@ -427,7 +428,8 @@ private final class CommandQuery extends CommandBase {
              }
           }
        }
-      
+      no_history = IvyXml.getAttrBool(xml,"NOHISTORY");
+     
       IvyLog.logD("LIMBA","Query " + nm + " " + tool_set + " " +
             query_context + " " + command_id);
    
@@ -443,7 +445,7 @@ private final class CommandQuery extends CommandBase {
          usectx = true;
        }
       ChatMemory history = null;
-      if (command_id != null) {
+      if (command_id != null && !no_history) {
          history = memory_map.get(command_id);
          if (history == null) {
             history = MessageWindowChatMemory.builder()

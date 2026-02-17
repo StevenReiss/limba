@@ -1,6 +1,7 @@
 <LIMBA DO='PING' />
 <LIMBA DO='LIST' />
-<LIMBA DO='SETMODEL' MODEL='qwen3-coder:480b' />
+<!-- <LIMBA DO='SETMODEL' MODEL='qwen3-coder:480b' /> -->
+<LIMBA DO='SETMODEL' MODEL='devstral-2:latest' />
 <LIMBA DO='SETUPBUBBLES' MINT='limba_tutorial_debug' WORKSPACE='tutorial' />
 <LIMBA DO='PROJECT' />
 <LIMBA DO='STYLE'><STYLE>Do not use on-demand imports.
@@ -36,7 +37,7 @@ public Force calculateForce(Magnet otherMag)
 
    double  magnitude = (direction * K * strength * otherMag.getStrength())
 	    / Math.pow(getDistance(otherMag), 2);
-
+														 $
    Position otherPos = otherMag.getPos();
    double deltaX = pos.getX() - otherPos.getX();
    double deltaY = pos.getY() - otherPos.getY();
