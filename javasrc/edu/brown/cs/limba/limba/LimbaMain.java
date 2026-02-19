@@ -257,6 +257,7 @@ boolean setModel(String model)
     }
 
    ollama_model = model;
+   transcriptModel();
    chat_interfaces.clear();
 
    return true;
@@ -466,6 +467,16 @@ private void startTranscript(String nm)
     }
 }
 
+private void transcriptModel() 
+{
+   if (limba_transcript != null) {
+      if (ollama_model != null) {
+         transcript("<br><div align='center'><p><font color='darkgreen'>" + 
+               "Using model " + ollama_model + "</font></p></div><br>");
+       }
+    }
+}
+
 
 
 void transcript(String cnts)
@@ -620,13 +631,12 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
 
    IvyLog.logD("LIMBA","Query " + usectx + " " + getModel() + " " +
          rag_model + " " + Thread.currentThread().hashCode() + " " +
-         tools + " " +
+         tools + " " + history + " " +
          Thread.currentThread().getName() + ":\n" + cmd);
    
    transcriptRequest(cmd);
 
    try {
-      // might need to add to history
       String resp = getChain(history,usectx,tools,context).chat(cmd);
       IvyLog.logD("LIMBA","Context Response: " + resp);
       IvyLog.logD("LIMBA","\n------------------------\n\n");
