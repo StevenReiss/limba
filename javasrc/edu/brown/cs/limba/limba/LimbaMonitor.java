@@ -24,6 +24,7 @@ package edu.brown.cs.limba.limba;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -386,6 +387,9 @@ private final class CommandHandler implements MintHandler {
 private final class ExitHandler implements MintHandler {
    
    @Override public void receive(MintMessage msg,MintArguments args) {
+      IvyLog.logD("LIMBA","EXIT from Code Bubbles");
+      limba_main.transcriptMessage("Exit at " + (new Date().toString()));
+      
       System.exit(0);
     }
 

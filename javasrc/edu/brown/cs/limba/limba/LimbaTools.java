@@ -87,7 +87,7 @@ public String getMethodInformation(@P("full name of the method") String name0)
     }
 
    IvyLog.logD("LIMBA","Get info for class " + cnm + " and method " + mnm);
-   limba_main.transcriptNote("Get method information for " + name); 
+   limba_main.transcriptAgent("Get method information for " + name); 
    
    String rslt = name;
 
@@ -138,11 +138,11 @@ public String getMethodSignature(@P("full name of the method") String name)
 public List<String> getSourceCode(
       @P("full name of the method") String name0)
 {
-   long start = System.currentTimeMillis();
+   long start = System.currentTimeMillis(); 
    String name = normalizeMethodName(name0);
 
    IvyLog.logD("LIMBA","GET SOURCE CODE with line numbers for " + name);
-   limba_main.transcriptNote("Get source code for " + name); 
+   limba_main.transcriptAgent("Get source code for " + name); 
    
    List<String> lines = new ArrayList<>(); 
    if (message_server != null && name != null) {
@@ -222,7 +222,7 @@ public String getSourceLine(
    String name = normalizeMethodName(name0);
 
    IvyLog.logD("LIMBA","GET SOURCE LINE for " + name + " " + linenumber);
-   limba_main.transcriptNote("Get source code for line " + linenumber + " in " + name); 
+   limba_main.transcriptAgent("Get source code for line " + linenumber + " in " + name); 
    
    if (message_server != null && name != null) {
       try {

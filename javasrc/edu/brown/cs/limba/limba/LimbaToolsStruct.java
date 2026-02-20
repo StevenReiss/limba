@@ -88,7 +88,7 @@ public List<String> getConstructorsForClass(@P("name of the class") String name)
    TypeDeclaration td = findClassAst(name,false);
    
    IvyLog.logD("LIMBA","Find constructors for class " + name);
-   limba_main.transcriptNote("Get constructors for " + name); 
+   limba_main.transcriptAgent("Get constructors for " + name); 
    
    if (td != null) {
       for (Object o1 : td.bodyDeclarations()) {
@@ -121,7 +121,7 @@ public List<String> getClassMethods(@P("name of the class") String name)
    List<String> rslt = new ArrayList<>();
    
    IvyLog.logD("LIMBA","Find methods for class " + name);
-   limba_main.transcriptNote("Get class methods for " + name); 
+   limba_main.transcriptAgent("Get class methods for " + name); 
    
    TypeDeclaration td = findClassAst(name,false);
    if (td != null) {
@@ -148,7 +148,7 @@ public List<String> getClassFields(@P("name of the class") String name)
    List<String> rslt = new ArrayList<>();
    
    IvyLog.logD("LIMBA","FIND FIELDS for class " + name);
-   limba_main.transcriptNote("Get class fields for " + name); 
+   limba_main.transcriptAgent("Get class fields for " + name); 
    
    TypeDeclaration td = findClassAst(name,false);
    if (td != null) {

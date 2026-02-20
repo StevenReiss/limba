@@ -467,8 +467,6 @@ private final class CommandQuery extends CommandBase {
        }
       String jdoc = LimbaMain.getJavaDoc(resp);
       if (jdoc != null) xw.cdataElement("JAVADOC",jdoc);
-      
-      return;
     }
    
 }       // end of inner class CommandQuery

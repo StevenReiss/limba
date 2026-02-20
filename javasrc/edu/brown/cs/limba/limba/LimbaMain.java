@@ -327,7 +327,7 @@ private void scanArgs(String [] args)
                continue;
              }
             else if (args[i].startsWith("-T")) {                // -Transcript <file>
-               startTranscript(args[++i]);
+               transcriptStart(args[++i]);
                continue;
              }
           }
@@ -449,7 +449,7 @@ private void process()
 /*                                                                              */
 /********************************************************************************/
 
-private void startTranscript(String nm)
+private void transcriptStart(String nm)
 {
    IvyLog.logD("LIMBA","Start transcript " + nm);
    File ft = new File(nm);
@@ -459,8 +459,7 @@ private void startTranscript(String nm)
       if (!fg) {
          transcript("<html>");
        }
-      transcript("<br><div align='center'><p><font color='darkgreen'>" + 
-            (new Date().toString()) + "</font></p></div><br>");
+      transcriptMessage(new Date().toString());
     }
    catch (IOException e) {
       IvyLog.logE("LIMBA","Can't open transcript file " + ft);
@@ -471,8 +470,7 @@ private void transcriptModel()
 {
    if (limba_transcript != null) {
       if (ollama_model != null) {
-         transcript("<br><div align='center'><p><font color='darkgreen'>" + 
-               "Using model " + ollama_model + "</font></p></div><br>");
+         transcriptMessage("Using model " + ollama_model);
        }
     }
 }
@@ -511,13 +509,24 @@ void transcriptRequest(String cnts)
 }
 
 
-void transcriptNote(String cnts)
+void transcriptAgent(String cnts)
 {
    if (limba_transcript == null) return;
    
    String text = IvyFormat.formatText(cnts);
    String disp = "<br><div align='left'><p><font color='darkmagenta'>AGENT: " + text +
          "</font></p></div>";
+   transcript(disp);
+}
+
+
+void transcriptMessage(String cnts)
+{
+   if (limba_transcript == null) return;
+   
+   String text = IvyFormat.formatText(cnts);
+   String disp = "<br><div align='center'><p><font color='darkgreen'>" + text +
+         "</font></p></div><br>";
    transcript(disp);
 }
 
@@ -618,6 +627,8 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
       EnumSet<LimbaToolSet> tools,Map<String,?> context)
    throws Exception
 {
+   long start = System.currentTimeMillis();
+   
    String cmd = cmd0;
    if (user_style != null) {
       cmd = cmd.replace("$STYLE",user_style);
@@ -641,6 +652,8 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
       IvyLog.logD("LIMBA","Context Response: " + resp);
       IvyLog.logD("LIMBA","\n------------------------\n\n");
       transcriptResponse(resp);
+      long time = System.currentTimeMillis() - start;
+      transcriptMessage("Time: " + time + " ms");
       return resp;
     }
    catch (Throwable t) {
