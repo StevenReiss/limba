@@ -102,6 +102,8 @@ LimbaCommand createCommand(Element xml)
          return new CommandSetModel(xml);
       case "CLEAR" :
          return new CommandClear(xml);
+      case "TRANSCRIPT" :
+         return new CommandTranscript(xml);
       case "DETAIL" :
       case "DETAILS" :
          return new CommandDetails(xml);
@@ -389,6 +391,33 @@ private class CommandClear extends CommandBase {
     }
    
 }       // end of inner class CommandClear
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      TRANSCRIPT command                                                      */
+/*                                                                              */
+/********************************************************************************/
+
+private final class CommandTranscript extends CommandBase {
+
+   private String file_name;
+   private boolean do_append;
+   
+   CommandTranscript(Element xml) {
+      super(xml);
+      file_name = IvyXml.getAttrString(xml,"FILE");
+      do_append = IvyXml.getAttrBool(xml,"APPEND");
+    }
+   
+   @Override public String getCommandName()             { return "TRANSCRIPT"; }
+   
+   @Override public void localProcess(IvyXmlWriter xw) {
+      limba_main.transcriptStart(file_name,do_append); 
+    }
+
+}       // end of inner class CommadnTranscript
 
 
 

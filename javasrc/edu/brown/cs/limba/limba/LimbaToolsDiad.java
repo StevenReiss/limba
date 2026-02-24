@@ -225,9 +225,10 @@ public String getLineNumberTrace(
 
 
 @Tool("This agent returns the history of a variable during the execution of a particular " +
-"method or call.  This takes the call id of the call frame as well as the name " +
-"of the variable in question.  It returns a string representing a JSON Object " +
-"that gives information about the variable as well as all value changes.")
+      "method or call.  This takes the call id of the call frame as well as the name " +
+      "of the variable in question.  This should be a variable, not an expression. " +
+      "It returns a string representing a JSON Object " +
+      "that gives information about the variable as well as all value changes.")
 public String getVariableTrace(
       @P("ID of the particular call (from getCallTrace)") String callid,
       @P("Name of the variable") String variable)

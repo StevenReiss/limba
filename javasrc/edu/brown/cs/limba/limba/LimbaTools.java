@@ -236,7 +236,7 @@ public String getSourceLine(
             if (fnm == null) fnm = IvyXml.getAttrString(xml1,"FILE");
             String cnds = IvyFile.loadFile(new File(fnm));
             String lines0 = getLineText(cnds,soff,eoff,linenumber);
-            if (lines0 != null && !lines0.isEmpty()) {
+            if (lines0 != null && !lines0.isBlank()) {
                IvyLog.logD("LIMBA","Result: " + lines0);
                long time = System.currentTimeMillis() - start;
                IvyLog.logI("LIMBA","Time for get source code: " + time);

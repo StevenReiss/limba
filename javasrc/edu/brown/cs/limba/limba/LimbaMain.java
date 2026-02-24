@@ -327,7 +327,7 @@ private void scanArgs(String [] args)
                continue;
              }
             else if (args[i].startsWith("-T")) {                // -Transcript <file>
-               transcriptStart(args[++i]);
+               transcriptStart(args[++i],true);
                continue;
              }
           }
@@ -449,13 +449,13 @@ private void process()
 /*                                                                              */
 /********************************************************************************/
 
-private void transcriptStart(String nm)
+void transcriptStart(String nm,boolean append)
 {
    IvyLog.logD("LIMBA","Start transcript " + nm);
    File ft = new File(nm);
-   boolean fg = ft.exists();
+   boolean fg = ft.exists() && append;
    try {
-      limba_transcript = new PrintWriter(new FileWriter(ft,true),true);
+      limba_transcript = new PrintWriter(new FileWriter(ft,append),true);
       if (!fg) {
          transcript("<html>");
        }
@@ -650,7 +650,8 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
    try {
       String resp = getChain(history,usectx,tools,context).chat(cmd);
       IvyLog.logD("LIMBA","Context Response: " + resp);
-      IvyLog.logD("LIMBA","\n------------------------\n\n");
+      IvyLog.logD("LIMBA","------------------------\n\n");
+      if (resp == null) resp = "*** No response from LLM ***";
       transcriptResponse(resp);
       long time = System.currentTimeMillis() - start;
       transcriptMessage("Time: " + time + " ms");
