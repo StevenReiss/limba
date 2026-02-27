@@ -262,9 +262,11 @@ protected Element getMethodMatches(String name)
       return xml;
     }
    
-   Element xml1 = message_server.findClass(name);
-   if (xml1 != null && IvyXml.getChild(xml, "MATCH") != null) {
-      return xml;
+   if (!name.contains("(") && !name.contains("<init>")) {
+      Element xml1 = message_server.findClass(name);
+      if (xml1 != null && IvyXml.getChild(xml, "MATCH") != null) {
+         return xml;
+       }
     }
    
    return xml;
@@ -284,6 +286,7 @@ protected static String normalizeMethodName(String name0)
    
    String name = name0;
    if (name.contains(":(")) name = name.replace(":(","(");
+   if (name.contains(":<")) name = name.replace(":<",".<");
    if (name.contains("(")) {
       int idx0 = name.indexOf("(");
       int idx1 = name.lastIndexOf(")");
@@ -308,6 +311,7 @@ protected static String normalizeMethodName(String name0)
          name = name.substring(0,idx2) + ".<init>";
        }
     }
+   if (name.endsWith("<init")) name = name + ">";
    
    if (!name0.equals(name)) {
       IvyLog.logD("LIMBA","Normalize " + name0 + " = " + name);

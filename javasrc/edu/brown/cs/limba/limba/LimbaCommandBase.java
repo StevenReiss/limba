@@ -104,6 +104,8 @@ LimbaCommand createCommand(Element xml)
          return new CommandClear(xml);
       case "TRANSCRIPT" :
          return new CommandTranscript(xml);
+      case "MESSAGE" :
+         return new CommandMessage(xml);
       case "DETAIL" :
       case "DETAILS" :
          return new CommandDetails(xml);
@@ -418,6 +420,25 @@ private final class CommandTranscript extends CommandBase {
     }
 
 }       // end of inner class CommadnTranscript
+
+
+
+private final class CommandMessage extends CommandBase {
+
+   private String message_text;
+   
+   CommandMessage(Element xml) {
+      super(xml);
+      message_text = IvyXml.getTextElement(xml,"MESSAGE");
+    }
+   
+   @Override public String getCommandName()             { return "MESSAGE"; }
+    
+   @Override public void localProcess(IvyXmlWriter xw) {
+      limba_main.transcriptMessage(message_text);
+    }
+   
+}       // end of inner class CommandMessage
 
 
 
