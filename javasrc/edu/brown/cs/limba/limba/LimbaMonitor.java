@@ -251,7 +251,7 @@ Element findClass(String name)
    return pr;
 }
 
-Element findMethod(final String name0)
+Element findMethod(final String name0,boolean impl)
 {
    String name = name0;
    if (name == null) return null;
@@ -266,6 +266,7 @@ Element findMethod(final String name0)
    
    CommandArgs args = new CommandArgs("PATTERN",name,
          "DEFS",true,"REFS",false,"FOR",what,"SYSTEM",false);
+   if (impl) args.put("IMPLS",true);
    Element xml = sendBubblesMessage("PATTERNSEARCH",args,null);
    
    return xml;

@@ -514,7 +514,7 @@ void transcriptAgent(String cnts)
    if (limba_transcript == null) return;
    
    String text = IvyFormat.formatText(cnts);
-   IvyLog.logD("LIMBA","Format agent " + cnts + " " + text);
+   IvyLog.logD("LIMBA","Agent " + cnts);
    String disp = "<br><div align='left'><p><font color='darkmagenta'>AGENT: " + text +
          "</font></p></div>";
    transcript(disp);

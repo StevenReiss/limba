@@ -145,6 +145,9 @@ protected TypeDeclaration findClassAst(String name,boolean resolve)
 }
 
 
+
+
+
 private TypeDeclaration findInnerType(TypeDeclaration td,String name)
 {
    String subnm = null;
@@ -257,7 +260,7 @@ protected Element getMethodMatches(String name)
 {
    if (message_server == null || name == null) return null;
    
-   Element xml = message_server.findMethod(name);
+   Element xml = message_server.findMethod(name,false);
    if (xml != null && IvyXml.getChild(xml, "MATCH") != null) {
       return xml;
     }
