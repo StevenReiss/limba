@@ -31,9 +31,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.w3c.dom.Element;
 
@@ -106,7 +108,7 @@ private JcompControl jcomp_main;
 private LimbaMonitor msg_server;
 private String user_style;
 private String user_context;
-private String inited_model;
+private Set<String> inited_models;
 private String workspace_name;
 private Map<String,LimbaChatter> chat_interfaces;
 private PrintWriter limba_transcript;
@@ -156,7 +158,7 @@ private LimbaMain(String [] args)
    user_style = "";
    user_context = "";
    ollama_api = null;
-   inited_model = null;
+   inited_models = new HashSet<>();
    chat_interfaces = new HashMap<>();
    limba_transcript = null;
 
@@ -258,9 +260,28 @@ boolean setModel(String model)
 
    ollama_model = model;
    transcriptModel();
-   chat_interfaces.clear();
+// chat_interfaces.clear();
 
    return true;
+}
+
+
+boolean checkModel(String model)
+{
+   if (model == null) return false;
+   if (getOllama() == null) return true;
+   
+   try {
+      List<Model> mdls = getOllama().listModels();
+      for (Model m : mdls) {
+         if (model.equals(m.getModelName()) ||
+               model.equals(m.getModel())) {
+            return true;
+          }
+       }
+    }
+   catch (Exception e) { }
+   return false;
 }
 
 
@@ -620,15 +641,16 @@ void setupRag()
 
 String askOllama(String cmd0,boolean usectx) throws Exception
 {
-   return askOllama(cmd0,usectx,null,null,null);
+   return askOllama(cmd0,usectx,null,null,null,null);
 }
 
 
 String askOllama(String cmd0,boolean usectx,ChatMemory history,
-      EnumSet<LimbaToolSet> tools,Map<String,?> context)
+      EnumSet<LimbaToolSet> tools,Map<String,?> context,String model)
    throws Exception
 {
    long start = System.currentTimeMillis();
+   
    
    String cmd = cmd0;
    if (user_style != null) {
@@ -637,9 +659,10 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
    if (user_context != null) {
       cmd = cmd.replace("$CONTEXT",user_context);
     }
-   if (getModel() == null) return null;
-
-   initializeModel();
+   
+   if (model == null) model = getModel();
+   if (model == null) return null;
+   initializeModel(model);
 
    IvyLog.logD("LIMBA","Query " + usectx + " " + getModel() + " " +
          rag_model + " " + Thread.currentThread().hashCode() + " " +
@@ -649,7 +672,7 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
    transcriptRequest(cmd);
 
    try {
-      String resp = getChain(history,usectx,tools,context).chat(cmd);
+      String resp = getChain(history,usectx,tools,context,null).chat(cmd);
       IvyLog.logD("LIMBA","Context Response: " + resp);
       IvyLog.logD("LIMBA","------------------------\n\n");
       if (resp == null) resp = "*** No response from LLM ***";
@@ -666,12 +689,14 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
 
 
 private LimbaChatter getChain(ChatMemory mem,boolean usectx,
-      EnumSet<LimbaToolSet> toolids,Map<String,?> context)
+      EnumSet<LimbaToolSet> toolids,Map<String,?> context,String model)
 {
+   if (model == null) model = getModel();
+   
    if (toolids == null) {
       toolids = EnumSet.of(LimbaToolSet.PROJECT);
     }
-   String key = getKey(toolids,context);
+   String key = getKey(toolids,context,model);
 
    LimbaChatter rslt = chat_interfaces.get(key);
    if (rslt != null) return rslt;
@@ -682,7 +707,7 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
       .timeout(Duration.ofMinutes(15))
       .logRequests(http_log)
       .logResponses(http_log)
-      .modelName(getModel())
+      .modelName(model)
       .build();
    ConversationalRetrievalChain.Builder bldr = ConversationalRetrievalChain.builder();
    bldr.chatModel(chat);
@@ -751,14 +776,16 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
 }
 
 
-private String getKey(EnumSet<LimbaToolSet> tools,Map<String,?> context)
+private String getKey(EnumSet<LimbaToolSet> tools,Map<String,?> context,String model)
 {
-   if (tools.isEmpty()) return "*";
-
-   String k = tools.toString();
+   String k = "*";
+   if (!tools.isEmpty()) {
+      k = tools.toString();
+    }
    if (tools.contains(LimbaToolSet.DEBUG)) {
       k += "." + context.get("DEBUGID") + ".";
     }
+   if (model != null) k += model;
 
    return k;
 }
@@ -816,6 +843,18 @@ private static final class EmptyContentRetriever implements ContentRetriever {
 
 static List<String> getJavaCode(String resp)
 {
+   return getCodeType(resp,"java",false);
+}
+
+
+static List<String> getPatchCode(String resp)
+{
+   return getCodeType(resp,"patch",false);
+}
+
+
+static List<String> getCodeType(String resp,String find,boolean dflt)
+{
    if (resp == null) return null;
    if (!resp.contains("```")) return List.of(resp);
 
@@ -839,10 +878,10 @@ static List<String> getJavaCode(String resp)
          break;
        }
       else {
-         if (type.equals("java")) {
+         if (type.equals(find)) {
             extractFragments(resp.substring(idx1,idx2),rslt);
           }
-         else if (type.isEmpty()) {
+         else if (type.isEmpty() && dflt) {
             extractFragments(resp.substring(idx1,idx2),base);
           }
         
@@ -916,15 +955,15 @@ private boolean startOllama(String hostname,int port,String usehost)
 }
 
 
-private void initializeModel()
+private void initializeModel(String model)
 {
-   if (getModel() == null) return;
-   if (getModel().equals(inited_model)) return;
-   inited_model = getModel();
+   if (model == null) return;
+   if (inited_models.contains(model)) return;
+   inited_models.add(model);
 
    try {
       String host = "http://" + ollama_host + ":" + ollama_port + "/";
-      String cmd = "limballama.csh " + inited_model;
+      String cmd = "limballama.csh " + model;
       if (ollama_usehost != null && !ollama_host.isEmpty()) {
          cmd += " " + ollama_usehost + " " + ollama_host;
        }
@@ -1012,6 +1051,11 @@ void setupBedrock(String workspace,String mint)
 
    throw new Error("Problem running Eclipse: " + cmd);
 }
+
+
+
+
+
 
 
 

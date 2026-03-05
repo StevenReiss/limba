@@ -456,6 +456,7 @@ private final class CommandQuery extends CommandBase {
    private EnumSet<LimbaToolSet> tool_set;
    private CommandArgs query_context;
    private boolean no_history;
+   private String limba_model;
    
    CommandQuery(String nm,String prompt,Element xml) {
       super(xml);
@@ -465,6 +466,7 @@ private final class CommandQuery extends CommandBase {
       query_context = null; 
       tool_set = IvyXml.getAttrEnumSet(xml,"TOOLS",
             LimbaToolSet.class,LimbaToolSet.PROJECT,LimbaToolSet.STRUCTURE);
+      
       for (Element ctxelt : IvyXml.children(xml,"CONTEXT")) {
          String k = IvyXml.getAttrString(ctxelt,"KEY");
          String v = IvyXml.getAttrString(ctxelt,"VALUE");
@@ -479,9 +481,15 @@ private final class CommandQuery extends CommandBase {
           }
        }
       no_history = IvyXml.getAttrBool(xml,"NOHISTORY");
+      
+      limba_model = null;
+      String mdl = IvyXml.getAttrString(xml,"MODEL");
+      if (mdl != null && limba_main.checkModel(mdl)) { 
+         limba_model = mdl;
+       }
      
       IvyLog.logD("LIMBA","Query " + nm + " " + tool_set + " " +
-            query_context + " " + command_id);
+            query_context + " " + command_id + " " + limba_model);
    
     }
    
@@ -506,7 +514,7 @@ private final class CommandQuery extends CommandBase {
        } 
        
       String resp = limba_main.askOllama(cmd,usectx,
-            history,tool_set,query_context);   
+            history,tool_set,query_context,limba_model);   
       
       xw.cdataElement("RESPONSE",resp);
       List<String> jcodes = LimbaMain.getJavaCode(resp);
@@ -517,6 +525,12 @@ private final class CommandQuery extends CommandBase {
        }
       String jdoc = LimbaMain.getJavaDoc(resp);
       if (jdoc != null) xw.cdataElement("JAVADOC",jdoc);
+      List<String> patches = LimbaMain.getPatchCode(resp); 
+      if (patches != null) {
+         for (String p : patches) {
+            xw.cdataElement("PATCH",p);
+          }
+       }
     }
    
 }       // end of inner class CommandQuery

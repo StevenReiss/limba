@@ -108,8 +108,16 @@ private String processCommand(String cmd,Element xml) throws LimbaException
          case "DETAILS" :
          case "PING" :
             // immediate commands
-            LimbaCommand lcmd = limba_main.setupLimbaCommand(xml);
-            lcmd.process(xw);
+            try {
+               LimbaCommand lcmd = limba_main.setupLimbaCommand(xml);
+               lcmd.process(xw);
+             }
+            catch (Throwable t) {
+               IvyLog.logE("LIMBA","Problem processing command " + cmd,t);
+               xw.begin("ERROR");
+               xw.textElement("MESSAGE",t);
+               xw.end("ERROR");
+             }
             break;
          default :
             // background commands
@@ -326,6 +334,7 @@ private class CommandProcessor extends Thread {
          mint_control.send(xw.toString());
        }
       catch (Throwable t) {
+         IvyLog.logE("LIMBA","Problem processing command",t);
          IvyXmlWriter xw = new IvyXmlWriter();
          xw.begin("LIMBAREPLY");
          xw.field("RID",reply_id);
