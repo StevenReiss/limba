@@ -40,6 +40,7 @@ import java.util.Set;
 import org.w3c.dom.Element;
 
 import dev.langchain4j.chain.ConversationalRetrievalChain;
+import dev.langchain4j.exception.UnresolvedModelServerException;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.rag.content.Content;
@@ -671,20 +672,32 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
    
    transcriptRequest(cmd);
 
-   try {
-      String resp = getChain(history,usectx,tools,context,null).chat(cmd);
-      IvyLog.logD("LIMBA","Context Response: " + resp);
-      IvyLog.logD("LIMBA","------------------------\n\n");
-      if (resp == null) resp = "*** No response from LLM ***";
-      transcriptResponse(resp);
-      long time = System.currentTimeMillis() - start;
-      transcriptMessage("Time: " + time + " ms");
-      return resp;
+   for (int i = 0; i < 3; ++i) {
+      try {
+         String resp = getChain(history,usectx,tools,context,null).chat(cmd);
+         IvyLog.logD("LIMBA","Context Response: " + resp);
+         IvyLog.logD("LIMBA","------------------------\n\n");
+         if (resp == null) resp = "*** No response from LLM ***";
+         transcriptResponse(resp);
+         long time = System.currentTimeMillis() - start;
+         transcriptMessage("Time: " + time + " ms");
+         return resp;
+       }
+      catch (UnresolvedModelServerException e) {
+         if (i != 2) {
+            IvyLog.logE("LIMBA","Query failed, will retry",e);
+          }
+         else {
+            throw e;
+          }
+       }
+      catch (Throwable t) {
+         IvyLog.logE("LIMBA","Problem with chained response",t);
+         throw t;
+       }
     }
-   catch (Throwable t) {
-      IvyLog.logE("LIMBA","Problem with chained response",t);
-      throw t;
-    }
+   
+   throw new Exception("Too many retires with chained response");
 }
 
 
