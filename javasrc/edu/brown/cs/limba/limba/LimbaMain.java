@@ -862,14 +862,29 @@ static List<String> getJavaCode(String resp)
 
 static List<String> getPatchCode(String resp)
 {
-   return getCodeType(resp,"patch",false);
+   List<String> l1 = getCodeType(resp,"patch",false);
+   List<String> l2 = getCodeType(resp,"diff",false);
+   
+   List<String> rslt = new ArrayList<>();
+   if (l1 != null) {
+      rslt.addAll(l1);
+    }
+   if (l2 != null) {
+      rslt.addAll(l2);
+    }
+   if (rslt.isEmpty()) return null;
+   
+   return rslt;
 }
 
 
 static List<String> getCodeType(String resp,String find,boolean dflt)
 {
    if (resp == null) return null;
-   if (!resp.contains("```")) return List.of(resp);
+   if (!resp.contains("```")) {
+      if (dflt) return List.of(resp);
+      else return List.of();
+    }
 
    List<String> base = new ArrayList<>();
    List<String> rslt = new ArrayList<>();
@@ -887,6 +902,7 @@ static List<String> getCodeType(String resp,String find,boolean dflt)
        }
       else idx1 = idx1+1;
       int idx2 = resp.indexOf("```",idx1);
+      IvyLog.logD("LIMBA","Check code type `" + type + "' " + dflt + " " + idx2);
       if (idx2 < 0)  {
          break;
        }
@@ -902,7 +918,10 @@ static List<String> getCodeType(String resp,String find,boolean dflt)
        }
     }
 
-   if (!base.isEmpty() && rslt.isEmpty()) rslt = base;
+   if (!base.isEmpty() && rslt.isEmpty() && dflt) {
+      IvyLog.logD("LIMBA","Add default code type " + dflt);
+      rslt = base;
+    }
 
    return rslt;
 }
