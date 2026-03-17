@@ -155,8 +155,10 @@ public List<String> getSourceCode(
             int eoff = IvyXml.getAttrInt(xml2,"ENDOFFSET");
             String fnm = IvyXml.getAttrString(xml2,"PATH");
             if (fnm == null) fnm = IvyXml.getAttrString(xml1,"FILE");
-            String cnds = IvyFile.loadFile(new File(fnm));
-            List<String> lines0 = getLineNumbersAndText(cnds,soff,eoff);
+            String cnts = IvyFile.loadFile(new File(fnm));
+            IvyLog.logD("LIMBA","Find source " + fnm + " " + soff + " " + eoff + " " +
+                  (cnts == null ? 0 : cnts.length()));
+            List<String> lines0 = getLineNumbersAndText(cnts,soff,eoff);
             lines.addAll(lines0);
           }
          IvyLog.logD("LIMBA","FOUND source for method " + name0 + " " + lines);
@@ -267,20 +269,26 @@ public String getSourceLine(
  * offsets in a source file.
  *
  * @param src               The complete source code (one string).
- * @param startOffset       Inclusive beginning offset (0bQbased).
- * @param endOffset         Exclusive ending offset (b  $ length of src).
+ * @param startoffset       Inclusive beginning offset (0bQbased).
+ * @param endoffset         Exclusive ending offset (b  $ length of src).
  * @return                  An ArrayList<String> with "lineNumber<TAB>line".
  */
 private static List<String> getLineNumbersAndText(String src,
-      int startOffset, int endOffset)
+      int startoffset, int endoffset)
 { 
    List<String> lines = new ArrayList<String>();
 
    // sanity checks
-   if (src == null || src.isEmpty()) return lines;
-   if (startOffset < 0) startOffset = 0;
-   if (endOffset > src.length()) endOffset = src.length();
-   if (startOffset >= endOffset) return lines;
+   if (src == null || src.isEmpty()) {
+      IvyLog.logD("LIMBA","Source is empty");
+      return lines;
+    }
+   if (startoffset < 0) startoffset = 0;
+   if (endoffset > src.length()) endoffset = src.length();
+   if (startoffset >= endoffset) {
+      IvyLog.logD("LIMBA","Start is after end: " + startoffset + " " + endoffset);
+      return lines;
+    }
 
    int lineno = 1;                                 // humanbQreadable line count
    int pos   = 0;
@@ -292,8 +300,8 @@ private static List<String> getLineNumbersAndText(String src,
       if (src.charAt(i) == '\n') {                // \n is always used as line terminator here
          if (linestart >= 0) {                    // we already have a complete line before it
             String txt = src.substring(linestart, i);
-            int relPos = startOffset - linestart;
-            if (relPos < txt.length() && i <= endOffset) {
+            int relPos = startoffset - linestart;
+            if (relPos < txt.length() && i <= endoffset) {
                lines.add(String.format("%d\t%s", lineno, txt));
              }
           }
@@ -301,7 +309,7 @@ private static List<String> getLineNumbersAndText(String src,
          linestart = i + 1;                      // after the \n character
        }
 
-      if (i == endOffset - 1) {
+      if (i == endoffset - 1) {
          // last requested line  capture it even if it does not end with '\n'
          String txt = src.substring(linestart, i + 1);
          lines.add(String.format("%d\t%s", lineno, txt));

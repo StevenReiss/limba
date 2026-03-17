@@ -16,6 +16,11 @@ Place right brace on a separate line.</STYLE></LIMBA>
 </LIMBA>
 
 
+<LIMBA DO='QUERY' USECONTEXT='true'>
+   <CONTENTS>List the methods of the class edu.brown.cs.bubbles.tutorial.romp.Magnet</CONTENTS>
+</LIMBA>
+<
+
 
 <LIMBA DO='TESTS' RID='LIMBA_964014' USECONTEXT='true'>
 <TOTEST NEW='true' SOURCEFILE='/home/spr/Eclipse/tutorial/romp/src/edu/brown/cs/bubbles/tutorial/romp/Magnet.java' SOURCETYPE='METHOD' TARGETCLASS='edu.brown.cs.bubbles.tutorial.romp.MagnetTest'>

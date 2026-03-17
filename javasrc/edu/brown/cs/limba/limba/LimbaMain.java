@@ -864,6 +864,7 @@ static List<String> getPatchCode(String resp)
 {
    List<String> l1 = getCodeType(resp,"patch",false);
    List<String> l2 = getCodeType(resp,"diff",false);
+   List<String> l3 = getCodeType(resp,"",false);
    
    List<String> rslt = new ArrayList<>();
    if (l1 != null) {
@@ -871,6 +872,9 @@ static List<String> getPatchCode(String resp)
     }
    if (l2 != null) {
       rslt.addAll(l2);
+    }
+   if (rslt.isEmpty() && l3 != null) {
+      rslt.addAll(l3);
     }
    if (rslt.isEmpty()) return null;
    
@@ -902,7 +906,8 @@ static List<String> getCodeType(String resp,String find,boolean dflt)
        }
       else idx1 = idx1+1;
       int idx2 = resp.indexOf("```",idx1);
-      IvyLog.logD("LIMBA","Check code type `" + type + "' " + dflt + " " + idx2);
+      IvyLog.logD("LIMBA","Check code type `" + type + "' " + dflt + " " + idx2 + 
+            " " + find + " " + type.equals(find));
       if (idx2 < 0)  {
          break;
        }

@@ -526,6 +526,7 @@ private final class CommandQuery extends CommandBase {
       String jdoc = LimbaMain.getJavaDoc(resp);
       if (jdoc != null) xw.cdataElement("JAVADOC",jdoc);
       List<String> patches = LimbaMain.getPatchCode(resp); 
+   
       if (patches != null) {
          for (String p : patches) {
             xw.cdataElement("PATCH",p);
