@@ -652,12 +652,11 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
 {
    long start = System.currentTimeMillis();
    
-   
    String cmd = cmd0;
-   if (user_style != null) {
+   if (user_style != null && cmd != null) {
       cmd = cmd.replace("$STYLE",user_style);
     }
-   if (user_context != null) {
+   if (user_context != null && cmd != null) {
       cmd = cmd.replace("$CONTEXT",user_context);
     }
    
