@@ -1,0 +1,371 @@
+<LIMBA DO='PING' />
+<LIMBA DO='LIST' />
+<LIMBA DO='SETMODEL' MODEL='qwen3-coder:latest' />
+<LIMBA DO='SETUPBUBBLES' MINT='limba_nanoxml_debug' WORKSPACE='nanoxml' />
+<LIMBA DO='PROJECT' />
+<LIMBA DO='STYLE'><STYLE>Do not use on-demand imports.
+Do not use on-demand static imports.
+Do not use anonymous classes.
+Do not use lambdas.
+Place right brace on a separate line.</STYLE></LIMBA>
+
+
+<LIMBA DO='QUERY' USECONTEXT='true'>
+   <CONTENTS>Show the source for the class net3.n3.nanoxml.StdXMLParser</CONTENTS>
+</LIMBA>
+
+
+<LIMBA DO='QUERY' USECONTEXT='true'>
+   <CONTENTS>List the methods of the class edu.brown.cs.bubbles.tutorial.romp.Magnet</CONTENTS>
+</LIMBA>
+<
+
+
+<LIMBA DO='TESTS' RID='LIMBA_964014' USECONTEXT='true'>
+<TOTEST NEW='true' SOURCEFILE='/home/spr/Eclipse/tutorial/romp/src/edu/brown/cs/bubbles/tutorial/romp/Magnet.java' SOURCETYPE='METHOD' TARGETCLASS='edu.brown.cs.bubbles.tutorial.romp.MagnetTest'>
+  <CODE><![CDATA[/** Calculates the force between this magnet and otherMag using the formula
+from the assignment
+@return a new Force
+*/
+public Force calculateForce(Magnet otherMag)
+{
+   // calculate the force between one magnet and another
+   int direction;
+
+   if (attractsP(otherMag)) {
+      direction = 1;
+   }
+   else {
+      direction = -1;
+   }
+
+   double  magnitude = (direction * K * strength * otherMag.getStrength())
+	    / Math.pow(getDistance(otherMag), 2);
+														 $
+   Position otherPos = otherMag.getPos();
+   double deltaX = pos.getX() - otherPos.getX();
+   double deltaY = pos.getY() - otherPos.getY();
+   double deltaZ = pos.getZ() - otherPos.getZ();
+
+   // use a pvec to get the angles
+   PhysicsVector vec = new PhysicsVector(deltaX,deltaY,deltaZ);
+   Force mForce = new Force(magnitude,vec.getTheta(),vec.getPhi());
+   /*
+   System.err.println("Magnet: " + magnitude + ", " + mForce.getTheta() + ", " + mForce.getPhi());
+   System.err.println("         " + mForce.getIHat() + ", " +
+			     mForce.getJHat() + ", " +
+			     mForce.getKHat());
+   */
+   return mForce;
+}]]></CODE>
+</TOTEST>
+</LIMBA>
+
+
+
+
+
+
+
+<LIMBA DO='TESTS' RID='LIMBA_797054' USECONTEXT='true'>
+<TOTEST TARGETCLASS='edu.brown.cs.bubbles.tutorial.romp.MagnetTest' NEWCLASS='true'
+      SOURCETYPE='METHOD'
+      SOURCEFILE='/home/spr/Eclipse/tutorial/romp/src/edu/brown/cs/bubbles/tutorial/romp/Magnet.java'>
+  <CODE><![CDATA[/** Calculates the force between this magnet and otherMag using the formula
+from the assignment
+@return a new Force
+*/
+public Force calculateForce(Magnet otherMag)
+{
+   // calculate the force between one magnet and another
+   int direction;
+
+   if (attractsP(otherMag)) {
+      direction = 1;
+   }
+   else {
+      direction = -1;
+   }
+
+   double  magnitude = (direction * K * strength * otherMag.getStrength())
+	    / Math.pow(getDistance(otherMag), 2);
+
+   Position otherPos = otherMag.getPos();
+   double deltaX = pos.getX() - otherPos.getX();
+   double deltaY = pos.getY() - otherPos.getY();
+   double deltaZ = pos.getZ() - otherPos.getZ();
+
+   // use a pvec to get the angles
+   PhysicsVector vec = new PhysicsVector(deltaX,deltaY,deltaZ);
+   Force mForce = new Force(magnitude,vec.getTheta(),vec.getPhi());
+   /*
+   System.err.println("Magnet: " + magnitude + ", " + mForce.getTheta() + ", " + mForce.getPhi());
+   System.err.println("         " + mForce.getIHat() + ", " +
+			     mForce.getJHat() + ", " +
+			     mForce.getKHat());
+   */
+   return mForce;
+}]]></CODE>
+</TOTEST>
+</LIMBA>
+
+
+<LIMBA DO='TESTS' RID='LIMBA_797054' USECONTEXT='true'>
+<TOTEST TARGETCLASS='edu.brown.cs.bubbles.tutorial.romp.RompTest' NEWCLASS='false'
+      SOURCETYPE='METHOD'
+      TARGETFILE='/home/spr/Eclipse/tutorial/romp/src/edu/brown/cs/bubbles/tutorial/romp/RompTest.java'>
+      SOURCEFILE='/home/spr/Eclipse/tutorial/romp/src/edu/brown/cs/bubbles/tutorial/romp/Magnet.java'>
+  <CODE><![CDATA[/** Calculates the force between this magnet and otherMag using the formula
+from the assignment
+@return a new Force
+*/
+public Force calculateForce(Magnet otherMag)
+{
+   // calculate the force between one magnet and another
+   int direction;
+
+   if (attractsP(otherMag)) {
+      direction = 1;
+   }
+   else {
+      direction = -1;
+   }
+
+   double  magnitude = (direction * K * strength * otherMag.getStrength())
+	    / Math.pow(getDistance(otherMag), 2);
+
+   Position otherPos = otherMag.getPos();
+   double deltaX = pos.getX() - otherPos.getX();
+   double deltaY = pos.getY() - otherPos.getY();
+   double deltaZ = pos.getZ() - otherPos.getZ();
+
+   // use a pvec to get the angles
+   PhysicsVector vec = new PhysicsVector(deltaX,deltaY,deltaZ);
+   Force mForce = new Force(magnitude,vec.getTheta(),vec.getPhi());
+   /*
+   System.err.println("Magnet: " + magnitude + ", " + mForce.getTheta() + ", " + mForce.getPhi());
+   System.err.println("         " + mForce.getIHat() + ", " +
+			     mForce.getJHat() + ", " +
+			     mForce.getKHat());
+   */
+   return mForce;
+}]]></CODE>
+</TOTEST>
+</LIMBA>
+
+
+<LIMBA DO='FIND' RID='LIMBA_994942' TYPE='METHOD'>
+<SEARCH LANGUAGE='JAVA' NAME='numericConstantParser' PREFIX='edu.brown.cs.bubbles.tutorial.romp.RompTest' USECONTEXT='false' WHAT='METHOD'>
+  <SIGNATURE>String numericConstantParser(StreamTokenizer)</SIGNATURE>
+  <DESCRIPTION><![CDATA[This is a parser for constant numeric expressions.  A constant numeric expression is a valid expression containing
+only numbers, know Java constants in the form ClassName.CONSTANT_NAME such as Math.PI or Integer.MAX_INT,
+standard mathematical operators, and optional parenthesis.
+If the expression is valid, it should return a string form of the expression without any spaces.  If the expression is
+invalid or incomplete, it should return null.  Be sure to check for expression validity.
+Integers in the input should be left as integers in the output; real numbers in the input should be
+output as reals.
+The end of the expression can be either the end of the input or a comma.
+The input is a java.io.StreamTokenizer set just before the first token of the expression,
+that is, nextToken will need to be called to get the first token.]]></DESCRIPTION>
+  <TESTS>
+    <TESTCASE NAME='TEST_1' TYPE='CALLS'>
+      <DESCRIPTION>Calling numericConstantParser with (5.3) should yield 5.3</DESCRIPTION>
+      <CALL METHOD='numericConstantParser' OP='EQL'>
+	<INPUT>
+	  <VALUE><![CDATA[new java.io.StreamTokenizer(new java.io.StringReader("5.3"))]]></VALUE>
+	</INPUT>
+	<OUTPUT>
+	  <VALUE><![CDATA["5.3"]]></VALUE>
+	</OUTPUT>
+      </CALL>
+    </TESTCASE>
+    <TESTCASE NAME='TEST_2' TYPE='CALLS'>
+      <DESCRIPTION>Calling numericConstantParser with (Math.PI * (3+2.2)) should yield Math.PI*(3+2.2)</DESCRIPTION>
+      <CALL METHOD='numericConstantParser' OP='EQL'>
+	<INPUT>
+	  <VALUE><![CDATA[new java.io.StreamTokenizer(new java.io.StringReader("Math.PI * (3+2.2)"))]]></VALUE>
+	</INPUT>
+	<OUTPUT>
+	  <VALUE><![CDATA["Math.PI*(3+2.2)"]]></VALUE>
+	</OUTPUT>
+      </CALL>
+    </TESTCASE>
+    <TESTCASE NAME='TEST_3' TYPE='CALLS'>
+      <DESCRIPTION>Calling numericConstantParser with (abc) should yield null</DESCRIPTION>
+      <CALL METHOD='numericConstantParser' OP='EQL'>
+	<INPUT>
+	  <VALUE><![CDATA[new java.io.StreamTokenizer(new java.io.StringReader("abc"))]]></VALUE>
+	</INPUT>
+	<OUTPUT>
+	  <VALUE><![CDATA[null]]></VALUE>
+	</OUTPUT>
+      </CALL>
+    </TESTCASE>
+    <TESTCASE NAME='TEST_4' TYPE='CALLS'>
+      <DESCRIPTION>Calling numericConstantParser with (3+) should yield null</DESCRIPTION>
+      <CALL METHOD='numericConstantParser' OP='EQL'>
+	<INPUT>
+	  <VALUE><![CDATA[new java.io.StreamTokenizer(new java.io.StringReader("3+"))]]></VALUE>
+	</INPUT>
+	<OUTPUT>
+	  <VALUE><![CDATA[null]]></VALUE>
+	</OUTPUT>
+      </CALL>
+    </TESTCASE>
+    <TESTCASE NAME='TEST_5' TYPE='CALLS'>
+      <DESCRIPTION>Calling numericConstantParser with ((1.2) should yield null</DESCRIPTION>
+      <CALL METHOD='numericConstantParser' OP='EQL'>
+	<INPUT>
+	  <VALUE><![CDATA[new java.io.StreamTokenizer(new java.io.StringReader("(1.2"))]]></VALUE>
+	</INPUT>
+	<OUTPUT>
+	  <VALUE><![CDATA[null]]></VALUE>
+	</OUTPUT>
+      </CALL>
+    </TESTCASE>
+  </TESTS>
+  <CONTEXT CLASS='RompTest' LANGUAGE='JAVA' PACKAGE='edu.brown.cs.bubbles.tutorial.romp' SEPARATOR='/' USEPATH='true'>
+    <IMPORT>import org.junit.*;</IMPORT>
+    <IMPORT>import static org.junit.Assert.*;</IMPORT>
+    <IMPORT>import java.io.StreamTokenizer;</IMPORT>
+    <IMPORT>import java.util.Collection;</IMPORT>
+    <SOURCE NAME='/home/spr/Eclipse/tutorial/romp/src/edu/brown/cs/bubbles/tutorial/romp/RompTest.java' />
+    <CLASSPATH>/home/spr/Eclipse/tutorial/romp/bin</CLASSPATH>
+  </CONTEXT>
+</SEARCH>
+</LIMBA>
+
+
+<LIMBA DO='FINDJDOC' RID='LIMBA_650291' TYPE='METHOD' USECONTEXT='true'>
+<JAVADOC>
+  <CODE><![CDATA[public static Force calculateForce(Pendulum p)
+{
+   // Calculate magnitude
+   double magnitude = -Pendulum.getMass() * g * p.getAngle().sine();
+
+   // Error checking - remove me later
+   if (Double.isNaN(magnitude)) {
+      System.err.println("Got NaN from mass: " + Pendulum.getMass() + ", g: " + g
+	       + ", angle: " + p.getAngle() + ", sine(angle): " + p.getAngle().sine());
+      System.exit(-1);
+   }
+
+   // Calculate angles
+   Position pos = p.getPosition();
+   // use a pvec to get the angles
+   PhysicsVector vec = new PhysicsVector(pos.getX(),pos.getY(),pos.getZ());
+   Force gForce = new Force(magnitude,vec.getTheta(),vec.getPhi());
+   /*
+   System.err.println("  Gravity: " );
+   System.err.println(magnitude + ", " + vec.getTheta() + ", " + vec.getPhi());
+   System.err.println(gForce);
+   */
+   return gForce;
+}]]></CODE>
+</JAVADOC>
+</LIMBA>
+
+
+<LIMBA DO='FINDJDOC' RID='LIMBA_650291' TYPE='METHOD' USECONTEXT='true'>
+<JAVADOC>
+  <PRIOR><![CDATA[/**
+ * Calculates the gravitational force acting on a pendulum.
+ *
+ * @param p the pendulum object
+ * @return a Force object representing the gravitational force
+ */
+]]></PRIOR>
+  <CODE><![CDATA[public static Force calculateForce(Pendulum p)
+{
+   // Calculate magnitude
+   double magnitude = -Pendulum.getMass() * g * p.getAngle().sine();
+
+   // Error checking - remove me later
+   if (Double.isNaN(magnitude)) {
+      System.err.println("Got NaN from mass: " + Pendulum.getMass() + ", g: " + g
+	       + ", angle: " + p.getAngle() + ", sine(angle): " + p.getAngle().sine());
+      System.exit(-1);
+   }
+
+   // Calculate angles
+   Position pos = p.getPosition();
+   // use a pvec to get the angles
+   PhysicsVector vec = new PhysicsVector(pos.getX(),pos.getY(),pos.getZ());
+   Force gForce = new Force(magnitude,vec.getTheta(),vec.getPhi());
+   /*
+   System.err.println("  Gravity: " );
+   System.err.println(magnitude + ", " + vec.getTheta() + ", " + vec.getPhi());
+   System.err.println(gForce);
+   */
+   return gForce;
+}]]></CODE>
+</JAVADOC>
+</LIMBA>
+
+
+<LIMBA DO='FIND' RID='LIMBA_924532' TYPE='METHOD'>
+<SEARCH LANGUAGE='JAVA' NAME='reduce' PREFIX='edu.brown.cs.bubbles.tutorial.romp.Angle' USECONTEXT='false' WHAT='METHOD'>
+  <SIGNATURE>static double reduce(double)</SIGNATURE>
+  <DESCRIPTION><![CDATA[Reduce a negative angle or an angle greater than 2*PI
+to something between 0 and 2*PI.]]></DESCRIPTION>
+  <TESTS>
+    <TESTCASE NAME='TEST_1' TYPE='CALLS'>
+      <DESCRIPTION>Calling reduce with 3.0 should yield 3.0</DESCRIPTION>
+      <CALL METHOD='reduce' OP='EQL'>
+	<INPUT>
+	  <VALUE><![CDATA[3.0]]></VALUE>
+	</INPUT>
+	<OUTPUT>
+	  <VALUE><![CDATA[3.0]]></VALUE>
+	</OUTPUT>
+      </CALL>
+    </TESTCASE>
+    <TESTCASE NAME='TEST_2' TYPE='CALLS'>
+      <DESCRIPTION>Calling reduce with 9.0 should not yield 9.0</DESCRIPTION>
+      <CALL METHOD='reduce' OP='NEQ'>
+	<INPUT>
+	  <VALUE><![CDATA[9.0]]></VALUE>
+	</INPUT>
+	<OUTPUT>
+	  <VALUE><![CDATA[9.0]]></VALUE>
+	</OUTPUT>
+      </CALL>
+    </TESTCASE>
+    <TESTCASE NAME='TEST_3' TYPE='CALLS'>
+      <DESCRIPTION>Calling reduce with -1.0 should not yield -1.0</DESCRIPTION>
+      <CALL METHOD='reduce' OP='NEQ'>
+	<INPUT>
+	  <VALUE><![CDATA[-1.0]]></VALUE>
+	</INPUT>
+	<OUTPUT>
+	  <VALUE><![CDATA[-1.0]]></VALUE>
+	</OUTPUT>
+      </CALL>
+    </TESTCASE>
+  </TESTS>
+  <CONTEXT CLASS='Angle' LANGUAGE='JAVA' PACKAGE='edu.brown.cs.bubbles.tutorial.romp' SEPARATOR='/' USEPATH='true'>
+    <SOURCE NAME='/home/spr/Eclipse/tutorial/romp/src/edu/brown/cs/bubbles/tutorial/romp/Angle.java' />
+    <CLASSPATH>/home/spr/Eclipse/tutorial/romp/bin</CLASSPATH>
+  </CONTEXT>
+</SEARCH>
+</LIMBA>
+
+
+<LIMBA DO='FIND' TYPE='CLASS'>
+<SEARCH WHAT='CLASS' NAME='edu.brown.cs.limba.LimbaMain.IncludeReader' USECONTEXT='false'
+      FILE='/pro/limba/limba/src/LimbaMain.java'  >
+   <SIGNATURE>private static class IncludeReader extends BufferedReader</SIGNATURE>
+   <DESCRIPTION><![CDATA[Create a Java Reader subclass that can handle includes.
+The class should be initialized with a BufferedReader.
+If it sees a line starting with a > then the remainder of the line
+is a file name that should be included at that point.
+The class should implmeent readLine. ]]></DESCRIPTION>
+</SEARCH>
+</LIMBA>
+
+
+
+
+
+<LIMBA DO='EXIT' />
+
