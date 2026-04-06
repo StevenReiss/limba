@@ -123,6 +123,8 @@ LimbaCommand createCommand(Element xml)
          return new CommandQuery("SUGGEST",prompt,xml);
       case "EXPLAIN" :
          return new CommandQuery("EXPLAIN",prompt,xml);
+      case "BASEEXPLAIN" :
+         return new CommandQuery("BASEEXPLAIN",prompt,xml);
       case "PROJECT" :
          return new CommandProject(xml);
       case "FIND" :

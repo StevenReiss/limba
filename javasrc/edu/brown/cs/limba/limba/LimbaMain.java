@@ -760,6 +760,9 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
           }
        }
       if (toolids.contains(LimbaToolSet.DEBUG)) {
+         tools.add(new LimbaToolsDebug(this,context)); 
+       }
+      if (toolids.contains(LimbaToolSet.DIAD)) {
          tools.add(new LimbaToolsDiad(this,context)); 
        }
     }

@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
@@ -56,7 +57,11 @@ import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.jcomp.JcompControl;
 import edu.brown.cs.ivy.jcomp.JcompProject;
+import edu.brown.cs.ivy.mint.MintControl;
+import edu.brown.cs.ivy.mint.MintDefaultReply;
+import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
 import edu.brown.cs.ivy.xml.IvyXml;
+import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 abstract class LimbaToolBase implements LimbaConstants
 {
@@ -321,6 +326,57 @@ protected static String normalizeMethodName(String name0)
     }
    
    return name;
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Send reqeust to diad                                                    */
+/*                                                                              */
+/********************************************************************************/
+
+protected Element sendToDiad(final String what,final CommandArgs args0,String cnts,Map<String,?> queryctx)
+{
+   CommandArgs args = args0;
+   MintDefaultReply rply = new MintDefaultReply();
+   MintControl mintctrl = limba_main.getMintControl();
+   
+   IvyLog.logD("LIMBA","Query context " + queryctx + " " +
+         Thread.currentThread().hashCode());
+   if (queryctx != null) {
+      for (Map.Entry<String,?> ent : queryctx.entrySet()) {
+         String key = ent.getKey();
+         if (args == null) args = new CommandArgs();
+         else if (args.containsKey(key)) ;
+         else args.put(key,ent.getValue());
+       }
+    }
+   
+   IvyXmlWriter xw = new IvyXmlWriter();
+   xw.begin("DIAD");
+   xw.field("DO",what);
+   if (args != null) {
+      for (Map.Entry<String,?> ent : args.entrySet()) {
+         xw.field(ent.getKey(),ent.getValue());
+       }
+    }
+   if (cnts != null) {
+      xw.xmlText(cnts);
+    }
+   xw.end("DIAD");
+   String msg = xw.toString();
+   xw.close();
+   
+   IvyLog.logD("LIMBA","Send to DIAD: " + msg);
+   
+   mintctrl.send(msg,rply,MintControl.MINT_MSG_FIRST_NON_NULL);
+   
+   Element rslt = rply.waitForXml(0);
+   
+   IvyLog.logD("LIMBA","Reply from DIAD: " + IvyXml.convertXmlToString(rslt));
+   
+   return rslt;
 }
 
 
