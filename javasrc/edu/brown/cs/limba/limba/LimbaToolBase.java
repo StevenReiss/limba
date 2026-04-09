@@ -272,8 +272,8 @@ protected Element getMethodMatches(String name)
    
    if (!name.contains("(") && !name.contains("<init>")) {
       Element xml1 = message_server.findClass(name);
-      if (xml1 != null && IvyXml.getChild(xml, "MATCH") != null) {
-         return xml;
+      if (xml1 != null && IvyXml.getChild(xml1, "MATCH") != null) {
+         return xml1;
        }
     }
    
