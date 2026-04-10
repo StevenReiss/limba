@@ -665,7 +665,7 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
    initializeModel(model);
 
    IvyLog.logD("LIMBA","Query " + usectx + " " + getModel() + " " +
-         rag_model + " " + Thread.currentThread().hashCode() + " " +
+         rag_model + "\n\t" +
          tools + " " + history + " " +
          Thread.currentThread().getName() + ":\n" + cmd);
    

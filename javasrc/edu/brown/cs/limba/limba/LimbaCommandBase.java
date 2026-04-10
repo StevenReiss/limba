@@ -515,8 +515,13 @@ private final class CommandQuery extends CommandBase {
          IvyLog.logD("LIMBA","Use history " + command_id + " " + history);
        } 
        
-      String resp = limba_main.askOllama(cmd,usectx,
-            history,tool_set,query_context,limba_model);   
+      String resp = null;
+      for (int i = 0; i < 10; ++i) {
+         resp = limba_main.askOllama(cmd,usectx,
+               history,tool_set,query_context,limba_model);  
+         if (!resp.contains("<function=get")) break;
+         IvyLog.logI("LIMBA","Ollama missed agent call: " + resp);
+       }
       
       xw.cdataElement("RESPONSE",resp);
       List<String> jcodes = LimbaMain.getJavaCode(resp);
