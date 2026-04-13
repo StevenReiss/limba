@@ -676,7 +676,7 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
          String resp = getChain(history,usectx,tools,context,null).chat(cmd);
          IvyLog.logD("LIMBA","Context Response: " + resp);
          IvyLog.logD("LIMBA","------------------------\n\n");
-         if (resp == null) resp = "*** No response from LLM ***";
+         if (resp == null) resp = NO_RESPONSE; 
          transcriptResponse(resp);
          long time = System.currentTimeMillis() - start;
          transcriptMessage("Time: " + time + " ms");

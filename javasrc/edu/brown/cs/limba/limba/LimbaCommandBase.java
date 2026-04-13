@@ -519,7 +519,11 @@ private final class CommandQuery extends CommandBase {
       for (int i = 0; i < 10; ++i) {
          resp = limba_main.askOllama(cmd,usectx,
                history,tool_set,query_context,limba_model);  
-         if (!resp.contains("<function=get")) break;
+         if (resp != null && 
+               !resp.contains("<function=get") && 
+               !resp.equals(NO_RESPONSE)) {
+            break;
+          }
          IvyLog.logI("LIMBA","Ollama missed agent call: " + resp);
        }
       
