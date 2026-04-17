@@ -525,6 +525,7 @@ private final class CommandQuery extends CommandBase {
             break;
           }
          IvyLog.logI("LIMBA","Ollama missed agent call: " + resp);
+         limba_main.transcriptMessage("OLLAMA BAD AGENT CALL");
        }
       
       xw.cdataElement("RESPONSE",resp);
