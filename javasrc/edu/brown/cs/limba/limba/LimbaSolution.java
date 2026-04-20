@@ -96,6 +96,8 @@ LimbaSolution(LimbaFinder lf,String name,String text0) throws LimbaException
       if (idx >= 0) {
          idx = text.indexOf("\n",idx) + 1;
        }
+      else idx = 0;
+      
       StringBuffer buf = new StringBuffer();
       if (idx > 0) {
          buf.append(text.substring(0,idx));

@@ -690,6 +690,16 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
             throw e;
           }
        }
+      catch (RuntimeException e) {
+         if (e.getMessage().contains("trying to execute")) {
+            if (i != 2) {
+               IvyLog.logE("LIMBA","Query failed, will retry",e);
+             }
+            else {
+               throw e;
+             }
+          }
+       }
       catch (Throwable t) {
          IvyLog.logE("LIMBA","Problem with chained response",t);
          throw t;
@@ -746,6 +756,7 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
       if (toolids.contains(LimbaToolSet.PROJECT)) {
          if (rag_model != null) {
             tools.add(new LimbaTools(this,rag_model.getFiles()));
+            IvyLog.logD("LIMBA","Using project tools");
           }
          else {
             IvyLog.logE("LIMBA","no project found");
@@ -754,6 +765,7 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
       if (toolids.contains(LimbaToolSet.STRUCTURE)) { 
          if (rag_model != null) {
             tools.add(new LimbaToolsStruct(this,rag_model.getFiles()));
+            IvyLog.logD("LIMBA","Using structure tools");
           }
          else {
             IvyLog.logE("LIMBA","no project found");
@@ -761,9 +773,11 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
        }
       if (toolids.contains(LimbaToolSet.DEBUG)) {
          tools.add(new LimbaToolsDebug(this,context)); 
+         IvyLog.logD("LIMBA","Using debug tools");
        }
       if (toolids.contains(LimbaToolSet.DIAD)) {
          tools.add(new LimbaToolsDiad(this,context)); 
+         IvyLog.logD("LIMBA","Using diad tools");
        }
     }
 
