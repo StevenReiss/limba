@@ -107,6 +107,7 @@ private String processCommand(String cmd,Element xml) throws LimbaException
          case "LIST" :
          case "DETAILS" :
          case "PING" :
+         case "DEBUGREMOVE" :
             // immediate commands
             try {
                LimbaCommand lcmd = limba_main.setupLimbaCommand(xml);
