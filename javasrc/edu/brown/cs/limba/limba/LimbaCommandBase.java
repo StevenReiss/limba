@@ -75,6 +75,10 @@ LimbaCommandFactory(LimbaMain lm)
 LimbaCommand createCommand(Element xml)
 {
    String cmd = IvyXml.getAttrString(xml,"DO");
+   if (cmd == null) {
+      IvyLog.logI("LIMBA","Null command given");
+      return null;
+    }
    cmd = cmd.toUpperCase();
    
    String prompt = getPrompt(cmd);
