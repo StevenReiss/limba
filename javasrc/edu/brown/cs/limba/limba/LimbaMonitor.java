@@ -282,6 +282,15 @@ Element findMethod(final String name0,boolean impl)
 }
 
 
+Element findField(String name)
+{
+   CommandArgs args = new CommandArgs("PATTERN",name,
+         "DEFS",true,"REFS",true,"FOR","FIELD","SYSTEM",false);
+   Element xml = sendBubblesMessage("PATTERNSEARCH",args,null);
+   
+   return xml;
+}
+
 
 /********************************************************************************/
 /*                                                                              */

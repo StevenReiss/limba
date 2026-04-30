@@ -87,7 +87,7 @@ LimbaToolsDebug(LimbaMain lm,Map<String,?> context)
       "in that method (key LINE); and a list of local variables (key LOCALS). " +
       "Each local includes its data type (key TYPE), its name (key NAME), and " +
       "its value if it is a string or a primitive (key VALUE). ")
-      public String getStackFrames()
+public String getStackFrames()
 {
    limba_main.transcriptAgent("Get stack frames"); 
    
@@ -147,6 +147,31 @@ public String getEvaluation(@P("Expression to evaluate") String expr)
    return "{ error: 'No debugid given' }";
 }
 
+
+
+
+// @Tool("This agent will find all references to a method, field, or class.  It returns a string " +
+//    "representing a JSON array of references where each reference is a JSON object " +
+//    "with fields for FILE, METHOD (optional), LINE, whether the reference is " +
+//    "a definition or not DEFINITION, the TYPE of item (METHOD, FIELD, or TYPE, "
+//    "and the source offset (OFFSET)"
+// public String getReferences(@P("Name of field, method, or class") String name)
+
+public String getReferernces(String name)
+{
+   limba_main.transcriptAgent("Find references to " + name); 
+   
+   CommandArgs args = new CommandArgs("FORMAT","JSON",
+         "NAME",name);
+   
+   Element rslt = sendToDiad("Q_REFERENCES",args,null,query_context);
+   if (rslt != null) {
+      String json = IvyXml.getTextElement(rslt,"JSON");
+      return json;
+    }
+   
+   return "{ error: 'No debugid given' }";
+}
 
 
 
