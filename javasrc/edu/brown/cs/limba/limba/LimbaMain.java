@@ -839,7 +839,7 @@ private interface LimbaAssistant extends LimbaChatter {
    String chat(String msg);
 }
 
-private class ChainChatter implements LimbaChatter {
+private class ChainChatter implements LimbaAssistant {
 
    private ConversationalRetrievalChain ret_chain;
 

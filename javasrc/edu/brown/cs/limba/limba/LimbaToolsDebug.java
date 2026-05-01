@@ -150,14 +150,13 @@ public String getEvaluation(@P("Expression to evaluate") String expr)
 
 
 
-// @Tool("This agent will find all references to a method, field, or class.  It returns a string " +
-//    "representing a JSON array of references where each reference is a JSON object " +
-//    "with fields for FILE, METHOD (optional), LINE, whether the reference is " +
-//    "a definition or not DEFINITION, the TYPE of item (METHOD, FIELD, or TYPE, "
-//    "and the source offset (OFFSET)"
-// public String getReferences(@P("Name of field, method, or class") String name)
-
-public String getReferernces(String name)
+@Tool("This agent will find all references to a method, field, or class. " + 
+      "It returns a string " +
+      "representing a JSON array of references where each reference is a JSON object " +
+      "with fields for FILE, INSIDE, LINE, DEFINITION indicating whether the reference is " +
+      "a definition or not, the TYPE of item (METHOD, FIELD, or TYPE), " +
+      "and INSIDETYPE indicating the type of container.")
+public String getReferences(@P("Name of field, method, or class") String name)
 {
    limba_main.transcriptAgent("Find references to " + name); 
    
