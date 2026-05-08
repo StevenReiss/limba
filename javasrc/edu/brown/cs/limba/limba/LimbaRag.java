@@ -80,6 +80,8 @@ private String chroma_url;
 
 private static boolean use_java_splitter = true;
 private static boolean rag_log = false;
+
+private static final int BLOCK_SIZE = 5;
       
 
 /********************************************************************************/
@@ -297,8 +299,19 @@ private ContentRetriever setupRAG()
          .embeddingModel(embed)
          .embeddingStore(store)
          .build();
+      
       IvyLog.logD("LIMBA","Ingest documents " + docs.size());
-      ingest.ingest(docs);
+      if (docs.size() > BLOCK_SIZE) {
+         for (int i = 0; i < docs.size(); i += BLOCK_SIZE) {
+            int end = Math.min(i+BLOCK_SIZE,docs.size());
+            IvyLog.logD("LIMBA","Ingest " + i + " " + end);
+            List<Document> slist = docs.subList(i,end);
+            ingest.ingest(slist);
+          }
+       }
+      else {
+         ingest.ingest(docs);
+       }
       IvyLog.logD("LIMBA","Done ingest");
       
       last_modified = System.currentTimeMillis();

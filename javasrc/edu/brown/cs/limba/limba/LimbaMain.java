@@ -960,6 +960,10 @@ private static void extractFragments(String text,List<String> rslt)
 static String getJavaDoc(String resp)
 {
    List<String> jcodes = getJavaCode(resp);
+   if (jcodes == null && resp.startsWith("/*")) {
+      jcodes = new ArrayList<>();
+      jcodes.add(resp);
+    }
    if (jcodes == null) return null;
    for (String jcode : jcodes) {
       int idx0 = jcode.indexOf("/**");
