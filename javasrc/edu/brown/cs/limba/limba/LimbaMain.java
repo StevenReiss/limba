@@ -957,14 +957,17 @@ private static void extractFragments(String text,List<String> rslt)
 }
 
 
-static String getJavaDoc(String resp)
+static List<String> getJavaDoc(String resp)
 {
    List<String> jcodes = getJavaCode(resp);
    if (jcodes == null && resp.startsWith("/*")) {
       jcodes = new ArrayList<>();
       jcodes.add(resp);
     }
-   if (jcodes == null) return null;
+   
+   if (jcodes == null || jcodes.isEmpty()) return null;
+   
+   List<String> rslt = new ArrayList<>();
    for (String jcode : jcodes) {
       int idx0 = jcode.indexOf("/**");
       if (idx0 < 0) continue;
@@ -974,9 +977,9 @@ static String getJavaDoc(String resp)
       if (idx2 > 0) idx1 = idx2+1;
       String jdoc = jcode.substring(idx0,idx1);
       if (!jdoc.endsWith("\n")) jdoc += "\n";
-      return jdoc;
+      rslt.add(jdoc);
     }
-   return null;
+   return rslt;
 }
 
 

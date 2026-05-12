@@ -1,4 +1,4 @@
-<LIMBA DO='PING' />
+ LIMBA DO='PING' />
 <LIMBA DO='LIST' />
 <!-- <LIMBA DO='SETMODEL' MODEL='qwen3-coder:480b' /> -->
 <LIMBA DO='SETMODEL' MODEL='devstral-2:latest' />
@@ -12,15 +12,170 @@ Place right brace on a separate line.</STYLE></LIMBA>
 
 
 <LIMBA DO='QUERY' USECONTEXT='true'>
-   <CONTENTS>List the methods of the class edu.brown.cs.bubbles.tutorial.romp.Magnet</CONTENTS>
+   <CONTENTS>List the methods of the class edu.brown.cs.bubbles.tutorial.romp.Magnet.
+   You can use the getClassMethods agent.
+</CONTENTS>
 </LIMBA>
 
 
-<LIMBA DO='QUERY' USECONTEXT='true'>
-   <CONTENTS>List the methods of the class edu.brown.cs.bubbles.tutorial.romp.Magnet</CONTENTS>
-</LIMBA>
-<
+<LIMBA DO='FINDJDOC' RID='LIMBA_650291' WHAT='METHOD' USECONTEXT='true'>
+<JAVADOC>
+  <PRIOR><![CDATA[/**
+ * Calculates the gravitational force acting on a pendulum.
+ *
+ * @param p the pendulum object
+ * @return a Force object representing the gravitational force
+ */
+]]></PRIOR>
+  <CODE><![CDATA[public static Force calculateForce(Pendulum p)
+{
+   // Calculate magnitude
+   double magnitude = -Pendulum.getMass() * g * p.getAngle().sine();
 
+   // Error checking - remove me later
+   if (Double.isNaN(magnitude)) {
+      System.err.println("Got NaN from mass: " + Pendulum.getMass() + ", g: " + g
+	       + ", angle: " + p.getAngle() + ", sine(angle): " + p.getAngle().sine());
+      System.exit(-1);
+   }
+
+   // Calculate angles
+   Position pos = p.getPosition();
+   // use a pvec to get the angles
+   PhysicsVector vec = new PhysicsVector(pos.getX(),pos.getY(),pos.getZ());
+   Force gForce = new Force(magnitude,vec.getTheta(),vec.getPhi());
+   /*
+   System.err.println("  Gravity: " );
+   System.err.println(magnitude + ", " + vec.getTheta() + ", " + vec.getPhi());
+   System.err.println(gForce);
+   */
+   return gForce;
+}]]></CODE>
+</JAVADOC>
+</LIMBA>
+
+<LIMBA DO='FINDJDOC' RID='LIMBA_123456' WHAT='CLASS' TYPES='*' USECONTEXT='true'>
+<JAVADOC>
+<CODE><![CDATA[public class Gravity {
+
+/** The gravitational constant */
+private static double g;
+
+static {
+g = calculateG();
+// System.err.println("Gravity calculated as " + g);
+}
+
+
+public static double getG()
+{
+return g;
+}
+
+/** Calculate the value of the gravitational constant using the fact that the frequency
+of oscillation of the pendulum is 1.25/sec and the formula freq = 2*PI*sqrt(l/g) */
+private static double calculateG()
+{
+// period of the pendulum is 1.25/sec
+return (Pendulum.getLength() * 4 * Math.pow(Math.PI, 2)) / Math.pow(1.25, 2);
+}
+
+/**
+* Calculates the gravitational force acting on a pendulum.
+*
+* @param p the pendulum object
+* @return a Force object representing the gravitational force
+*/
+
+public static Force calculateForce(Pendulum p)
+{
+// Calculate magnitude
+double magnitude = -Pendulum.getMass() * g * p.getAngle().sine();
+
+// Error checking - remove me later
+if (Double.isNaN(magnitude)) {
+System.err.println("Got NaN from mass: " + Pendulum.getMass() + ", g: " + g
++ ", angle: " + p.getAngle() + ", sine(angle): " + p.getAngle().sine());
+System.exit(-1);
+}
+
+// Calculate angles
+Position pos = p.getPosition();
+// use a pvec to get the angles
+PhysicsVector vec = new PhysicsVector(pos.getX(),pos.getY(),pos.getZ());
+Force gForce = new Force(magnitude,vec.getTheta(),vec.getPhi());
+/*
+System.err.println("  Gravity: " );
+System.err.println(magnitude + ", " + vec.getTheta() + ", " + vec.getPhi());
+System.err.println(gForce);
+*/
+return gForce;
+}
+}]]></CODE>
+</JAVADOC>
+</LIMBA>
+
+
+<LIMBA DO='FINDJDOC' RID='LIMBA_123456' WHAT='CLASS' TYPES='PUBLIC,PROTECTED' USECONTEXT='true'>
+<JAVADOC>
+<CODE><![CDATA[public class Gravity {
+
+/** The gravitational constant */
+private static double g;
+
+static {
+g = calculateG();
+// System.err.println("Gravity calculated as " + g);
+}
+
+
+public static double getG()
+{
+return g;
+}
+
+/** Calculate the value of the gravitational constant using the fact that the frequency
+of oscillation of the pendulum is 1.25/sec and the formula freq = 2*PI*sqrt(l/g) */
+private static double calculateG()
+{
+// period of the pendulum is 1.25/sec
+return (Pendulum.getLength() * 4 * Math.pow(Math.PI, 2)) / Math.pow(1.25, 2);
+}
+
+/**
+* Calculates the gravitational force acting on a pendulum.
+*
+* @param p the pendulum object
+* @return a Force object representing the gravitational force
+*/
+
+public static Force calculateForce(Pendulum p)
+{
+// Calculate magnitude
+double magnitude = -Pendulum.getMass() * g * p.getAngle().sine();
+
+// Error checking - remove me later
+if (Double.isNaN(magnitude)) {
+System.err.println("Got NaN from mass: " + Pendulum.getMass() + ", g: " + g
++ ", angle: " + p.getAngle() + ", sine(angle): " + p.getAngle().sine());
+System.exit(-1);
+}
+
+// Calculate angles
+Position pos = p.getPosition();
+// use a pvec to get the angles
+PhysicsVector vec = new PhysicsVector(pos.getX(),pos.getY(),pos.getZ());
+Force gForce = new Force(magnitude,vec.getTheta(),vec.getPhi());
+/*
+System.err.println("  Gravity: " );
+System.err.println(magnitude + ", " + vec.getTheta() + ", " + vec.getPhi());
+System.err.println(gForce);
+*/
+return gForce;
+}
+}]]></CODE>
+</JAVADOC>
+</LIMBA>
 
 <LIMBA DO='TESTS' RID='LIMBA_964014' USECONTEXT='true'>
 <TOTEST NEW='true' SOURCEFILE='/home/spr/Eclipse/tutorial/romp/src/edu/brown/cs/bubbles/tutorial/romp/Magnet.java' SOURCETYPE='METHOD' TARGETCLASS='edu.brown.cs.bubbles.tutorial.romp.MagnetTest'>
@@ -237,73 +392,6 @@ that is, nextToken will need to be called to get the first token.]]></DESCRIPTIO
 </LIMBA>
 
 
-<LIMBA DO='FINDJDOC' RID='LIMBA_650291' TYPE='METHOD' USECONTEXT='true'>
-<JAVADOC>
-  <CODE><![CDATA[public static Force calculateForce(Pendulum p)
-{
-   // Calculate magnitude
-   double magnitude = -Pendulum.getMass() * g * p.getAngle().sine();
-
-   // Error checking - remove me later
-   if (Double.isNaN(magnitude)) {
-      System.err.println("Got NaN from mass: " + Pendulum.getMass() + ", g: " + g
-	       + ", angle: " + p.getAngle() + ", sine(angle): " + p.getAngle().sine());
-      System.exit(-1);
-   }
-
-   // Calculate angles
-   Position pos = p.getPosition();
-   // use a pvec to get the angles
-   PhysicsVector vec = new PhysicsVector(pos.getX(),pos.getY(),pos.getZ());
-   Force gForce = new Force(magnitude,vec.getTheta(),vec.getPhi());
-   /*
-   System.err.println("  Gravity: " );
-   System.err.println(magnitude + ", " + vec.getTheta() + ", " + vec.getPhi());
-   System.err.println(gForce);
-   */
-   return gForce;
-}]]></CODE>
-</JAVADOC>
-</LIMBA>
-
-
-<LIMBA DO='FINDJDOC' RID='LIMBA_650291' TYPE='METHOD' USECONTEXT='true'>
-<JAVADOC>
-  <PRIOR><![CDATA[/**
- * Calculates the gravitational force acting on a pendulum.
- *
- * @param p the pendulum object
- * @return a Force object representing the gravitational force
- */
-]]></PRIOR>
-  <CODE><![CDATA[public static Force calculateForce(Pendulum p)
-{
-   // Calculate magnitude
-   double magnitude = -Pendulum.getMass() * g * p.getAngle().sine();
-
-   // Error checking - remove me later
-   if (Double.isNaN(magnitude)) {
-      System.err.println("Got NaN from mass: " + Pendulum.getMass() + ", g: " + g
-	       + ", angle: " + p.getAngle() + ", sine(angle): " + p.getAngle().sine());
-      System.exit(-1);
-   }
-
-   // Calculate angles
-   Position pos = p.getPosition();
-   // use a pvec to get the angles
-   PhysicsVector vec = new PhysicsVector(pos.getX(),pos.getY(),pos.getZ());
-   Force gForce = new Force(magnitude,vec.getTheta(),vec.getPhi());
-   /*
-   System.err.println("  Gravity: " );
-   System.err.println(magnitude + ", " + vec.getTheta() + ", " + vec.getPhi());
-   System.err.println(gForce);
-   */
-   return gForce;
-}]]></CODE>
-</JAVADOC>
-</LIMBA>
-
-
 <LIMBA DO='FIND' RID='LIMBA_924532' TYPE='METHOD'>
 <SEARCH LANGUAGE='JAVA' NAME='reduce' PREFIX='edu.brown.cs.bubbles.tutorial.romp.Angle' USECONTEXT='false' WHAT='METHOD'>
   <SIGNATURE>static double reduce(double)</SIGNATURE>
@@ -369,4 +457,3 @@ The class should implmeent readLine. ]]></DESCRIPTION>
 
 
 <LIMBA DO='EXIT' />
-

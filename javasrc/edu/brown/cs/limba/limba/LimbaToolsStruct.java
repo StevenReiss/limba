@@ -113,7 +113,7 @@ public List<String> getConstructorsForClass(@P("name of the class") String name)
 /*                                                                              */
 /********************************************************************************/
 
-@Tool("This agent returns the set of methods of a class.  Each method is returned as " +
+@Tool("This agent returns the list  of methods of a class.  Each method is returned as " +
       "its signature and description.  Will return an empty list if " +
       "the class does not exist.")
 public List<String> getClassMethods(@P("name of the class") String name)
