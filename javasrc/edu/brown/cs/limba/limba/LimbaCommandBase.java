@@ -234,6 +234,9 @@ private abstract class CommandBase implements LimbaCommand {
          catch (Throwable t) {
             IvyLog.logE("LIMBA","Problem with " + getCommandName(),t);
           }
+         if (retry) {
+            rslt.clear();
+          }
        }
     }
    
