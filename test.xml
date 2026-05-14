@@ -18,7 +18,7 @@ Place right brace on a separate line.</STYLE></LIMBA>
 </LIMBA>
 
 
-<LIMBA DO='FINDJDOC' RID='LIMBA_650291' WHAT='METHOD' USECONTEXT='true'>
+<LIMBA DO='FINDJDOC' RID='LIMBA_650291' WHAT='METHOD' USECONTEXT='true' NAME='calculateForce' >
 <JAVADOC>
   <PRIOR><![CDATA[/**
  * Calculates the gravitational force acting on a pendulum.
@@ -54,7 +54,7 @@ Place right brace on a separate line.</STYLE></LIMBA>
 </JAVADOC>
 </LIMBA>
 
-<LIMBA DO='FINDJDOC' RID='LIMBA_123456' WHAT='CLASS' TYPES='*' USECONTEXT='true'>
+<LIMBA DO='FINDJDOC' RID='LIMBA_123456' WHAT='CLASS' TYPES='*' USECONTEXT='true' NAME='Gravity'>
 <JAVADOC>
 <CODE><![CDATA[public class Gravity {
 
@@ -116,7 +116,7 @@ return gForce;
 </LIMBA>
 
 
-<LIMBA DO='FINDJDOC' RID='LIMBA_123456' WHAT='CLASS' TYPES='PUBLIC,PROTECTED' USECONTEXT='true'>
+<LIMBA DO='FINDJDOC' RID='LIMBA_123456' WHAT='CLASS' TYPES='PUBLIC,PROTECTED' USECONTEXT='true' NAME='Gravity'>
 <JAVADOC>
 <CODE><![CDATA[public class Gravity {
 

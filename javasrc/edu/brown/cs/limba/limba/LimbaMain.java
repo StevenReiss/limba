@@ -656,12 +656,12 @@ String askOllamaWithRetry(String cmd0,boolean usectx) throws Exception
    String resp = null;
    for (int i = 0; i < 3; ++i) {
       resp = askOllama(cmd,usectx);
-      IvyLog.logD("LIMBA","Need to retry the query to ollama");
       if (!resp.contains("<function=")) {
          break;
        }
+      IvyLog.logD("LIMBA","Need to retry the query to ollama");
       if (i == 0) { 
-         cmd += "\nThe previousresponse included a failed attempt at making an agent call. ";
+         cmd += "\nThe previous response included a failed attempt at making an agent call. ";
          cmd += "Try again.\n";
        }
     }

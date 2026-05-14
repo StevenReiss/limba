@@ -47,6 +47,7 @@ private String          method_body;
 private boolean         use_context;
 private String          find_what;
 private String          method_types;
+private String          find_name;
 
 
 /********************************************************************************/
@@ -62,6 +63,7 @@ LimbaJdocer(LimbaMain lm,String prompt,Element xml)
    Element sxml = IvyXml.getChild(xml,"JAVADOC");
    find_what = IvyXml.getAttrString(xml,"WHAT","METHOD").toLowerCase();
    method_types = IvyXml.getAttrString(xml,"TYPES","*").toUpperCase();
+   find_name = IvyXml.getAttrString(xml,"NAME");
 // if (method_types.equals("ALL")) {
 //    method_types = "PUBLIC,PRIVATE,PACKAGE,PROTECTED";
 //  }
@@ -108,11 +110,13 @@ void process(IvyXmlWriter xw) throws Exception
     }
    else if (find_what.equals("class") && method_types.equals("*")) {
       p = "Please create just the JavaDoc for the whole class, ";
-      p += "not the individual methods, for the class below.\n";
+      p += "not the individual methods, for the class " + find_name + 
+            " shown below.\n";
       p += "Do not modify or create JavaDoc for the methods of the class.";
     }
-   else if (find_what.equals("method")) {
-      p = "Please create JavaDoc for the single method below.";
+   else if (find_what.equals("method") && find_name != null) {
+      p = "Please create JavaDoc for only the single method " + find_name +
+         " shown below.";
     }
    pbuf.append("\n" + p + "\n");
    if (prior_jdoc != null && !prior_jdoc.isEmpty()) {
