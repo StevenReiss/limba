@@ -111,6 +111,9 @@ void process(IvyXmlWriter xw) throws Exception
       p += "not the individual methods, for the class below.\n";
       p += "Do not modify or create JavaDoc for the methods of the class.";
     }
+   else if (find_what.equals("method")) {
+      p = "Please create JavaDoc for the single method below.";
+    }
    pbuf.append("\n" + p + "\n");
    if (prior_jdoc != null && !prior_jdoc.isEmpty()) {
       pbuf.append("This will replace the prior JavaDoc which was:\n");
@@ -134,10 +137,10 @@ void process(IvyXmlWriter xw) throws Exception
    Map<String,String> jdocs = LimbaMain.getJavaDoc(resp); 
    if (jdocs != null) {
       for (Map.Entry<String,String> ent : jdocs.entrySet()) {
-            xw.begin("JDOC");
-            xw.field("METHOD",ent.getKey());
-            xw.cdata(ent.getValue());
-            xw.end("JDOC");
+         xw.begin("JDOC");
+         xw.field("NAME",ent.getKey());
+         xw.cdata(ent.getValue());
+         xw.end("JDOC");
        }
     }
 }

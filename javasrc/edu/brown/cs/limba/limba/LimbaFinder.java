@@ -349,9 +349,16 @@ private String checkCompilation(Set<String> undefs,List<LimbaSolution> tocheck,b
             s0 = Math.max(0,s0-5);
             int s1 = jm.getEndOffset();
             s1 = Math.min(s1+5,cnts.length());
-            String str = cnts.substring(s0,s1);
+            String str = null;
+            if (s0 <= s1) {
+               str = cnts.substring(s0,s1);
+             }
+            else {
+               str = "**Bad Error offsets**";
+             }
             IvyLog.logD("LIMBA","Handle compiler error: " + 
-                  jm.getLineNumber() + " @ " + str + " : " +
+                  jm.getLineNumber() + " @ " + str + 
+                  jm.getStartOffset() + " " + jm.getEndOffset() + " " + " : " +
                   jm.getText());
             String err = jm.getText();
             if (err.startsWith("Undefined ")) {
