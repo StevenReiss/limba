@@ -162,7 +162,6 @@ public List<String> getSourceCode(
             lines.addAll(lines0);
           }
          IvyLog.logD("LIMBA","FOUND source for method " + name0 + " " + lines);
-         return lines;
        }
       catch (Throwable t) {
          IvyLog.logE("LIMBA","Problem getting source lines",t);

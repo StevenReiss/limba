@@ -176,7 +176,7 @@ TestDecl analyzeResult(String code)
       cu = JcompAst.parseSourceFile(code);
     }
    catch (Throwable t) {
-      IvyLog.logE("LIMBA","Result is not a compilation unit");
+      IvyLog.logE("LIMBA","Analyze result is not a compilation unit");
       return null;
     }
    

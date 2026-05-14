@@ -101,7 +101,7 @@ public List<String> getConstructorsForClass(@P("name of the class") String name)
        }
     }
    
-   IvyLog.logD("LIMBA","Result is " + rslt);
+   IvyLog.logD("LIMBA","Find constructorr result is " + rslt);
    
    return rslt;
 }
@@ -134,7 +134,7 @@ public List<String> getClassMethods(@P("name of the class") String name)
        }
     }
    
-   IvyLog.logD("LIMBA","Result is " + rslt);
+   IvyLog.logD("LIMBA","Find methods result is " + rslt);
    
    return rslt;
 }
@@ -164,7 +164,7 @@ public List<String> getClassFields(@P("name of the class") String name)
        }
     }
    
-   IvyLog.logD("LIMBA","Result is " + rslt);
+   IvyLog.logD("LIMBA","Find fields result is " + rslt);
    
    return rslt;
 }

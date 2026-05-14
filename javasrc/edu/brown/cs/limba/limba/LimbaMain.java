@@ -33,10 +33,14 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.w3c.dom.Element;
 
 import dev.langchain4j.chain.ConversationalRetrievalChain;
@@ -140,7 +144,7 @@ private LimbaMain(String [] args)
    alt_port = 11434;
    alt_usehost = null;
    server_mode = false;
-   ollama_model = "llama4:scout";
+   ollama_model = "qwen3-coder:latest";
    workspace_name = null;
    input_file = null;
    raw_flag = false;
@@ -574,8 +578,8 @@ private void processXmlFile(FileReader fr)
                xw.begin("RESULT");
                cmd.process(xw);
                xw.end("RESULT");
-               IvyLog.logD("LIMBA","Command " + cmd.getCommandName() + ":\n");
-               IvyLog.logD("LIMBA","RESULT: " + xw.toString());
+               IvyLog.logD("LIMBA","LIMBA RESULT for " + 
+                     cmd.getCommandName() + ": " + xw.toString());
              }
             catch (Throwable t) {
                IvyLog.logE("LIMBA",
@@ -640,9 +644,29 @@ void setupRag()
 /*                                                                              */
 /********************************************************************************/
 
-String askOllama(String cmd0,boolean usectx) throws Exception
+String askOllama(String cmd,boolean usectx) throws Exception
 {
-   return askOllama(cmd0,usectx,null,null,null,null);
+   return askOllama(cmd,usectx,null,null,null,null);
+}
+
+
+String askOllamaWithRetry(String cmd0,boolean usectx) throws Exception
+{
+   String cmd = cmd0;
+   String resp = null;
+   for (int i = 0; i < 3; ++i) {
+      resp = askOllama(cmd,usectx);
+      IvyLog.logD("LIMBA","Need to retry the query to ollama");
+      if (!resp.contains("<function=")) {
+         break;
+       }
+      if (i == 0) { 
+         cmd += "\nThe previousresponse included a failed attempt at making an agent call. ";
+         cmd += "Try again.\n";
+       }
+    }
+   
+   return resp;
 }
 
 
@@ -673,7 +697,8 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
 
    for (int i = 0; i < 3; ++i) {
       try {
-         String resp = getChain(history,usectx,tools,context,null).chat(cmd);
+         String resp = getChain(history,usectx,tools,
+               context,null).chat(cmd);
          IvyLog.logD("LIMBA","Context Response: " + resp);
          IvyLog.logD("LIMBA","------------------------\n\n");
          if (resp == null) resp = NO_RESPONSE; 
@@ -957,18 +982,57 @@ private static void extractFragments(String text,List<String> rslt)
 }
 
 
-static List<String> getJavaDoc(String resp)
+static Map<String,String> getJavaDoc(String resp)
 {
-   List<String> jcodes = getJavaCode(resp);
+   Map<String,String> jcodes = null;
+   
+   String resp1 = resp.trim();
+   if (resp1.startsWith("[")) {
+      try {
+         JSONArray arr = new JSONArray(resp1);
+         jcodes = new LinkedHashMap<>();
+         for (int i = 0; i < arr.length(); ++i) {
+            JSONObject jo = arr.getJSONObject(i);
+            jcodes.put(jo.getString("NAME"),jo.getString("DOC"));
+          }
+       }
+      catch (JSONException e) {
+         jcodes = null;
+       }
+    }
+   if (jcodes == null && resp1.startsWith("{")) {
+      try {
+         JSONObject jo = new JSONObject(resp1);
+         jcodes = new LinkedHashMap<>();
+         jcodes.put(jo.getString("NAME"),jo.getString("DOC"));
+       }
+      catch (JSONException e) {
+         jcodes = null;
+       }
+    }
+   
+   if (jcodes == null) {
+      List<String> jc = getJavaCode(resp);
+      if (jc != null) {
+         jcodes = new LinkedHashMap<>();
+         for (int i = 0; i < jc.size(); ++i) {
+            String s = jc.get(i);
+            jcodes.put(String.valueOf(i),s);
+          }      
+       }
+    }
    if (jcodes == null && resp.startsWith("/*")) {
-      jcodes = new ArrayList<>();
-      jcodes.add(resp);
+      jcodes = new LinkedHashMap<>();
+      jcodes.put("0",resp);
     }
    
    if (jcodes == null || jcodes.isEmpty()) return null;
    
-   List<String> rslt = new ArrayList<>();
-   for (String jcode : jcodes) {
+   Map<String,String> rslt = new LinkedHashMap<>();
+   for (Map.Entry<String,String> ent : jcodes.entrySet()) {
+      // need to isolate actual name from javadoc if possible
+      String fct = ent.getKey();
+      String jcode = ent.getValue();
       int idx0 = jcode.indexOf("/**");
       if (idx0 < 0) continue;
       int idx1 = jcode.indexOf("*/",idx0);
@@ -977,8 +1041,9 @@ static List<String> getJavaDoc(String resp)
       if (idx2 > 0) idx1 = idx2+1;
       String jdoc = jcode.substring(idx0,idx1);
       if (!jdoc.endsWith("\n")) jdoc += "\n";
-      rslt.add(jdoc);
+      rslt.put(fct,jdoc);
     }
+   
    return rslt;
 }
 

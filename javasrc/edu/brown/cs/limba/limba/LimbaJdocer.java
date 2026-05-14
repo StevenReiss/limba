@@ -22,10 +22,7 @@
 
 package edu.brown.cs.limba.limba;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Map;
 
 import org.w3c.dom.Element;
 
@@ -51,8 +48,6 @@ private boolean         use_context;
 private String          find_what;
 private String          method_types;
 
-private static final Pattern ITEM_PATTERN = Pattern.compile("### `([^`])+`"); 
-
 
 /********************************************************************************/
 /*                                                                              */
@@ -67,6 +62,9 @@ LimbaJdocer(LimbaMain lm,String prompt,Element xml)
    Element sxml = IvyXml.getChild(xml,"JAVADOC");
    find_what = IvyXml.getAttrString(xml,"WHAT","METHOD").toLowerCase();
    method_types = IvyXml.getAttrString(xml,"TYPES","*").toUpperCase();
+// if (method_types.equals("ALL")) {
+//    method_types = "PUBLIC,PRIVATE,PACKAGE,PROTECTED";
+//  }
    use_context = IvyXml.getAttrBool(xml,"USECONTEXT",true);
    prior_jdoc = IvyXml.getTextElement(sxml,"PRIOR");
    method_body = IvyXml.getTextElement(sxml,"CODE");
@@ -84,17 +82,34 @@ void process(IvyXmlWriter xw) throws Exception
    StringBuffer pbuf = new StringBuffer();
    if (base_prompt != null) pbuf.append(base_prompt);
    String p = "Please create JavaDoc for the " + find_what + " below.";
-   if (find_what.equals("class") && !method_types.equals("ALL")) {
-      p = "Please create JavaDoc for each ";
-      if (method_types.contains("PUBLIC")) p += " public, ";
-      if (method_types.contains("PROTECTED")) p += " protected, ";
-      if (method_types.contains("PACKAGE")) p += " package protected, ";
-      if (method_types.contains("PRIVATE")) p += " private, ";
+   if (find_what.equals("class") && !method_types.equals("*")) {
+      p = "Please create JavaDoc for all";
+      boolean have = false;
+      if (method_types.contains("PUBLIC")) {
+         p += " public";
+         have = true;
+       }
+      if (method_types.contains("PROTECTED")) {
+         if (have) p += " or";
+         p += " protected";
+         have = true;
+       }
+      if (method_types.contains("PACKAGE")) {
+         if (have) p += " or";
+         p += " package protected";
+         have = true;
+       }
+      if (method_types.contains("PRIVATE")) {
+         if (have) p += " or";
+         p += " private";
+         have = true;
+       }
       p += " method in the class below.";
     }
-   else if (find_what.equals("class") && method_types.equals("ALL")) {
-      p = "Please create JavaDoc for each ";
-      p += " method in the class below.";
+   else if (find_what.equals("class") && method_types.equals("*")) {
+      p = "Please create just the JavaDoc for the whole class, ";
+      p += "not the individual methods, for the class below.\n";
+      p += "Do not modify or create JavaDoc for the methods of the class.";
     }
    pbuf.append("\n" + p + "\n");
    if (prior_jdoc != null && !prior_jdoc.isEmpty()) {
@@ -102,52 +117,33 @@ void process(IvyXmlWriter xw) throws Exception
       pbuf.append(prior_jdoc);
       pbuf.append("\n");
     }
-   if (method_types.equals("*")) {
-      pbuf.append("Return only the javadoc.\n");
-    }
+// if (method_types.equals("*")) {
+//    pbuf.append("Return only the javadoc.\n");
+//  }
+   pbuf.append("Return a JSON array where each element is a JSON object ");
+   pbuf.append("with 2 fields,\nNAME containing the method/class name ");
+   pbuf.append("(possibly with parameter types), ");
+   pbuf.append("and DOC containing the JavaDoc.\n");
+   
    pbuf.append("The " + find_what + " is: \n");
    pbuf.append(method_body);
    
    IvyLog.logD("LIMBA","Find  " + pbuf.toString());
    
-   String resp = limba_main.askOllama(pbuf.toString(),use_context);
-   List<String> jdocs = LimbaMain.getJavaDoc(resp);
+   String resp = limba_main.askOllamaWithRetry(pbuf.toString(),use_context);
+   Map<String,String> jdocs = LimbaMain.getJavaDoc(resp); 
    if (jdocs != null) {
-      List<String> items = getMethodList(resp);
-      int i = 0;
-      for (String s : jdocs) {
-         if (i >= items.size()) {
-            xw.cdataElement("JDOC",s);
-          }
-         else {
+      for (Map.Entry<String,String> ent : jdocs.entrySet()) {
             xw.begin("JDOC");
-            xw.field("METHOD",items.get(i));
-            xw.cdata(s);
+            xw.field("METHOD",ent.getKey());
+            xw.cdata(ent.getValue());
             xw.end("JDOC");
-          }
        }
     }
 }
 
 
-/********************************************************************************/
-/*                                                                              */
-/*      Get method names                                                        */
-/*                                                                              */
-/********************************************************************************/
 
-private List<String> getMethodList(String resp)
-{
-   List<String> rslt = new ArrayList<>();
-
-   Matcher m = ITEM_PATTERN.matcher(resp);
-   while (m.find()) {
-      String s = m.group(1);
-      rslt.add(s);
-    }   
-   
-   return rslt;
-}
 
 
 

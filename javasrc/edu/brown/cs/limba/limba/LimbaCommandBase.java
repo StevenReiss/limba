@@ -121,8 +121,8 @@ LimbaCommand createCommand(Element xml)
          return new CommandQuery("CLEAN",prompt,xml);
       case "GENERATE" :
          return new CommandQuery("GENERATE",prompt,xml);
-      case "JAVADOC" :
-         return new CommandQuery("JAVADOC",prompt,xml);
+//    case "JAVADOC" :
+//       return new CommandQuery("JAVADOC",prompt,xml);
       case "SUGGEST" :
          return new CommandQuery("SUGGEST",prompt,xml);
       case "EXPLAIN" :
@@ -542,10 +542,13 @@ private final class CommandQuery extends CommandBase {
             xw.cdataElement("JAVA",jcode);
           }
        }
-      List<String> jdoc = LimbaMain.getJavaDoc(resp);
+      Map<String,String> jdoc = LimbaMain.getJavaDoc(resp); 
       if (jdoc != null) {
-         for (String s : jdoc) {
-            xw.cdataElement("JAVADOC",s);
+         for (Map.Entry<String,String> ent : jdoc.entrySet()) {
+            xw.begin("JAVADOC");
+            xw.field("NAME",ent.getKey());
+            xw.cdata(ent.getValue());
+            xw.end("JAVADOC");
           }
        }
       List<String> patches = LimbaMain.getPatchCode(resp); 
