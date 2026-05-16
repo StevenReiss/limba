@@ -128,9 +128,9 @@ void process(IvyXmlWriter xw) throws Exception
 //    pbuf.append("Return only the javadoc.\n");
 //  }
    pbuf.append("Return a JSON array where each element is a JSON object ");
-   pbuf.append("with 2 fields,\nNAME containing the method/class name ");
+   pbuf.append("with 2 fields,\nNAME containing the full method/class name ");
    pbuf.append("(possibly with parameter types), ");
-   pbuf.append("and DOC containing the JavaDoc.\n");
+   pbuf.append("and DOC containing the JavaDoc formatted for insertion.\n");
    
    pbuf.append("The " + find_what + " is: \n");
    pbuf.append(method_body);
@@ -138,7 +138,7 @@ void process(IvyXmlWriter xw) throws Exception
    IvyLog.logD("LIMBA","Find  " + pbuf.toString());
    
    String resp = limba_main.askOllamaWithRetry(pbuf.toString(),use_context);
-   Map<String,String> jdocs = LimbaMain.getJavaDoc(resp); 
+   Map<String,String> jdocs = LimbaMain.getJavaDoc(resp,true); 
    if (jdocs != null) {
       for (Map.Entry<String,String> ent : jdocs.entrySet()) {
          xw.begin("JDOC");

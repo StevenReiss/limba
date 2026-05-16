@@ -116,7 +116,8 @@ return gForce;
 </LIMBA>
 
 
-<LIMBA DO='FINDJDOC' RID='LIMBA_123456' WHAT='CLASS' TYPES='PUBLIC,PROTECTED' USECONTEXT='true' NAME='Gravity'>
+<LIMBA DO='FINDJDOC' RID='LIMBA_123456' WHAT='CLASS' TYPES='PUBLIC,PROTECTED' USECONTEXT='true'
+      NAME='edu.brown.cs.bubbles.tutorial.romp.Gravity'>
 <JAVADOC>
 <CODE><![CDATA[public class Gravity {
 
@@ -229,7 +230,7 @@ public Force calculateForce(Magnet otherMag)
       SOURCEFILE='/home/spr/Eclipse/tutorial/romp/src/edu/brown/cs/bubbles/tutorial/romp/Magnet.java'>
   <CODE><![CDATA[/** Calculates the force between this magnet and otherMag using the formula
 from the assignment
-@return a new Force
+@return a new Force															 R
 */
 public Force calculateForce(Magnet otherMag)
 {

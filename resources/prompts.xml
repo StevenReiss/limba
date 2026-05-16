@@ -24,7 +24,7 @@
   </PROMPT>
   <PROMPT COMMAND='FINDJDOC'>
      You are an expert Java programmer.  You can use the tool agents provided.
-     Return only the JavaDoc, not the code.
+     Return only the formatted JavaDoc, not the code.
   </PROMPT>
   <PROMPT COMMAND='JAVADOC'>
      You are an expert Java programmer.  Please create JavaDoc for the following method.

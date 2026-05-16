@@ -655,9 +655,15 @@ String askOllamaWithRetry(String cmd0,boolean usectx) throws Exception
    String cmd = cmd0;
    String resp = null;
    for (int i = 0; i < 3; ++i) {
-      resp = askOllama(cmd,usectx);
-      if (!resp.contains("<function=")) {
-         break;
+      try {
+         resp = askOllama(cmd,usectx);
+         if (!resp.contains("<function=")) {
+            break;
+          }
+       }
+      catch (Exception e) {
+         if (i == 2) throw e;
+         IvyLog.logD("LIMBA","Ollama exception",e);
        }
       IvyLog.logD("LIMBA","Need to retry the query to ollama");
       if (i == 0) { 
@@ -982,34 +988,10 @@ private static void extractFragments(String text,List<String> rslt)
 }
 
 
-static Map<String,String> getJavaDoc(String resp)
+static Map<String,String> getJavaDoc(String resp,boolean json)
 {
    Map<String,String> jcodes = null;
-   
-   String resp1 = resp.trim();
-   if (resp1.startsWith("[")) {
-      try {
-         JSONArray arr = new JSONArray(resp1);
-         jcodes = new LinkedHashMap<>();
-         for (int i = 0; i < arr.length(); ++i) {
-            JSONObject jo = arr.getJSONObject(i);
-            jcodes.put(jo.getString("NAME"),jo.getString("DOC"));
-          }
-       }
-      catch (JSONException e) {
-         jcodes = null;
-       }
-    }
-   if (jcodes == null && resp1.startsWith("{")) {
-      try {
-         JSONObject jo = new JSONObject(resp1);
-         jcodes = new LinkedHashMap<>();
-         jcodes.put(jo.getString("NAME"),jo.getString("DOC"));
-       }
-      catch (JSONException e) {
-         jcodes = null;
-       }
-    }
+   if (json) jcodes = checkForJson(resp);
    
    if (jcodes == null) {
       List<String> jc = getJavaCode(resp);
@@ -1036,15 +1018,65 @@ static Map<String,String> getJavaDoc(String resp)
       int idx0 = jcode.indexOf("/**");
       if (idx0 < 0) continue;
       int idx1 = jcode.indexOf("*/",idx0);
-      if (idx1 < 0) jcode.substring(idx0);
+      if (idx1 < 0) continue;
       int idx2 = jcode.indexOf("\n",idx1);
       if (idx2 > 0) idx1 = idx2+1;
+      else idx1 = jcode.length();
       String jdoc = jcode.substring(idx0,idx1);
       if (!jdoc.endsWith("\n")) jdoc += "\n";
       rslt.put(fct,jdoc);
     }
    
    return rslt;
+}
+
+
+
+private static Map<String,String> checkForJson(String resp)
+{
+   Map<String,String> jcodes = new LinkedHashMap<>();
+   
+   List<String> jsons = getCodeType(resp,"json",true);
+   if (jsons == null || jsons.isEmpty()) return null;
+  
+   for (String resp1 : jsons) {
+      if (!resp1.startsWith("[") && !resp1.startsWith("{")) {
+         int idx = resp1.indexOf("\"NAME\"");
+         if (idx < 0) continue;
+         int idx1 = resp1.lastIndexOf("{",idx);
+         int idx2 = resp1.lastIndexOf("[",idx);
+         if (idx1 < 0) continue;
+         int idx3 = resp1.indexOf("]",idx);
+         if (idx2 < 0 || idx2 > idx1) {
+            // { .. } only
+            idx2 = idx1;
+            idx3 = resp1.indexOf("}",idx);
+          }
+         if (idx3 < 0) continue;
+         resp1 = resp1.substring(idx2,idx3+1);
+       }
+      if (resp1.startsWith("[")) {
+         try {
+            JSONArray arr = new JSONArray(resp1);
+            for (int i = 0; i < arr.length(); ++i) {
+               JSONObject jo = arr.getJSONObject(i);
+               jcodes.put(jo.getString("NAME"),jo.getString("DOC"));
+             }
+          }
+         catch (JSONException e) { }
+       }
+      if (resp1.startsWith("{")) {
+         try {
+            JSONObject jo = new JSONObject(resp1);
+            jcodes.put(jo.getString("NAME"),jo.getString("DOC"));
+          }
+         catch (JSONException e) { }
+       }
+    }
+   
+   if (jcodes == null || jcodes.isEmpty()) return null;
+   
+   return jcodes;
 }
 
 

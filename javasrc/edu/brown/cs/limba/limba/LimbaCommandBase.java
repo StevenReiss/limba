@@ -542,7 +542,7 @@ private final class CommandQuery extends CommandBase {
             xw.cdataElement("JAVA",jcode);
           }
        }
-      Map<String,String> jdoc = LimbaMain.getJavaDoc(resp); 
+      Map<String,String> jdoc = LimbaMain.getJavaDoc(resp,false); 
       if (jdoc != null) {
          for (Map.Entry<String,String> ent : jdoc.entrySet()) {
             xw.begin("JAVADOC");
