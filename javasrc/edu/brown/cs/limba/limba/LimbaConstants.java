@@ -19,6 +19,14 @@ enum LimbaCommandType {
    MODEL_DETAILS;
 }
 
+
+enum LimbaModelType {
+   OLLAMA_MODEL,
+   ANTHROPIC_MODEL,
+   OPENAI_MODEL,
+   GEMINI_MODEL,
+}
+
 enum LimbaTestType {
    USERCODE,
    CALLS,
@@ -35,7 +43,6 @@ enum LimbaTestOp {
    THROW,
    SAME,
    DIFF,
-   
 }
 
 

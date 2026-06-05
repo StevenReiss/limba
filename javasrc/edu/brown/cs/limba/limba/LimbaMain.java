@@ -22,10 +22,17 @@
 package edu.brown.cs.limba.limba;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
@@ -36,7 +43,9 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -46,7 +55,11 @@ import org.w3c.dom.Element;
 import dev.langchain4j.chain.ConversationalRetrievalChain;
 import dev.langchain4j.exception.UnresolvedModelServerException;
 import dev.langchain4j.memory.ChatMemory;
+import dev.langchain4j.model.anthropic.AnthropicChatModel;
+import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import dev.langchain4j.model.ollama.OllamaChatModel;
+import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.query.Query;
@@ -90,6 +103,7 @@ public static void main(String [] args)
 /********************************************************************************/
 
 private String mint_id;
+private Properties limba_props;
 private String ollama_host;
 private int ollama_port;
 private String ollama_usehost;
@@ -97,9 +111,13 @@ private String alt_host;
 private int alt_port;
 private String alt_usehost;
 private String ollama_model;
+private LimbaModelType model_type;
 private boolean server_mode;
 private File input_file;
 private OllamaAPI ollama_api;
+private String anthropic_key;
+private String openai_key;
+private String gemini_key;
 private boolean raw_flag;
 private Options generate_options;
 private LimbaCommandFactory command_factory;
@@ -137,14 +155,38 @@ static {
 private LimbaMain(String [] args)
 {
    mint_id = null;
-   ollama_host = "localhost";
-   ollama_port = 11434;
+   log_level = IvyLog.LogLevel.DEBUG;
+   String home = System.getProperty("user.home");
+   File f1 = new File(home);
+   log_file = new File(f1,"limba.log");
+   log_stderr = false;
+   
+   File f2 = new File(f1,".bubbles");
+   File f3 = new File(f2,"Limba.props");
+   limba_props = new Properties();
+   try {
+      InputStream ins = getClass().getClassLoader().getResourceAsStream("Limba.props");
+      if (ins != null) limba_props.loadFromXML(ins);
+    }
+   catch (IOException e) {
+      IvyLog.logE("LIMBA","Problem loading system properties");
+    }
+   try (InputStream ins1 = new FileInputStream(f3)) {
+      limba_props.loadFromXML(ins1);
+    }
+   catch (FileNotFoundException e) { }
+   catch (IOException e) {
+      IvyLog.logE("LIMBA","Problem loading user properties");
+    }
+   
+   ollama_host = getProperty("Limba.ollama.host","localhost");
+   ollama_port = getIntProperty("Limba.ollama.port",11434);
    ollama_usehost = null;
-   alt_host = "localhost";
-   alt_port = 11434;
+   alt_host = getProperty("Limba.ollama.althost","localhost");
+   alt_port = getIntProperty("Limba.ollama.altport",11434);
    alt_usehost = null;
    server_mode = false;
-   ollama_model = "qwen3-coder:latest";
+   ollama_model = getProperty("Limba.ollama.model","qwen3-coder:latest");
    workspace_name = null;
    input_file = null;
    raw_flag = false;
@@ -154,15 +196,13 @@ private LimbaMain(String [] args)
    key_map = new HashMap<>();
    key_map.put("LANGUAGE","java");
    remote_files = false;
-   log_level = IvyLog.LogLevel.DEBUG;
-   String home = System.getProperty("user.home");
-   File f1 = new File(home);
-   log_file = new File(f1,"limba.log");
-   log_stderr = false;
    jcomp_main = new JcompControl();
    user_style = "";
    user_context = "";
    ollama_api = null;
+   anthropic_key = null;
+   openai_key = null;
+   gemini_key = null;
    inited_models = new HashSet<>();
    chat_interfaces = new HashMap<>();
    limba_transcript = null;
@@ -244,27 +284,20 @@ void setWorkspace(String nm)
 
 boolean setModel(String model)
 {
-   if (getOllama() != null && model != null) {
-      boolean fnd = false;
-      try {
-         List<Model> mdls = getOllama().listModels();
-         for (Model m : mdls) {
-            if (model.equals(m.getModelName()) ||
-                  model.equals(m.getModel())) {
-               fnd = true;
-               break;
-             }
-          }
-       }
-      catch (Exception e) { }
-      if (!fnd) {
+   if (model != null) {
+      Map<String,LimbaModelType> models = listModels();
+      model_type = models.get(model);
+      if (model_type == null) {
          IvyLog.logI("LIMBA","Model " + model + " not found");
          model = null;
        }
     }
 
    ollama_model = model;
+   if (model == null) model_type = null;
+   
    transcriptModel();
+   // set up CLAUDE CODE
 // chat_interfaces.clear();
 
    return true;
@@ -274,19 +307,114 @@ boolean setModel(String model)
 boolean checkModel(String model)
 {
    if (model == null) return false;
-   if (getOllama() == null) return true;
+   if (getOllama() == null && openai_key == null && anthropic_key == null) return true;
+   
+   Map<String,LimbaModelType> models = listModels();
+   if (models.get(model) != null) return true;
+   
+   return false;
+}
+
+
+String getProperty(String id,String dflt)
+{
+   return limba_props.getProperty(id,dflt);
+}
+
+
+int getIntProperty(String id,int dflt)
+{
+   String v = limba_props.getProperty(id);
+   if (v == null) return dflt;
    
    try {
-      List<Model> mdls = getOllama().listModels();
-      for (Model m : mdls) {
-         if (model.equals(m.getModelName()) ||
-               model.equals(m.getModel())) {
-            return true;
+      return Integer.parseInt(v);
+    }
+   catch (NumberFormatException e) { }
+   
+   return dflt;
+}
+
+
+Map<String,LimbaModelType> listModels()
+{
+   Map<String,LimbaModelType> rslt = new TreeMap<>();
+   
+   if (getOllama() != null) {
+     try {
+         List<Model> models = getOllama().listModels();
+         for (Model m : models) {
+            rslt.put(m.getName(),LimbaModelType.OLLAMA_MODEL);
           }
        }
+     catch (Exception e) {
+        IvyLog.logE("LIMBA","Problem getting ollama models",e);
+      }
     }
-   catch (Exception e) { }
-   return false;
+   
+   if (openai_key != null) {
+      HttpClient client = HttpClient.newHttpClient();
+      HttpRequest rqst = HttpRequest.newBuilder()
+            .uri(URI.create("https://api.openai.com/v1/models"))
+            .header("Authorization","Bearer " + openai_key)
+            .GET()
+            .build();
+      try {
+         HttpResponse<String> resp = client.send(rqst,
+               HttpResponse.BodyHandlers.ofString());
+         if (resp.statusCode() == 200) {
+            IvyLog.logD("LIMBA","OPENAI MODELS: " + resp.body());
+          }
+       }
+      catch (Exception e) { 
+         IvyLog.logE("LIMBA","Problem getting openai models",e);
+       }
+    }
+   
+   if (anthropic_key != null) {
+      HttpClient client = HttpClient.newHttpClient();
+      HttpRequest rqst = HttpRequest.newBuilder()
+            .uri(URI.create("https://api.anthropic.com/v1/models"))
+            .header("x-api-key",anthropic_key)
+            .header("anthropic-version","2023-06-01")
+//          .header("Content-Type","application/json")
+            .header("Accept","application/json")
+            .GET()
+            .build();
+      try {
+         HttpResponse<String> resp = client.send(rqst,
+               HttpResponse.BodyHandlers.ofString());
+         if (resp.statusCode() == 200) {
+            IvyLog.logD("LIMBA","ANTRHOPIC MODELS: " + resp.body());
+          }
+       }
+      catch (Exception e) { 
+         IvyLog.logE("LIMBA","Problem getting antrhopic models",e);
+       }
+    }
+   
+   if (gemini_key != null) {
+      HttpClient client = HttpClient.newHttpClient();
+      HttpRequest rqst = HttpRequest.newBuilder()
+            .uri(URI.create("https://https://generativelanguage.googleapis.com/v1beta/models"))
+            .header("x-goog-api-key",gemini_key)
+            .header("Accept","application/json")
+            .GET()
+            .build();
+      try {
+         HttpResponse<String> resp = client.send(rqst,
+               HttpResponse.BodyHandlers.ofString());
+         if (resp.statusCode() == 200) {
+            IvyLog.logD("LIMBA","GEMINI MODELS: " + resp.body());
+          }
+       }
+      catch (Exception e) { 
+         IvyLog.logE("LIMBA","Problem getting google-gemini models",e);
+       }
+    }
+   
+   
+   return rslt;
 }
 
 
@@ -423,8 +551,22 @@ private void process()
           }
        }
     }
-   if (!fg) {
-      System.err.println("OLLAMA server not running");
+   
+   anthropic_key = getProperty("Limba.anthropic.api.key",null);
+   if (anthropic_key == null || anthropic_key.isEmpty() || anthropic_key.equals("*")) {
+      anthropic_key = null;
+    }
+   openai_key = getProperty("Limba.openai.api.key",null);
+   if (openai_key == null || openai_key.isEmpty() || openai_key.equals("*")) {
+      openai_key = null;
+    }
+   gemini_key = getProperty("Limba.openai.api.key",null);
+   if (gemini_key == null || gemini_key.isEmpty() || gemini_key.equals("*")) {
+      gemini_key = null;
+    }
+   
+   if (!fg && anthropic_key == null && openai_key == null && gemini_key == null) {
+      System.err.println("No LLM models available: ollama not running, no API keys");
       System.exit(1);
     }
 
@@ -745,6 +887,7 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
       EnumSet<LimbaToolSet> toolids,Map<String,?> context,String model)
 {
    if (model == null) model = getModel();
+   if (model_type == null) return null;
    
    if (toolids == null) {
       toolids = EnumSet.of(LimbaToolSet.PROJECT);
@@ -753,15 +896,55 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
 
    LimbaChatter rslt = chat_interfaces.get(key);
    if (rslt != null) return rslt;
+   
+   ChatModel chat = null;
+   
+   switch (model_type) {
+      case OLLAMA_MODEL :
+         chat = OllamaChatModel.builder()
+            .baseUrl(getUrl())
+            .maxRetries(3)
+            .timeout(Duration.ofMinutes(15))
+            .logRequests(http_log)
+            .logResponses(http_log)
+            .modelName(model)
+            .build();
+         break;
+      case OPENAI_MODEL :
+         chat = OpenAiChatModel.builder()
+            .apiKey(openai_key)
+            .modelName(model)
+            .logRequests(http_log)
+            .logResponses(http_log)
+            .timeout(Duration.ofMinutes(15))
+            .maxRetries(3)
+            .build();
+         break;
+      case ANTHROPIC_MODEL :
+         chat = AnthropicChatModel.builder()
+            .apiKey(anthropic_key)
+            .modelName(model)
+            .logRequests(http_log)
+            .logResponses(http_log)
+            .timeout(Duration.ofMinutes(15))
+            .maxRetries(3)
+            .build();
+         break;
+      case GEMINI_MODEL :
+         chat = GoogleAiGeminiChatModel.builder()
+            .apiKey(gemini_key)
+            .modelName(model)
+            .logRequests(http_log)
+            .logResponses(http_log)
+            .timeout(Duration.ofMinutes(15))
+            .maxRetries(3)
+            .allowCodeExecution(true)
+            .build();
+         break;
+      default :
+         return null;
+    }
 
-   OllamaChatModel chat = OllamaChatModel.builder()
-      .baseUrl(getUrl())
-      .maxRetries(3)
-      .timeout(Duration.ofMinutes(15))
-      .logRequests(http_log)
-      .logResponses(http_log)
-      .modelName(model)
-      .build();
    ConversationalRetrievalChain.Builder bldr = ConversationalRetrievalChain.builder();
    bldr.chatModel(chat);
 
@@ -1208,12 +1391,6 @@ void setupBedrock(String workspace,String mint)
 
    throw new Error("Problem running Eclipse: " + cmd);
 }
-
-
-
-
-
-
 
 
 

@@ -39,10 +39,7 @@ import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
-import io.github.ollama4j.OllamaAPI;
 import io.github.ollama4j.exceptions.OllamaBaseException;
-import io.github.ollama4j.models.response.Model;
-import io.github.ollama4j.models.response.ModelDetail;
 
 class LimbaCommandFactory implements LimbaConstants
 {
@@ -110,9 +107,6 @@ LimbaCommand createCommand(Element xml)
          return new CommandTranscript(xml);
       case "MESSAGE" :
          return new CommandMessage(xml);
-      case "DETAIL" :
-      case "DETAILS" :
-         return new CommandDetails(xml);
       case "QUERY" :
          return new CommandQuery("QUERY",prompt,xml);
       case "ASK" :
@@ -203,13 +197,6 @@ private abstract class CommandBase implements LimbaCommand {
       command_id = IvyXml.getAttrString(xml,"ID");
     }
 
-   protected OllamaAPI getOllama() {
-      return limba_main.getOllama();
-    }
-   protected String getModel() {
-      return limba_main.getModel();
-    }
-   
    @Override public void process(IvyXmlWriter rslt) { 
       boolean retry = true;
       for (int i = 0; retry && i < 10; ++i) {
@@ -283,9 +270,12 @@ private class CommandList extends CommandBase {
    @Override public String getCommandName()             { return "LIST"; }
    
    @Override public void localProcess(IvyXmlWriter xw) throws Exception {
-      List<Model> models = getOllama().listModels();
-      for (Model m : models) {
-         xw.textElement("MODEL",m.getName());
+      Map<String,LimbaModelType> models = limba_main.listModels();
+      for (Map.Entry<String,LimbaModelType> ent : models.entrySet()) {
+         xw.begin("MODEL");
+         xw.field("TYPE",ent.getValue());
+         xw.text(ent.getKey());
+         xw.end("MODEL");
        }
     }
 
@@ -319,28 +309,7 @@ private class CommandSetModel extends CommandBase {
 
 
 
-/********************************************************************************/
-/*                                                                              */
-/*      DETAILS command                                                         */
-/*                                                                              */
-/********************************************************************************/
 
-private class CommandDetails extends CommandBase {
-
-   CommandDetails(Element xml) { 
-      super(xml);
-    }
-   
-   @Override public String getCommandName()             { return "DETAILS"; }
-   
-   @Override public void localProcess(IvyXmlWriter xw) throws Exception {
-      ModelDetail md = getOllama().getModelDetails(getModel());
-      if (xw != null) {
-         xw.textElement("DETAILS",md.toString());
-       }
-    }
-
-}       // end of inner class CommandDetails
 
 
 /********************************************************************************/
