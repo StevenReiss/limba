@@ -112,6 +112,7 @@ private int alt_port;
 private String alt_usehost;
 private String ollama_model;
 private LimbaModelType model_type;
+private Map<String,String> model_map;
 private boolean server_mode;
 private File input_file;
 private OllamaAPI ollama_api;
@@ -203,6 +204,7 @@ private LimbaMain(String [] args)
    anthropic_key = null;
    openai_key = null;
    gemini_key = null;
+   model_map = new HashMap<>();
    inited_models = new HashSet<>();
    chat_interfaces = new HashMap<>();
    limba_transcript = null;
@@ -291,13 +293,16 @@ boolean setModel(String model)
          IvyLog.logI("LIMBA","Model " + model + " not found");
          model = null;
        }
+      else {
+         String nm = model_map.get(model);
+         if (nm != null) model = nm;
+       }
     }
-
+   
    ollama_model = model;
    if (model == null) model_type = null;
    
    transcriptModel();
-   // set up CLAUDE CODE
 // chat_interfaces.clear();
 
    return true;
@@ -363,7 +368,13 @@ Map<String,LimbaModelType> listModels()
          HttpResponse<String> resp = client.send(rqst,
                HttpResponse.BodyHandlers.ofString());
          if (resp.statusCode() == 200) {
-            IvyLog.logD("LIMBA","OPENAI MODELS: " + resp.body());
+            JSONObject jo = new JSONObject(resp.body());
+            JSONArray data = jo.getJSONArray("data");
+            for (int i = 0; i < data.length(); ++i) {
+               JSONObject mjo = data.getJSONObject(i);
+               String nm = mjo.getString("id");
+               rslt.put(nm,LimbaModelType.OPENAI_MODEL);
+             }
           }
        }
       catch (Exception e) { 
@@ -396,7 +407,7 @@ Map<String,LimbaModelType> listModels()
    if (gemini_key != null) {
       HttpClient client = HttpClient.newHttpClient();
       HttpRequest rqst = HttpRequest.newBuilder()
-            .uri(URI.create("https://https://generativelanguage.googleapis.com/v1beta/models"))
+            .uri(URI.create("https://generativelanguage.googleapis.com/v1beta/models"))
             .header("x-goog-api-key",gemini_key)
             .header("Accept","application/json")
             .GET()
@@ -405,7 +416,15 @@ Map<String,LimbaModelType> listModels()
          HttpResponse<String> resp = client.send(rqst,
                HttpResponse.BodyHandlers.ofString());
          if (resp.statusCode() == 200) {
-            IvyLog.logD("LIMBA","GEMINI MODELS: " + resp.body());
+            JSONObject jo = new JSONObject(resp.body());
+            JSONArray mdls = jo.getJSONArray("models");
+            for (int i = 0; i < mdls.length(); ++i) {
+               JSONObject mjo = mdls.getJSONObject(i);
+               String id = mjo.getString("name");
+               String nm = mjo.getString("displayName");
+               rslt.put(nm,LimbaModelType.GEMINI_MODEL);
+               model_map.put(nm,id);
+             }
           }
        }
       catch (Exception e) { 
@@ -560,7 +579,7 @@ private void process()
    if (openai_key == null || openai_key.isEmpty() || openai_key.equals("*")) {
       openai_key = null;
     }
-   gemini_key = getProperty("Limba.openai.api.key",null);
+   gemini_key = getProperty("Limba.gemini.api.key",null);
    if (gemini_key == null || gemini_key.isEmpty() || gemini_key.equals("*")) {
       gemini_key = null;
     }
