@@ -57,6 +57,10 @@
 	<fileset dir='${LIMBA}/resources' includes='*.xml' />
 	<fileset dir='${LIMBA}/resources' includes='*.proto' />
 	<zipfileset src='${LIMBALIB}/ollama4j.jar' excludes='META-INF/*' />
+	<zipfileset src='${LIMBALIB}/langchain4j-anthropic.jar' excludes='META-INF/*' />
+	<zipfileset src='${LIMBALIB}/langchain4j-google-ai-gemini.jar' excludes='META-INF/*' />
+	<zipfileset src='${LIMBALIB}/langchain4j-open-ai-official.jar' excludes='META-INF/*' />
+	<zipfileset src='${LIMBALIB}/langchain4j-open-ai.jar' excludes='META-INF/*' />
 	<zipfileset src='${LIMBALIB}/langchain4j-http-client.jar' excludes='META-INF/*' />
 	<zipfileset src='${LIMBALIB}/langchain4j-chroma.jar' excludes='META-INF/*' />
 	<zipfileset src='${LIMBALIB}/langchain4j-core.jar' excludes='META-INF/*' />
