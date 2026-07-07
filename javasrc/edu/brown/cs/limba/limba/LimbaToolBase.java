@@ -110,14 +110,7 @@ protected TypeDeclaration findClassAst(String name,boolean resolve)
    File f1 = findClassFile(name);
    if (f1 == null) return null;
    
-   String cnts = null;
-   try {
-      cnts = IvyFile.loadFile(f1);
-    }
-   catch (IOException e) { }
-   if (cnts == null || cnts.isEmpty()) return null;
-   
-   CompilationUnit cu = JcompAst.parseSourceFile(cnts);
+   CompilationUnit cu = findFileUnit(f1);
    
    if (resolve) {
       JcompControl jcomp = limba_main.getJcompControl();
@@ -151,6 +144,20 @@ protected TypeDeclaration findClassAst(String name,boolean resolve)
 
 
 
+protected CompilationUnit findFileUnit(File f1)
+{
+   String cnts = null;
+   try {
+      cnts = IvyFile.loadFile(f1);
+    }
+   catch (IOException e) { }
+   if (cnts == null || cnts.isEmpty()) return null;
+   
+   CompilationUnit cu = JcompAst.parseSourceFile(cnts);
+   
+   return cu;
+}
+
 
 
 private TypeDeclaration findInnerType(TypeDeclaration td,String name)
@@ -179,7 +186,7 @@ private TypeDeclaration findInnerType(TypeDeclaration td,String name)
 private File findClassFile(String name)
 {
    if (message_server != null) {
-      Element xml = message_server.findClass(name);
+      Element xml = message_server.findClass(name,true);
       if (xml != null && IvyXml.isElement(xml,"RESULT")) {
          Element xml1 = IvyXml.getChild(xml,"MATCH");
          String f = IvyXml.getAttrString(xml1,"FILE");
@@ -265,13 +272,13 @@ protected Element getMethodMatches(String name)
 {
    if (message_server == null || name == null) return null;
    
-   Element xml = message_server.findMethod(name,false);
+   Element xml = message_server.findMethod(name,true,false);
    if (xml != null && IvyXml.getChild(xml, "MATCH") != null) {
       return xml;
     }
    
    if (!name.contains("(") && !name.contains("<init>")) {
-      Element xml1 = message_server.findClass(name);
+      Element xml1 = message_server.findClass(name,true);
       if (xml1 != null && IvyXml.getChild(xml1, "MATCH") != null) {
          return xml1;
        }

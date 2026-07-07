@@ -75,9 +75,12 @@ enum LimbaSolutionFlag {
 enum LimbaToolSet {
    PROJECT,             // limba tools for the current project
    STRUCTURE,           // limba structural tools
-   DEBUG,               // debugging only
-   DIAD,                // diad (fait + seede) tools
+   DEBUG,               // debugging only (evaluate, stack with variables)
+   STACK,               // stack access (w/o variables)
+   DIAD,                // diad (execution tools
+   FAIT,                // diad with only fait analysis, no execution
 }
+
 
 
 

@@ -74,7 +74,7 @@ LimbaToolsDiad(LimbaMain lm,Map<String,?> context)
 
 /********************************************************************************/
 /*                                                                              */
-/*      Access to initial fault localization                                   */
+/*      Access to initial fault localization                                    */
 /*                                                                              */
 /********************************************************************************/
 

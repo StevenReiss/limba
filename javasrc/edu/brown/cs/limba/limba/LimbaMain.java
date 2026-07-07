@@ -984,35 +984,7 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
       IvyLog.logD("LIMBA","Using memory " + mem);
     }
 
-   List<Object> tools = new ArrayList<>();
-   if (!toolids.isEmpty()) {
-      if (toolids.contains(LimbaToolSet.PROJECT)) {
-         if (rag_model != null) {
-            tools.add(new LimbaTools(this,rag_model.getFiles()));
-            IvyLog.logD("LIMBA","Using project tools");
-          }
-         else {
-            IvyLog.logE("LIMBA","no project found");
-          }
-       }
-      if (toolids.contains(LimbaToolSet.STRUCTURE)) { 
-         if (rag_model != null) {
-            tools.add(new LimbaToolsStruct(this,rag_model.getFiles()));
-            IvyLog.logD("LIMBA","Using structure tools");
-          }
-         else {
-            IvyLog.logE("LIMBA","no project found");
-          }
-       }
-      if (toolids.contains(LimbaToolSet.DEBUG)) {
-         tools.add(new LimbaToolsDebug(this,context)); 
-         IvyLog.logD("LIMBA","Using debug tools");
-       }
-      if (toolids.contains(LimbaToolSet.DIAD)) {
-         tools.add(new LimbaToolsDiad(this,context)); 
-         IvyLog.logD("LIMBA","Using diad tools");
-       }
-    }
+   List<Object> tools = getTools(toolids,context);
 
    // should pass in tool set and save chat_interface for those tools
    if (!tools.isEmpty()) {
@@ -1035,6 +1007,54 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
    chat_interfaces.put(key,rslt);
 
    return rslt;
+}
+
+
+
+private List<Object> getTools(EnumSet<LimbaToolSet> toolids,Map<String,?> context)
+{
+   List<Object> tools = new ArrayList<>();
+   
+   if (toolids.contains(LimbaToolSet.PROJECT)) {
+      if (rag_model != null) {
+         tools.add(new LimbaTools(this,rag_model.getFiles()));
+         IvyLog.logD("LIMBA","Using project tools");
+       }
+      else {
+         IvyLog.logE("LIMBA","no project found");
+       }
+    }
+   
+   if (toolids.contains(LimbaToolSet.STRUCTURE)) { 
+      if (rag_model != null) {
+         tools.add(new LimbaToolsStruct(this,rag_model.getFiles()));
+         IvyLog.logD("LIMBA","Using structure tools");
+       }
+      else {
+         IvyLog.logE("LIMBA","no project found");
+       }
+    }
+   
+   if (toolids.contains(LimbaToolSet.DEBUG)) {
+      tools.add(new LimbaToolsDebug(this,context)); 
+      IvyLog.logD("LIMBA","Using debug tools");
+    }
+   else if (toolids.contains(LimbaToolSet.STACK)) {
+      tools.add(new LimbaToolsStack(this,context));  
+      IvyLog.logD("LIMBA","Using stack tools");
+    } 
+   
+   if (toolids.contains(LimbaToolSet.FAIT)) {
+      tools.add(new LimbaToolsFait(this,context)); 
+      IvyLog.logD("LIMBA","Using diad tools"); 
+    }
+   
+   if (toolids.contains(LimbaToolSet.DIAD)) {
+      tools.add(new LimbaToolsDiad(this,context)); 
+      IvyLog.logD("LIMBA","Using diad tools");
+    }
+   
+   return tools;
 }
 
 

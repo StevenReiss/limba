@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              LimbaToolsDebug.java                                            */
+/*              LimbaToolsFait.java                                             */
 /*                                                                              */
-/*      Tools that just use the debugger                                        */
+/*      description of class                                                    */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2025 Brown University -- Steven P. Reiss                    */
@@ -39,13 +39,11 @@ import java.util.Map;
 
 import org.w3c.dom.Element;
 
-import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
 import edu.brown.cs.ivy.xml.IvyXml;
-import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
-public class LimbaToolsDebug extends LimbaToolBase
+public class LimbaToolsFait extends LimbaToolBase
 {
 
 
@@ -65,35 +63,35 @@ private Map<String,?>   query_context;
 /*                                                                              */
 /********************************************************************************/
 
-LimbaToolsDebug(LimbaMain lm,Map<String,?> context)
+LimbaToolsFait(LimbaMain lm,Map<String,?> context)
 {
    super(lm,null);
    query_context = context;
 }
 
 
+
+
+
 /********************************************************************************/
 /*                                                                              */
-/*      Access to the debugger stack                                            */
+/*      Access to initial fault localization                                    */
 /*                                                                              */
 /********************************************************************************/
 
-@Tool("This agent returns a list of the frames on the current execution stack. " +
-      "This returns a string representing a JSON array where each element " +
-      "is a JSON object representing a stack frame, with the 0 element being " +
-      "the current user frame and the subsequent elements being the calling " +
-      "frames.  Each frame object contains the method name which includes " +
-      "the class, method name and signature (key METHOD); the line number " +
-      "in that method (key LINE); and a list of local variables (key LOCALS). " +
-      "Each local includes its data type (key TYPE), its name (key NAME), and " +
-      "its value if it is a string or a primitive (key VALUE). ")
-public String getStackFrames()
+@Tool("This agent returns a list of locations that can affect the problematic symptom and " +
+      "thus might be faulty and that are executed. This is returned as a string " +
+      "representing a JSON array where " +
+      "each element represents a method with its full name (key METHOD) " +
+      "and an array of lines in the method that might " +
+      "be problematic (key LINES).  The source code for these lines can be " +
+      "found using the tool getSourceCode")
+      public String getFaultLocations()
 {
-   limba_main.transcriptAgent("Get stack frames"); 
+   limba_main.transcriptAgent("Get fault locations"); 
    
-   CommandArgs args = new CommandArgs("FORMAT","JSON");
-   
-   Element rslt = sendToDiad("Q_STACK",args,null,query_context);
+   CommandArgs args = new CommandArgs("FORMAT","JSON","ALL",false);
+   Element rslt = sendToDiad("Q_LOCATIONS",args,null,query_context);
    if (rslt != null) {
       String json = IvyXml.getTextElement(rslt,"JSON");
       return json;
@@ -103,42 +101,17 @@ public String getStackFrames()
 }
 
 
-@Tool("Alias for getStackFrames. This agent returns a list of the frames on the " + 
-      "current execution stack. " +
-      "This returns a string representing a JSON array where each element " +
-      "is a JSON object representing a stack frame, with the 0 element being " +
-      "the current user frame and the subsequent elements being the calling " +
-      "frames.  Each frame object contains the method name which includes " +
-      "the class, method name and signature (key METHOD); the line number " +
-      "in that method (key LINE); and a list of local variables (key LOCALS). " +
-      "Each local includes its data type (key TYPE), its name (key NAME), and " +
-      "its value if it is a string or a primitive (key VALUE). ")
-public String getCallStack()
+@Tool("This agent returns a list of locations that can affect the problematic symptom and " +
+      "thus might be faulty even if not executed. This is returned as a string " +
+      "representing a JSON array where " +
+      "each element represents a method with its full name and then a JSON array of line " +
+      "numbers for the identified lines in that method.")
+      public String getAllFaultLocations()
 {
-   return getStackFrames();
-}
-
-
-/********************************************************************************/
-/*                                                                              */
-/*      Evaluation in the debugger                                              */
-/*                                                                              */
-/********************************************************************************/
-
-@Tool("This agent evaluates an expression in the current frame and returns " +
-       "a string represeting the JSON representation of the result.  The resultant " +
-       "value is in the VALUE field of the returned object.")
-public String getEvaluation(@P("Expression to evaluate") String expr)
-{
-   limba_main.transcriptAgent("Evaluate " + expr); 
+   limba_main.transcriptAgent("Get all fault locations"); 
    
-   CommandArgs args = new CommandArgs("FORMAT","JSON");
-   IvyXmlWriter xw = new IvyXmlWriter();
-   xw.cdataElement("EXPRESSION",expr);
-   String cnts = xw.toString();
-   xw.close();
-   
-   Element rslt = sendToDiad("Q_EVAL",args,cnts,query_context);
+   CommandArgs args = new CommandArgs("FORMAT","JSON","ALL",true);
+   Element rslt = sendToDiad("Q_LOCATIONS",args,null,query_context);
    if (rslt != null) {
       String json = IvyXml.getTextElement(rslt,"JSON");
       return json;
@@ -148,36 +121,9 @@ public String getEvaluation(@P("Expression to evaluate") String expr)
 }
 
 
-
-
-// @Tool("This agent will find all references to a method, field, or class. " + 
-//    "It returns a string " +
-//    "representing a JSON array of references where each reference is a JSON object " +
-//    "with fields for FILE, INSIDE, LINE, DEFINITION indicating whether the reference is " +
-//    "a definition or not, the TYPE of item (METHOD, FIELD, or TYPE), " +
-//    "and INSIDETYPE indicating the type of container.")
-public String getDebugReferences(@P("Name of field, method, or class") String name)
-{
-   limba_main.transcriptAgent("Find references to " + name); 
-   
-   CommandArgs args = new CommandArgs("FORMAT","JSON",
-         "NAME",name);
-   
-   Element rslt = sendToDiad("Q_REFERENCES",args,null,query_context);
-   if (rslt != null) {
-      String json = IvyXml.getTextElement(rslt,"JSON");
-      return json;
-    }
-   
-   return "{ error: 'No debugid given' }";
-}
+}       // end of class LimbaToolsFait
 
 
 
-}       // end of class LimbaToolsDebug
-
-
-
-
-/* end of LimbaToolsDebug.java */
+/* end of LimbaToolsFait.java */
 

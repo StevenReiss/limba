@@ -251,16 +251,16 @@ List<File> getSources()
    return srcs;
 }
 
-Element findClass(String name)
+Element findClass(String name,boolean def)
 {
    CommandArgs args = new CommandArgs("PATTERN",name,
-         "DEFS",true,"REFS",false,"FOR","TYPE");
+         "DEFS",def,"REFS",!def,"FOR","TYPE");
    Element pr = sendBubblesMessage("PATTERNSEARCH",args,null);
    
    return pr;
 }
 
-Element findMethod(final String name0,boolean impl)
+Element findMethod(final String name0,boolean def,boolean impl)
 {
    String name = name0;
    if (name == null) return null;
@@ -274,18 +274,19 @@ Element findMethod(final String name0,boolean impl)
    // check for X.X as constructor ???
    
    CommandArgs args = new CommandArgs("PATTERN",name,
-         "DEFS",true,"REFS",false,"FOR",what,"SYSTEM",false);
-   if (impl) args.put("IMPLS",true);
+         "DEFS",def,"REFS",!def,"FOR",what,"SYSTEM",false,
+         "IMPLS",impl);
+   
    Element xml = sendBubblesMessage("PATTERNSEARCH",args,null);
    
    return xml;
 }
 
 
-Element findField(String name)
+Element findField(String name,boolean def)
 {
    CommandArgs args = new CommandArgs("PATTERN",name,
-         "DEFS",true,"REFS",true,"FOR","FIELD","SYSTEM",false);
+         "DEFS",def,"REFS",!def,"FOR","FIELD","SYSTEM",false);
    Element xml = sendBubblesMessage("PATTERNSEARCH",args,null);
    
    return xml;

@@ -27,8 +27,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.w3c.dom.Element;
 
 import dev.langchain4j.agent.tool.P;
@@ -362,6 +365,153 @@ private static String getLineText(String src,
     }
 
    return "";
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Find references to a name using the IDE                                 */
+/*                                                                              */
+/********************************************************************************/
+
+@Tool("This agent will find all references to a method, field, or class. " + 
+      "It returns a string " +
+      "representing a JSON array of references where each reference is a JSON object " +
+      "with fields for FILE, INSIDE, LINE, DEFINITION indicating whether the reference is " +
+      "a definition or not, the TYPE of item (METHOD, FIELD, or TYPE), " +
+      "and INSIDETYPE indicating the type of container.")
+public String getReferences(@P("Name of field, method, or class") String name)
+{
+   long start = System.currentTimeMillis();
+   
+   limba_main.transcriptAgent("Find references to " + name); 
+   
+   JSONArray ja = getReferenceArray(name);
+   
+   String rslt = null;
+   if (ja != null) {
+      rslt = ja.toString(2);
+    }
+   else {
+      rslt = "{ error: 'No debugid given' }";
+    }
+   
+   long time = System.currentTimeMillis() - start;
+   IvyLog.logI("DICONTROL","Time for getReferences: " + time);
+   
+   return rslt;
+}
+
+private JSONArray getReferenceArray(String name)
+{
+   JSONArray rslt = new JSONArray();
+   
+   Element xml1 = message_server.findClass(name,true);
+   Element xml2 = null;
+   String typ = null;
+   if (isMatch(xml1)) {
+      typ = "TYPE";
+      xml2 = message_server.findClass(name,true);
+    }
+   else {
+      xml1 = message_server.findMethod(name,true,false);
+      if (isMatch(xml1)) {
+         typ = "METHOD";
+         xml2 = message_server.findMethod(name,false,false);
+       }
+      else {
+         xml1 = message_server.findField(name,true);
+         if (isMatch(xml1)) {
+            typ = "FIELD";
+            xml2 = message_server.findField(name,false);
+          }
+       }
+    }
+   
+   for (Element me: IvyXml.children(xml1,"MATCH")) {
+      JSONObject jo = outputMatch(me,typ,true);
+      if (jo != null) rslt.put(jo);
+    }
+   for (Element me: IvyXml.children(xml2,"MATCH")) {
+      JSONObject jo = outputMatch(me,typ,false);
+      if (jo != null) rslt.put(jo);
+    }
+   
+   return rslt;
+}
+
+
+private boolean isMatch(Element xml)
+{
+   if (xml == null) return false;
+   if (IvyXml.getChild(xml,"MATCH") == null) return false;
+   return true;
+}
+
+
+private JSONObject outputMatch(Element me,String typ,boolean def)
+{
+   Element mi = IvyXml.getChild(me,"ITEM");
+   String intyp = IvyXml.getAttrString(mi,"TYPE");
+   intyp = getReturnType(intyp);
+   if (intyp == null) return null;
+   String usrc = IvyXml.getAttrString(mi,"SOURCE");
+   if (usrc == null || !usrc.equals("USERSOURCE")) return null;
+   
+   String fnm = IvyXml.getTextElement(me,"FILE");
+   if (fnm == null) return null;;
+   File fil = new File(fnm);
+   int offset = IvyXml.getAttrInt(me,"STARTOFFSET");
+   String pnm = IvyXml.getAttrString(me,"PROJECT");
+   if (pnm == null) pnm = IvyXml.getAttrString(mi,"PROJECT");
+   
+   CompilationUnit cu = findFileUnit(fil); 
+   int line = cu.getLineNumber(offset);
+   String inside = IvyXml.getAttrString(mi,"QNAME");
+   if (inside == null) inside = IvyXml.getAttrString(mi,"NAME");
+   
+   JSONObject jo = new JSONObject();
+   jo.put("FILE",fnm);
+   jo.put("LINE",line);
+   jo.put("TYPE",typ);
+   jo.put("INSIDE",inside);
+   jo.put("INSIDETYPE",intyp);
+   jo.put("DEFINITION",def);
+   
+   return jo;
+}
+
+
+
+private String getReturnType(String typ)
+{
+   if (typ == null) return null;
+   
+   String rslt = null;
+   
+   switch (typ) {
+      case "Class" :
+      case "Throwable" :
+      case "Exception" :
+      case "Interface" :
+      case "Enum" :
+         rslt = "TYPE";
+         break;
+      case "Function" :
+      case "Method" :
+      case "Constructor" :
+      case "StaticInitializer" :
+         rslt = "METHOD";
+         break;
+      case "Field" :
+      case "EnumConstant" :
+      case "Variable" :
+         rslt = "FIELD";
+         break;
+    }
+   
+   return rslt;
 }
 
 
