@@ -13,6 +13,13 @@ Place right brace on a separate line.</STYLE></LIMBA>
 
 
 <LIMBA DO='QUERY' USECONTEXT='true'>
+   <CONTENTS>
+      List all references to the method edu.brown.cs.bubbles.tutorial.romp.Magnet,attractsP
+   </CONTENTS>
+</LIMBA>
+
+
+<LIMBA DO='QUERY' USECONTEXT='true'>
    <CONTENTS>List the methods of the class edu.brown.cs.bubbles.tutorial.romp.Magnet.
 </CONTENTS>
 </LIMBA>
