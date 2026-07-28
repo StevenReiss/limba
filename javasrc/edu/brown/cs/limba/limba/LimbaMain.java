@@ -327,6 +327,18 @@ String getProperty(String id,String dflt)
 }
 
 
+int getProperty(String id,int dflt)
+{
+   String s = limba_props.getProperty(id,null);
+   if (s == null || s.isBlank()) return dflt;
+   try {
+      return Integer.parseInt(s);
+    }
+   catch (NumberFormatException e) { }
+   return dflt;
+}
+
+
 int getIntProperty(String id,int dflt)
 {
    String v = limba_props.getProperty(id);
@@ -789,7 +801,9 @@ void setupRag()
    else {
       List<File> sources = msg_server.getSources();
       IvyLog.logD("LIMBA","Found " + sources.size() + " sources");
-      if (sources != null && !sources.isEmpty() && workspace_name != null) {
+      int mxsrc = getProperty("Limba.rag.max",10000);
+      if (sources != null && !sources.isEmpty() && 
+            workspace_name != null && sources.size() <= mxsrc) {
          rag_model = new LimbaRag(this,sources,workspace_name); 
        }
       else {

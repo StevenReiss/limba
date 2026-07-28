@@ -146,7 +146,8 @@ private void checkUpdates()
    IvyLog.logD("LIMBA","Update based on " + new Date(last_modified));
    
    // force update -- DEBUGGING ONLY
-   last_modified = 0;
+// last_modified = 0;
+   
    remove_old = true;
    
    if (last_modified > 0) {
