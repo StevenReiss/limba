@@ -908,11 +908,12 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
        }
       catch (Throwable t) {
          IvyLog.logE("LIMBA","Problem with chained response",t);
-         throw t;
        }
     }
    
-   throw new Exception("Too many retires with chained response");
+   String rslt = NO_RESPONSE;
+   transcriptResponse(rslt);
+   return rslt;
 }
 
 
@@ -931,6 +932,9 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
    if (rslt != null) return rslt;
    
    ChatModel chat = null;
+   
+   IvyLog.logD("LIMBA","Get chain with " + model_type + " " +
+         model + " " + usectx + " " + toolids + " " + key);
    
    switch (model_type) {
       case OLLAMA_MODEL :
@@ -1002,21 +1006,29 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
 
    // should pass in tool set and save chat_interface for those tools
    if (!tools.isEmpty()) {
-      AiServices<LimbaAssistant> aib = AiServices.builder(LimbaAssistant.class)
-         .chatModel(chat)
-         .tools(tools)
-         .contentRetriever(cr);
-      if (mem != null) {
-         aib.chatMemory(mem);
+      try {
+         AiServices<LimbaAssistant> aib = AiServices.builder(LimbaAssistant.class)
+            .chatModel(chat)
+            .tools(tools)
+            .contentRetriever(cr);
+         if (mem != null) {
+            aib.chatMemory(mem);
+          }
+         LimbaAssistant la = aib.build();
+         IvyLog.logD("LIMBA","Built limba assistant " + la);
+         rslt = la;
        }
-      LimbaAssistant la = aib.build();
-      IvyLog.logD("LIMBA","Built limba assistant " + la);
-      rslt = la;
+      catch (Throwable t) {
+         IvyLog.logE("LIMBA","Problem setting up tool suite",t);
+       }
     }
-   else {
+   
+   if (rslt == null) {
       ConversationalRetrievalChain chain = bldr.build();
       rslt = new ChainChatter(chain);
     }
+   
+   IvyLog.logD("LIMBA","Chat interface set for " + key);
 
    chat_interfaces.put(key,rslt);
 
@@ -1060,7 +1072,7 @@ private List<Object> getTools(EnumSet<LimbaToolSet> toolids,Map<String,?> contex
    
    if (toolids.contains(LimbaToolSet.FAIT)) {
       tools.add(new LimbaToolsFait(this,context)); 
-      IvyLog.logD("LIMBA","Using diad tools"); 
+      IvyLog.logD("LIMBA","Using fait tools"); 
     }
    
    if (toolids.contains(LimbaToolSet.DIAD)) {

@@ -72,55 +72,12 @@ LimbaToolsDiad(LimbaMain lm,Map<String,?> context)
 
 
 
+
 /********************************************************************************/
 /*                                                                              */
-/*      Access to initial fault localization                                    */
+/*      Tools that use execution information                                    */
 /*                                                                              */
 /********************************************************************************/
-
-@Tool("This agent returns a list of locations that can affect the problematic symptom and " +
-      "thus might be faulty and that are executed. This is returned as a string " +
-      "representing a JSON array where " +
-      "each element represents a method with its full name (key METHOD) " +
-      "and an array of lines in the method that might " +
-      "be problematic (key LINES).  The source code for these lines can be " +
-      "found using the tool getSourceCode")
-public String getFaultLocations()
-{
-   limba_main.transcriptAgent("Get fault locations"); 
-   
-   CommandArgs args = new CommandArgs("FORMAT","JSON","ALL",false);
-   Element rslt = sendToDiad("Q_LOCATIONS",args,null,query_context);
-   if (rslt != null) {
-      String json = IvyXml.getTextElement(rslt,"JSON");
-      return json;
-    }
-
-   return "{ error: 'No debugid given' }";
-}
-
-
-@Tool("This agent returns a list of locations that can affect the problematic symptom and " +
-      "thus might be faulty even if not executed. This is returned as a string " +
-      "representing a JSON array where " +
-      "each element represents a method with its full name and then a JSON array of line " +
-      "numbers for the identified lines in that method.")
-public String getAllFaultLocations()
-{
-   limba_main.transcriptAgent("Get all fault locations"); 
-   
-   CommandArgs args = new CommandArgs("FORMAT","JSON","ALL",true);
-   Element rslt = sendToDiad("Q_LOCATIONS",args,null,query_context);
-   if (rslt != null) {
-      String json = IvyXml.getTextElement(rslt,"JSON");
-      return json;
-    }
-
-   return "{ error: 'No debugid given' }";
-}
-
-
-
 
 @Tool("This agent returns information about one call in the execution trace leading to a problem. " +
 "The call is identified by the callid parameter which can be 0 to indicate the " +
