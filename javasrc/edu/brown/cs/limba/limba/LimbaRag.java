@@ -263,6 +263,7 @@ private ContentRetriever setupRAG()
             remove_old = false;
           }
          store = cstore;
+         IvyLog.logD("LIMBA","Using chroma store");
        }
       catch (Throwable t) {
          IvyLog.logE("LIMBA","Can't create chroma store", t);
@@ -277,6 +278,7 @@ private ContentRetriever setupRAG()
 //          .host("localhost")
 //          .port(6379)
 //          .build();
+//       IvyLog.logD("LIMBA","Using redis store");   
 //     } 
 //    catch (Throwable t) {
 //       IvyLog.logI("LIMBA","Can't create redis store: " + t);

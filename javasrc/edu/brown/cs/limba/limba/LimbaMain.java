@@ -46,6 +46,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -136,6 +138,7 @@ private Set<String> inited_models;
 private String workspace_name;
 private Map<String,LimbaChatter> chat_interfaces;
 private PrintWriter limba_transcript;
+private Lock rag_lock;
 
 private static final String SPLIT_PATTERN;
 private static boolean http_log = false;
@@ -161,6 +164,7 @@ private LimbaMain(String [] args)
    File f1 = new File(home);
    log_file = new File(f1,"limba.log");
    log_stderr = false;
+   rag_lock = new ReentrantLock();
    
    File f2 = new File(f1,".bubbles");
    File f3 = new File(f2,"Limba.props");
@@ -335,6 +339,18 @@ int getProperty(String id,int dflt)
       return Integer.parseInt(s);
     }
    catch (NumberFormatException e) { }
+   return dflt;
+}
+
+
+boolean getProperty(String id,boolean dflt)
+{
+   String s = limba_props.getProperty(id,null);
+   if (s == null || s.isBlank()) return dflt;
+   s = s.trim();
+   if ("tT1yY".indexOf(s.charAt(0)) >= 0) return true;
+   if ("fF0nN".indexOf(s.charAt(0)) >= 0) return false;    
+   
    return dflt;
 }
 
@@ -624,6 +640,10 @@ private void process()
     }
 
    if (server_mode) {
+      if (getProperty("Limba.start.rag",true)) {
+         RagStarter rb = new RagStarter();
+         rb.start();
+       }
       boolean haveping = msg_server.sendPing();
       synchronized (this) {
          for ( ; ; ) {
@@ -794,7 +814,7 @@ LimbaRag getRagModel()                  { return rag_model; }
 void setupRag()
 {
    IvyLog.logD("LIMBA","Get sources from bubbles " + msg_server);
-
+   
    if (msg_server == null) {
       rag_model = null;
     }
@@ -804,13 +824,34 @@ void setupRag()
       int mxsrc = getProperty("Limba.rag.max",10000);
       if (sources != null && !sources.isEmpty() && 
             workspace_name != null && sources.size() <= mxsrc) {
-         rag_model = new LimbaRag(this,sources,workspace_name); 
+         rag_lock.lock();
+         try {
+            if (rag_model == null) {
+               rag_model = new LimbaRag(this,sources,workspace_name); 
+             }
+          }
+         finally {
+            rag_lock.unlock();
+          }
        }
       else {
          rag_model = null;
        }
     }
 }
+
+
+private final class RagStarter extends Thread {
+   
+   RagStarter() {
+      super("RagBuilder");
+    }
+   
+   @Override public void run() {
+      setupRag();
+    }
+   
+}       // end of inner class RagBuilder
 
 
 /********************************************************************************/
