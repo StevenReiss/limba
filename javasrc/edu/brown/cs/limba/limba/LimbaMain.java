@@ -460,7 +460,6 @@ Map<String,LimbaModelType> listModels()
        }
     }
    
-   
    return rslt;
 }
 
@@ -813,7 +812,8 @@ LimbaRag getRagModel()                  { return rag_model; }
 
 void setupRag()
 {
-   IvyLog.logD("LIMBA","Get sources from bubbles " + msg_server);
+   IvyLog.logD("LIMBA","Get sources from bubbles " + workspace_name + " " +
+      msg_server);
    
    if (msg_server == null) {
       rag_model = null;
@@ -827,7 +827,8 @@ void setupRag()
          rag_lock.lock();
          try {
             if (rag_model == null) {
-               rag_model = new LimbaRag(this,sources,workspace_name); 
+               rag_model = new LimbaRag(this,sources,workspace_name);
+               rag_model.getContentRetriever();
              }
           }
          finally {
