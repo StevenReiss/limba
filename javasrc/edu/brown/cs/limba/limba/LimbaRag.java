@@ -140,13 +140,10 @@ Collection<File> getFiles()
 
 private void checkUpdates()
 {
-   last_modified = 0;
-   remove_old = false;
-   
    IvyLog.logD("LIMBA","Update based on " + new Date(last_modified));
    
    // force update -- DEBUGGING ONLY
-// last_modified = 0;
+   // last_modified = 0;
    
    remove_old = true;
    
@@ -164,6 +161,7 @@ private void checkUpdates()
     }
    else {
       all_files = project_files;
+      remove_old = false;
     }
 }
 
@@ -203,6 +201,9 @@ private void loadConfigData()
    catch (IOException e) {
       // use 0 as last modified
     }   
+   
+   IvyLog.logD("LIMBA","Load RAG config " + chroma_url + " " + last_modified +
+         " " + config_file + " " + f4);
 }
 
 
@@ -232,7 +233,9 @@ private ContentRetriever setupRAG()
       if (f.length() == 0) continue;
       Path p = f.toPath();
       Document d = FileSystemDocumentLoader.loadDocument(p);
-      d.metadata().put("id",getUID(f));
+      String uid = getUID(f);
+      d.metadata().put("id",uid);
+      IvyLog.logD("LIMBA","Document " + f + " " + uid);
       docs.add(d);
       uids.add(getUID(f));
     }
