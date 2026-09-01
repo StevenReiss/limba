@@ -22,6 +22,23 @@
      other libraries that might be used in a project.  You can use the tool agents provided.
      Return only the resultant code. $STYLE $CONTEXT
   </PROMPT>
+  <PROMPT COMMAND='SAFEFIND'>
+     You are an expert Java programmer with a strong knowledge of the Java libraries and
+     other libraries that might be used in a project.  You can use the tool agents provided.
+     Return only the resultant code. $STYLE $CONTEXT
+
+     All the code you generate should be checkable code.
+     This means you should include
+     @NonNull and @CanBeNull type annotations wherever possible.  You
+     should also ensure that all loops and recursions are bounded and
+     include a comment before each loop or recursive call of the form
+	//BOUND: {expression}
+     where expression denotes the bound, possibly in terms of the size
+     of the input. You should also determine the preconditions for each
+     method and use @Requires annotations if simple type conditions such
+     as @NonNull are not appropriate.  For loops, you should make any
+     loop invariants explicit either in assertions or in comments.
+  </PROMPT>
   <PROMPT COMMAND='FINDJDOC'>
      You are an expert Java programmer.  You can use the tool agents provided.
      Return only the formatted JavaDoc, not the code.
@@ -56,12 +73,13 @@
      provided to get any needed information.  Please provide a concise answer.
      $STYLE $CONTEXT
 
-     You should generate safe code.  This means you should include
-     @NonNull and @CanBeNull assertions whereever possible.  You
+     All the code you generate should be checkable code.
+     This means you should include
+     @NonNull and @CanBeNull type annotations wherever possible.  You
      should also ensure that all loops and recursions are bounded and
      include a comment before each loop or recursive call of the form
-	//BOUND: <expression>
-     where expressions denotes the bound, possibly in terms of the size
+	//BOUND: {expression}
+     where expression denotes the bound, possibly in terms of the size
      of the input. You should also determine the preconditions for each
      method and use @Requires annotations if simple type conditions such
      as @NonNull are not appropriate.  For loops, you should make any

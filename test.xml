@@ -12,6 +12,64 @@ Do not use lambdas.
 Place right brace on a separate line.</STYLE></LIMBA>
 
 
+<LIMBA DO='SAFEQUERY' USECONTEXT='true'>
+   <CONTENTS>Generate a method that computes the GCD of two numbers.
+</CONTENTS>
+</LIMBA>
+
+<LIMBA DO='SAFEQUERY' USECONTEXT='false' ID='LIMBA_TEST_1'>
+   <CONTENTS>Generate a method with signature
+	String numericConstantParser(StreamTokenizer in)
+that is a parser for constant numeric expressions.  A constant numeric expression
+is a valid expression containing
+only numbers, know Java constants in the form ClassName.CONSTANT_NAME
+such as Math.PI or Integer.MAX_INT,
+standard mathematical operators, and optional parenthesis.
+If the expression is valid, it should return a string form of the expression without any spaces.  If the expression is
+invalid or incomplete, it should return null.  Be sure to check for expression validity.
+Integers in the input should be left as integers in the output; real numbers in the input should be
+output as reals.
+The end of the expression can be either the end of the input or a comma.
+The input is a java.io.StreamTokenizer set just before the first token of the expression,
+that is, nextToken will need to be called to get the first token.
+
+Be sure to generate checkable code as described. Include the necessary
+annotations, bounds and checks.
+</CONTENTS>
+</LIMBA>
+
+<LIMBA DO='SAFEQUERY' USECONTEXT='false' ID='LIMBA_TEST_1'>
+   <CONTENTS>That is good code, but it is not fully checkable code.  Please add the
+   necessary annotations, explicit loop bounds, and other checks to all methods in
+   the code you just generated for parsing constant numeric expressions.
+   </CONTENTS>
+</LIMBA>
+
+<LIMBA DO='SAFEFIND' RID='LIMBA_994942' TYPE='METHOD'>
+<SEARCH LANGUAGE='JAVA' NAME='numericConstantParser' PREFIX='edu.brown.cs.bubbles.tutorial.romp.RompTest' USECONTEXT='false' WHAT='METHOD'>
+  <SIGNATURE>String numericConstantParser(StreamTokenizer)</SIGNATURE>
+  <DESCRIPTION><![CDATA[This is a parser for constant numeric expressions.  A constant numeric expression is a valid expression containing
+only numbers, know Java constants in the form ClassName.CONSTANT_NAME such as Math.PI or Integer.MAX_INT,
+standard mathematical operators, and optional parenthesis.
+If the expression is valid, it should return a string form of the expression without any spaces.  If the expression is
+invalid or incomplete, it should return null.  Be sure to check for expression validity.
+Integers in the input should be left as integers in the output; real numbers in the input should be
+output as reals.
+The end of the expression can be either the end of the input or a comma.
+The input is a java.io.StreamTokenizer set just before the first token of the expression,
+that is, nextToken will need to be called to get the first token.]]></DESCRIPTION>
+  <CONTEXT CLASS='RompTest' LANGUAGE='JAVA' PACKAGE='edu.brown.cs.bubbles.tutorial.romp' SEPARATOR='/' USEPATH='true'>
+    <IMPORT>import org.junit.*;</IMPORT>
+    <IMPORT>import static org.junit.Assert.*;</IMPORT>
+    <IMPORT>import java.io.StreamTokenizer;</IMPORT>
+    <IMPORT>import java.util.Collection;</IMPORT>
+    <SOURCE NAME='/home/spr/Eclipse/tutorial/romp/src/edu/brown/cs/bubbles/tutorial/romp/RompTest.java' />
+    <CLASSPATH>/home/spr/Eclipse/tutorial/romp/bin</CLASSPATH>
+  </CONTEXT>
+</SEARCH>
+</LIMBA>
+
+
 <LIMBA DO='QUERY' USECONTEXT='true'>
    <CONTENTS>
       List all references to the method edu.brown.cs.bubbles.tutorial.romp.Magnet,attractsP
@@ -24,11 +82,6 @@ Place right brace on a separate line.</STYLE></LIMBA>
 </CONTENTS>
 </LIMBA>
 
-
-<LIMBA DO='SAFEQUERY' USECONTEXT='true'>
-   <CONTENTS>Generate a method that computes the GCD of two numbers.
-</CONTENTS>
-</LIMBA>
 
 
 <LIMBA DO='FINDJDOC' RID='LIMBA_650291' WHAT='METHOD' USECONTEXT='true' NAME='calculateForce' >

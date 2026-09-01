@@ -184,7 +184,7 @@ void process(IvyXmlWriter xw) throws Exception
          pbuf.append("Pleasse provide the complete solution, not a correction.\n"); 
          pbuf.append("Recall the problem you are supposed to solve:\n");
        }
-      pbuf.append("Please generate a ");
+      pbuf.append("\nPlease generate a ");
       switch (find_type) {
          case METHOD :
             pbuf.append("method");

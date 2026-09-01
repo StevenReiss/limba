@@ -126,6 +126,7 @@ LimbaCommand createCommand(Element xml)
       case "PROJECT" :
          return new CommandProject(xml);
       case "FIND" :
+      case "SAFEFIND" :
          return new CommandFind(prompt,xml);
       case "FINDJDOC" :
          return new CommandJdoc(prompt,xml);
@@ -440,7 +441,7 @@ private final class CommandQuery extends CommandBase {
          limba_model = mdl;
        }
      
-      IvyLog.logD("LIMBA","Query " + nm + " " + tool_set + " " +
+      IvyLog.logD("LIMBA","Query setup " + nm + " " + tool_set + " " +
             query_context + " " + command_id + " " + limba_model + " " +
             no_history);
     }
@@ -458,9 +459,11 @@ private final class CommandQuery extends CommandBase {
       if (command_id != null && !no_history) {
          history = memory_map.get(command_id);
          if (history == null) {
+            IvyLog.logD("LIMBA","Create new history for " + command_id);
             history = MessageWindowChatMemory.builder()
                .maxMessages(20)
                .build();
+            memory_map.put(command_id,history);
           }
          IvyLog.logD("LIMBA","Use history " + command_id + " " + history);
        } 
