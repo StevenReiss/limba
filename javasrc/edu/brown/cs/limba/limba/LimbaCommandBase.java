@@ -23,7 +23,6 @@
 package edu.brown.cs.limba.limba;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.http.HttpTimeoutException;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -34,12 +33,12 @@ import org.w3c.dom.Element;
 
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
-import edu.brown.cs.ivy.file.IvyFile;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import io.github.ollama4j.exceptions.OllamaBaseException;
+
 
 class LimbaCommandFactory implements LimbaConstants
 {
@@ -116,14 +115,14 @@ LimbaCommand createCommand(Element xml)
          return new CommandQuery("CLEAN",prompt,xml);
       case "GENERATE" :
          return new CommandQuery("GENERATE",prompt,xml);
-//    case "JAVADOC" :
-//       return new CommandQuery("JAVADOC",prompt,xml);
       case "SUGGEST" :
          return new CommandQuery("SUGGEST",prompt,xml);
       case "EXPLAIN" :
          return new CommandQuery("EXPLAIN",prompt,xml);
       case "BASEEXPLAIN" :
          return new CommandQuery("BASEEXPLAIN",prompt,xml);
+      case "SAFEQUERY" :
+         return new CommandQuery("SAFEQUERY",prompt,xml);
       case "PROJECT" :
          return new CommandProject(xml);
       case "FIND" :
@@ -153,34 +152,8 @@ LimbaCommand createCommand(Element xml)
 
 private String getPrompt(String cmd)
 {
-   InputStream ins = getClass().getClassLoader().getResourceAsStream("resources/prompts.xml");
-   if (ins == null) {
-      ins = getClass().getClassLoader().getResourceAsStream("prompts.xml");
-    }
-   if (ins == null) return null;
-   Element xml = IvyXml.loadXmlFromStream(ins);
-   if (xml == null) return null;
-   String base = null;
-   String ptxt = null;
-   for (Element pmpt : IvyXml.children(xml,"PROMPT")) {
-      String what = IvyXml.getAttrString(pmpt,"COMMAND");
-      if (what == null) base = IvyXml.getText(pmpt).trim();
-      else if (what.equals(cmd)) {
-         ptxt = IvyXml.getText(pmpt).trim();
-       }
-    }
-   
-   Map<String,String> keymap = limba_main.getKeyMap(); 
-   if (keymap != null) {
-      base = IvyFile.expandName(base,keymap);
-      ptxt = IvyFile.expandName(ptxt,keymap);
-    }
-   
-   if (base == null) return ptxt;
-   if (ptxt == null) return base;
-   return base + " " + ptxt;
+   return limba_main.getPrompt(cmd);
 }
-
 
 
 
@@ -468,8 +441,8 @@ private final class CommandQuery extends CommandBase {
        }
      
       IvyLog.logD("LIMBA","Query " + nm + " " + tool_set + " " +
-            query_context + " " + command_id + " " + limba_model);
-   
+            query_context + " " + command_id + " " + limba_model + " " +
+            no_history);
     }
    
    @Override public String getCommandName()             { return command_name; }

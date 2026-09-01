@@ -25,6 +25,12 @@ Place right brace on a separate line.</STYLE></LIMBA>
 </LIMBA>
 
 
+<LIMBA DO='SAFEQUERY' USECONTEXT='true'>
+   <CONTENTS>Generate a method that computes the GCD of two numbers.
+</CONTENTS>
+</LIMBA>
+
+
 <LIMBA DO='FINDJDOC' RID='LIMBA_650291' WHAT='METHOD' USECONTEXT='true' NAME='calculateForce' >
 <JAVADOC>
   <PRIOR><![CDATA[/**

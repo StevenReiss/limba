@@ -71,6 +71,7 @@ import io.github.ollama4j.models.response.Model;
 import io.github.ollama4j.utils.Options;
 import io.github.ollama4j.utils.OptionsBuilder;
 import edu.brown.cs.ivy.exec.IvyExec;
+import edu.brown.cs.ivy.file.IvyFile;
 import edu.brown.cs.ivy.file.IvyFormat;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.jcomp.JcompControl;
@@ -464,6 +465,39 @@ Map<String,LimbaModelType> listModels()
 }
 
 
+String getPrompt(String cmd)
+{
+   InputStream ins = getClass().getClassLoader().getResourceAsStream("resources/prompts.xml");
+   if (ins == null) {
+      ins = getClass().getClassLoader().getResourceAsStream("prompts.xml");
+    }
+   if (ins == null) return null;
+   Element xml = IvyXml.loadXmlFromStream(ins);
+   if (xml == null) return null;
+   String base = null;
+   String ptxt = null;
+   for (Element pmpt : IvyXml.children(xml,"PROMPT")) {
+      String what = IvyXml.getAttrString(pmpt,"COMMAND");
+      if (what == null) base = IvyXml.getText(pmpt).trim();
+      else if (what.equals(cmd)) {
+         ptxt = IvyXml.getText(pmpt).trim();
+         if (IvyXml.getAttrBool(pmpt,"COMPLETE")) {
+            base = null;
+            break;
+          }
+       }
+    }
+   
+   Map<String,String> keymap = getKeyMap(); 
+   if (keymap != null) {
+      base = IvyFile.expandName(base,keymap);
+      ptxt = IvyFile.expandName(ptxt,keymap);
+    }
+   
+   if (base == null) return ptxt;
+   if (ptxt == null) return base;
+   return base + " " + ptxt;
+}
 /********************************************************************************/
 /*                                                                              */
 /*      Argument processing                                                     */
