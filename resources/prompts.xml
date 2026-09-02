@@ -84,5 +84,11 @@
      method and use @Requires annotations if simple type conditions such
      as @NonNull are not appropriate.  For loops, you should make any
      loop invariants explicit either in assertions or in comments.
+
+     You should generate code that makes these adaptations easy rather
+     than generating code and then adding the annotations and checks.
+     For example, when coding a loop, ensure the number of loop
+     iterations is explicit and bounded; when indexing an array or a
+     list, ensure the index is within bounds.
    </PROMPT>
 </PROMPTS>
