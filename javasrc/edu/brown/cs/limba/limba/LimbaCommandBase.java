@@ -469,7 +469,7 @@ private final class CommandQuery extends CommandBase {
        } 
        
       String resp = null;
-      for (int i = 0; i < 10; ++i) {
+      for (int i = 0; i < 20; ++i) {
          resp = limba_main.askOllama(cmd,usectx,
                history,tool_set,query_context,limba_model);  
          if (resp != null && 
@@ -479,6 +479,7 @@ private final class CommandQuery extends CommandBase {
           }
          IvyLog.logI("LIMBA","Ollama missed agent call: " + resp);
          limba_main.transcriptMessage("OLLAMA BAD AGENT CALL");
+         resp = NO_RESPONSE;
        }
       
       xw.cdataElement("RESPONSE",resp);
