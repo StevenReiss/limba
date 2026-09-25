@@ -72,6 +72,7 @@ import io.github.ollama4j.utils.Options;
 import io.github.ollama4j.utils.OptionsBuilder;
 import edu.brown.cs.ivy.exec.IvyExec;
 import edu.brown.cs.ivy.file.IvyFile;
+import edu.brown.cs.ivy.file.IvyFileLocker;
 import edu.brown.cs.ivy.file.IvyFormat;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.jcomp.JcompControl;
@@ -140,6 +141,7 @@ private String workspace_name;
 private Map<String,LimbaChatter> chat_interfaces;
 private PrintWriter limba_transcript;
 private Lock rag_lock;
+private IvyFileLocker workspace_lock;
 
 private static final String SPLIT_PATTERN;
 private static boolean http_log = false;
@@ -213,6 +215,7 @@ private LimbaMain(String [] args)
    inited_models = new HashSet<>();
    chat_interfaces = new HashMap<>();
    limba_transcript = null;
+   workspace_lock = null;
 
    scanArgs(args);
 }
@@ -285,8 +288,41 @@ void setUserContext(String s)
 String getWorkspace()                   { return workspace_name; }
 void setWorkspace(String nm)
 {
+   if (workspace_name != null) {
+      if (workspace_name.equals(nm)) return;
+      if (workspace_lock != null) {
+         workspace_lock.unlock();
+         workspace_lock = null;
+       }
+    }
    workspace_name = nm;
+   
+   try {
+      File lockf = File.createTempFile("limba_" + nm,".lock");
+      workspace_lock = new IvyFileLocker(lockf);
+      if (!workspace_lock.tryLock()) {
+         IvyLog.logW("LIMBA","Limba already running in " + nm);
+         System.exit(0);
+       }
+      Runtime.getRuntime().addShutdownHook(new Unlocker());
+    }
+   catch (IOException e) { 
+      IvyLog.logE("LIMBA","Can't create lock file",e);
+    }
 }
+
+
+private class Unlocker extends Thread {
+
+   Unlocker() {
+      super("Unlocker");
+    }
+   
+   @Override public void run() {
+      if (workspace_lock != null) workspace_lock.unlock();
+    }
+   
+}       // end of inner class Unlocker
 
 
 boolean setModel(String model)
@@ -557,7 +593,7 @@ private void scanArgs(String [] args)
                continue;
              }
             else if (args[i].startsWith("-L")) {                // -Log <logfile>
-               log_file = new File(args[++i]);
+               setLog(args[++i]);
                continue;
              }
             else if (args[i].startsWith("-T")) {                // -Transcript <file>
@@ -586,6 +622,28 @@ private void scanArgs(String [] args)
       alt_host = null;
       alt_port = 0;
     }
+}
+
+
+private void setLog(String file) 
+{
+   long now = System.currentTimeMillis();
+   int idx = file.indexOf(".log");
+   if (idx < 0) {
+      log_file = new File(file);
+      return;
+    }
+   for (int i = 0; i < 20; ++i) {
+      String fnm = file;
+      if (i > 0) {
+         fnm = fnm.substring(0,idx) + "_" + i + ".log";
+       }
+      File f1 = new File(fnm);
+      if (f1.exists() && now - f1.lastModified() < 20000) continue;
+      log_file = f1;
+      return;
+    }
+   log_file = new File(file);
 }
 
 
@@ -755,6 +813,7 @@ void transcriptRequest(String cnts)
    if (limba_transcript == null) return;
    
    String text = IvyFormat.formatText(cnts);
+   
    String disp = "<div align='right'><p style='text-indent: 50px;'><font color='blue'>" + text + 
          "</font></p></div>";
    transcript(disp);
