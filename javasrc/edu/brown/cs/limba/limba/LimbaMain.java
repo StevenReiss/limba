@@ -291,24 +291,26 @@ void setWorkspace(String nm)
    if (workspace_name != null) {
       if (workspace_name.equals(nm)) return;
       if (workspace_lock != null) {
+         IvyLog.logD("LIMBA","Workspace lock released");
          workspace_lock.unlock();
          workspace_lock = null;
        }
     }
    workspace_name = nm;
    
-   try {
-      File lockf = File.createTempFile("limba_" + nm,".lock");
-      workspace_lock = new IvyFileLocker(lockf);
-      if (!workspace_lock.tryLock()) {
-         IvyLog.logW("LIMBA","Limba already running in " + nm);
-         System.exit(0);
-       }
-      Runtime.getRuntime().addShutdownHook(new Unlocker());
+   IvyLog.logD("LIMBA","Setting workspace to " + nm);
+   
+   String tmp = System.getProperty("java.io.tmpdir");
+   File t1 = new File(tmp);
+   File lockf = new File(t1,"limba_" + nm + ".lock");
+   workspace_lock = new IvyFileLocker(lockf);
+   if (!workspace_lock.tryLock()) {
+      IvyLog.logW("LIMBA","Limba already running in " + nm);
+      System.exit(0);
     }
-   catch (IOException e) { 
-      IvyLog.logE("LIMBA","Can't create lock file",e);
-    }
+   IvyLog.logD("LIMBA","Workspace lock obtained " + lockf);
+   Runtime.getRuntime().addShutdownHook(new Unlocker());
+   lockf.deleteOnExit();
 }
 
 
@@ -319,7 +321,9 @@ private class Unlocker extends Thread {
     }
    
    @Override public void run() {
-      if (workspace_lock != null) workspace_lock.unlock();
+      if (workspace_lock != null) {
+         workspace_lock.unlock();
+       }
     }
    
 }       // end of inner class Unlocker
@@ -596,6 +600,9 @@ private void scanArgs(String [] args)
                setLog(args[++i]);
                continue;
              }
+            else if (args[i].startsWith("-O")) {                // -Output (to stderr)
+               log_stderr = true;
+             }
             else if (args[i].startsWith("-T")) {                // -Transcript <file>
                transcriptStart(args[++i],true);
                continue;
@@ -607,7 +614,6 @@ private void scanArgs(String [] args)
              }
             else if (args[i].startsWith("-D")) {                // -DEBUG
                log_level = IvyLog.LogLevel.DEBUG;
-               log_stderr = true;
                // set log level
              }
             else badArgs();
@@ -639,7 +645,7 @@ private void setLog(String file)
          fnm = fnm.substring(0,idx) + "_" + i + ".log";
        }
       File f1 = new File(fnm);
-      if (f1.exists() && now - f1.lastModified() < 20000) continue;
+      if (f1.exists() && now - f1.lastModified() < 10000) continue;
       log_file = f1;
       return;
     }
