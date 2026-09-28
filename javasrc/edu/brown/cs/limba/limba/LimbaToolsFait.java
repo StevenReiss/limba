@@ -86,7 +86,7 @@ LimbaToolsFait(LimbaMain lm,Map<String,?> context)
       "and an array of lines in the method that might " +
       "be problematic (key LINES).  The source code for these lines can be " +
       "found using the tool getSourceCode")
-      public String getFaultLocations()
+public String getFaultLocations()
 {
    limba_main.transcriptAgent("Get fault locations"); 
    
