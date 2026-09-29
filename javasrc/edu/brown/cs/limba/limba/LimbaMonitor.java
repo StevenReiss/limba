@@ -108,6 +108,8 @@ private String processCommand(String cmd,Element xml) throws LimbaException
          case "DETAILS" :
          case "PING" :
          case "DEBUGREMOVE" :
+         case "MESSAGE" :
+         case "TRANSCRIPT" :
             // immediate commands
             try {
                LimbaCommand lcmd = limba_main.setupLimbaCommand(xml);
@@ -209,7 +211,7 @@ List<File> getSources()
    Element r = rply.waitForXml();
    
    if (!IvyXml.isElement(r,"RESULT")) {
-      System.err.println("BATT: Problem getting project information: " +
+      System.err.println("LIMBA: Problem getting project information: " +
             IvyXml.convertXmlToString(r));
       System.exit(2);
     }

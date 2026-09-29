@@ -798,6 +798,7 @@ void transcript(String cnts)
    if (limba_transcript == null) return;
    
    limba_transcript.println(cnts);
+   limba_transcript.flush();
 }
 
 
