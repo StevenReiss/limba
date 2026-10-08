@@ -963,7 +963,8 @@ private final class RagStarter extends Thread {
 
 String askOllama(String cmd,boolean usectx) throws Exception
 {
-   return askOllama(cmd,usectx,null,null,null,null);
+   return askOllama(cmd,usectx,null,null,
+         null,null,true);
 }
 
 
@@ -994,7 +995,8 @@ String askOllamaWithRetry(String cmd0,boolean usectx) throws Exception
 
 
 String askOllama(String cmd0,boolean usectx,ChatMemory history,
-      EnumSet<LimbaToolSet> tools,Map<String,?> context,String model)
+      EnumSet<LimbaToolSet> tools,Map<String,?> context,String model,
+      boolean record)
    throws Exception
 {
    long start = System.currentTimeMillis();

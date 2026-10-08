@@ -483,7 +483,8 @@ private final class CommandQuery extends CommandBase {
       String send = cmd;
       for (int i = 0; i < 20; ++i) {
          resp = limba_main.askOllama(send,usectx,
-               history,tool_set,query_context,limba_model);  
+               history,tool_set,query_context,limba_model,
+               send.equals(cmd));  
          send = cmd;
          if (resp != null && 
                !resp.contains("<function=get") && 
