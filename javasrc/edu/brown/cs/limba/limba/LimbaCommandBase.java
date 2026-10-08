@@ -23,7 +23,9 @@
 package edu.brown.cs.limba.limba;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.http.HttpTimeoutException;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -53,6 +55,14 @@ class LimbaCommandFactory implements LimbaConstants
 private LimbaMain                limba_main;
 private Map<String,ChatMemory>   memory_map;
 
+private static final Class<?> [] AGENT_CLASSES = {
+   LimbaTools.class,
+   LimbaToolsDebug.class,
+   LimbaToolsDiad.class,
+   LimbaToolsFait.class,
+   LimbaToolsStack.class,
+   LimbaToolsStruct.class,
+};
       
 
 /********************************************************************************/
@@ -470,20 +480,33 @@ private final class CommandQuery extends CommandBase {
        
       String resp = null;
       boolean retrymsg = false;
+      String send = cmd;
       for (int i = 0; i < 20; ++i) {
-         resp = limba_main.askOllama(cmd,usectx,
+         resp = limba_main.askOllama(send,usectx,
                history,tool_set,query_context,limba_model);  
+         send = cmd;
          if (resp != null && 
                !resp.contains("<function=get") && 
                !resp.equals(NO_RESPONSE)) {
             break;
           }
+         
          IvyLog.logI("LIMBA","Ollama missed agent call: " + resp);
+         if (resp != null && resp.contains("<function")) {
+            String rply = handleAgentCall(resp);
+            if (rply != null) {
+               send = rply;
+               --i;
+               continue;
+             }
+          }
+         
          limba_main.transcriptMessage("OLLAMA BAD AGENT CALL");
          if (!retrymsg && resp != null && !resp.equals(NO_RESPONSE)) {
             retrymsg = true;
             cmd += "\nThe previous response included a failed attempt at making an agent call. ";
             cmd += "Try again.\n";
+            send = cmd;
           }
          resp = NO_RESPONSE;
        }
@@ -512,6 +535,95 @@ private final class CommandQuery extends CommandBase {
           }
        }
     }
+   
+   private String handleAgentCall(String text)
+   {
+      int idx0 = text.indexOf("<function");
+      int idx1 = text.lastIndexOf("</function>");
+      if (idx0 < 0 || idx1 < 0) return null;
+      text = text.substring(idx0,idx1+11);
+      
+      int idx2 = text.indexOf("=");
+      int idx3 = text.indexOf(">",idx2);
+      String fct = text.substring(idx2+1,idx3).trim();
+      if (fct.isEmpty()) return null;
+      
+      List<String> args = new ArrayList<>();
+      for ( ; ; ) {
+         int idx4 = text.indexOf("<parameter",idx3);
+         if (idx4 < 0) break;
+         int idx5 = text.indexOf(">",idx4);
+         int idx6 = text.indexOf("</parameter",idx4);
+         if (idx5 < 0 || idx6 < 0) return null;
+         String arg = text.substring(idx5+1,idx6).trim();
+         args.add(arg);
+         idx3 = idx6;
+       }
+      
+      Method method = null;
+      Class<?> agent = null;
+      for (Class<?> cls : AGENT_CLASSES) {
+         for (Method m : cls.getMethods()) {
+            if (m.getName().equals(fct)) {
+               agent = cls;
+               method = m;
+               break;
+             }
+          }
+       }
+      if (method == null) return null;
+      if (method.getParameterCount() != args.size()) return null;
+      Object [] argarr = new Object[method.getParameterCount()];
+      Class<?> [] ptyps = method.getParameterTypes();
+      for (int i = 0; i < ptyps.length; ++i) {
+         String arg = args.get(i);
+         if (ptyps[i] == String.class) {
+            argarr[i] = arg;
+          }
+         else if (ptyps[i] == int.class) {
+            try {
+               int v = Integer.parseInt(arg);
+               argarr[i] = v;
+             }
+            catch (NumberFormatException e) {
+               return null;
+             }
+          }
+         else if (ptyps[i] == long.class) {
+            try {
+               long v = Long.parseLong(arg);
+               argarr[i] = v;
+             }
+            catch (NumberFormatException e) {
+               return null;
+             }
+          }
+       }
+      
+      EnumSet<LimbaToolSet> toolset = EnumSet.allOf(LimbaToolSet.class);
+      List<Object> tools = limba_main.getTools(toolset,query_context);
+      Object tool = null;
+      for (Object o : tools) {
+         if (o.getClass() == agent) {
+            tool = o;
+            break;
+          }
+       }
+      if (tool == null) return null;
+      
+      try {
+         Object orslt = method.invoke(tool,argarr);
+         if (orslt != null) {
+            String rslt = orslt.toString();
+            return rslt;
+          }
+       }
+      catch (Throwable t) {
+         IvyLog.logE("LIMBA","Problem invoking tool agent",t);
+       }
+      
+      return null;
+   }
    
 }       // end of inner class CommandQuery
 

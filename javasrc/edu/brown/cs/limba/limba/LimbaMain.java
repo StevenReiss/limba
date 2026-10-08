@@ -1179,7 +1179,7 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
 
 
 
-private List<Object> getTools(EnumSet<LimbaToolSet> toolids,Map<String,?> context)
+List<Object> getTools(EnumSet<LimbaToolSet> toolids,Map<String,?> context)
 {
    List<Object> tools = new ArrayList<>();
    
