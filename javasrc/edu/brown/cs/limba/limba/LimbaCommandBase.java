@@ -133,6 +133,8 @@ LimbaCommand createCommand(Element xml)
          return new CommandQuery("BASEEXPLAIN",prompt,xml);
       case "SAFEQUERY" :
          return new CommandQuery("SAFEQUERY",prompt,xml);
+      case "SPECS1" :
+         return new CommandQuery("SPECS1",prompt,xml);
       case "PROJECT" :
          return new CommandProject(xml);
       case "FIND" :
