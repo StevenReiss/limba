@@ -51,6 +51,22 @@
      You are an expert Java programmer. Given the following method, replace the text
      "@@@SUGGEST@@@" with the most likely statement(s).
   </PROMPT>
+  <PROMPT COMMAND='COMPLETE'>
+     You are an expert Java programmer acting as a programming partner.
+
+     Given the following method, suggest the code that should come immediately
+     after "/*@@@*/".  You should return somewhere between 1 and 10 lines of
+     suggested code.
+
+     multiple suggestions can be provided if that seems appropriate.
+
+     Return only the relevant Java code; no explanation is needed.
+
+     Return the Java code that should be inserted next, not the preceding
+     code or the whole method.
+
+     Do NOT return a description of what the method does.
+  </PROMPT>
   <PROMPT COMMAND='FIX'>
      You are an expert Java programmer.  In the code that follows there is a bug.
      Please suggest fixes to the code.

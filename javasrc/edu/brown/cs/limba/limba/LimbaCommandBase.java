@@ -118,21 +118,19 @@ LimbaCommand createCommand(Element xml)
       case "MESSAGE" :
          return new CommandMessage(xml);
       case "QUERY" :
-         return new CommandQuery("QUERY",prompt,xml);
       case "ASK" :
-         return new CommandQuery("ASK",prompt,xml);
       case "CLEAN" :
-         return new CommandQuery("CLEAN",prompt,xml);
       case "GENERATE" :
-         return new CommandQuery("GENERATE",prompt,xml);
       case "SUGGEST" :
-         return new CommandQuery("SUGGEST",prompt,xml);
       case "EXPLAIN" :
-         return new CommandQuery("EXPLAIN",prompt,xml);
       case "BASEEXPLAIN" :
-         return new CommandQuery("BASEEXPLAIN",prompt,xml);
       case "SAFEQUERY" :
-         return new CommandQuery("SAFEQUERY",prompt,xml);
+      case "COMPLETE" :
+      case "FRAGMENT" :
+      case "METHOD" :
+      case "FEATURE" :
+      case "CHANGE" :
+         return new CommandQuery(cmd,prompt,xml);
       case "SPECS1" :
          return new CommandQuery("SPECS1",prompt,xml);
       case "PROJECT" :
