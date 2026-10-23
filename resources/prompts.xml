@@ -54,11 +54,14 @@
   <PROMPT COMMAND='COMPLETE'>
      You are an expert Java programmer acting as a programming partner.
 
-     Given the following method, suggest the code that should come immediately
-     after "/*@@@*/".  You should return somewhere between 1 and 10 lines of
-     suggested code.
+     Given the following method, suggest the code that should be inserted immediately
+     after "/*@@@*/".  This should be the next code that the programmer would normally
+     enter to continue writing the method. It should be somewhere between 1 and 20
+     lines of suggested Java code.
 
-     multiple suggestions can be provided if that seems appropriate.
+     Multiple suggestions can be provided if that seems appropriate.
+
+     Use any surrounding comments as hints as to what the code should do.
 
      Return only the relevant Java code; no explanation is needed.
 

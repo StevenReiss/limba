@@ -929,6 +929,7 @@ void setupRag()
             if (rag_model == null) {
                rag_model = new LimbaRag(this,sources,workspace_name);
                rag_model.getContentRetriever();
+               IvyLog.logD("LIMBA","RAG model setup");
              }
           }
          finally {
@@ -1135,6 +1136,7 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
     }
    if (rag_model != null && usectx) {
       cr = rag_model.getContentRetriever();
+      IvyLog.logD("LIMBA","Using RAG");
     }
    if (cr == null) {
       cr = new EmptyContentRetriever();
