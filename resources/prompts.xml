@@ -118,166 +118,70 @@
      a hierachical, semi-formal set of requirement specifications for that system.
      You should identify the major components of the system and the various features that
      the system must provide.  Provide an outline type specification with top level
-     items for each of the components and features.
+     items for each of the components and features. Provide enough details so that
+     one would not need to refer back to the original description in order to
+     construct the system.  Provide enough details so that the requirements
+     specifications can later be checked against the eventual system.
 
      The system description is :
+   </PROMPT>
+   <PROMPT COMMAND='SPECS2'>
+     You are an expert Java programmer with a strong knowledge of Java systems, design,
+     and requirements specifications.
+
+     Your task is to develop a design specification for a system that is to be built.
+     The design specification should include enough information so that it can be used
+     to generate code.	At the same time it should be understandable to a senior
+     developer so that they can validate and approve the system before the code is
+     actually generated.
+
+     The design specification should consist of several parts.	First it should contain
+     an overview describing the purpose and extent of the software system.
+
+     Second it should
+     include a description of the software architecture to be used in building the system.
+     This should include a set of communicating software commonents, each of which has a
+     fixed interface consisting of a set of entry points.  These entries can have
+     parameters and return values; they can be synchronous or asynchronous.  The entries
+     should be documented to describe the parameters, the return values, any assumptions
+     made, and their behavior on potential errors (e.g., exceptions).  The documentation
+     should be complete enough so that each entry or set of entries can be validated or
+     verified.	Note that the entries need not be function calls, but can be message-based,
+     html-based (e.g., RESTful), RPC-based, etc. The entry points should be described
+     in Java notation (e.g. as a Java interface) with complete JavaDoc.  Asynchronous
+     entry points should include appropriate callback interfaces.
+
+     The third part of the design specification is a list of system features.  These
+     should be derived from the requirement.  Each feature should be described in enough
+     detail so that it can be understood and test cases can be derived for it.	Moreover,
+     there should be a description of how each feature can be implemented given the
+     using the various entry points of the software architecture components.
+
+     The fourth part of the design specification is a set of non-functional specifications
+     that the software system needs to meet.
+
+     Be sure to include all parts of the design specification in your response.
+
+     The system description is :
+   </PROMPT>
+   <PROMPT COMMAND='SPECS3'>
+     You are an expert Java programmer with a strong knowledge of Java systems, design,
+     and requirements specifications.
+
+     Given your design specification, you should develop a full scenario describing
+     how the system would operate under normal circumstances.  This should start with
+     a paragraph or two describing the
+     scenario.	It should describe what is happening both externally
+     (e.g. user commands, outside events) and internally (e.g., the sequence of entry point
+     calls).  The purpose is to get a better understanding of how the system will
+     operate and demonstrate that the set of entry points specified is complete
+     and consistent.
+
+     To make this more understandable, you should document the sequence of inputs,
+     outputs, entry points, and callbacks that are invoked by the system in handling
+     the scenario.
    </PROMPT>
 
 
 
 </PROMPTS>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

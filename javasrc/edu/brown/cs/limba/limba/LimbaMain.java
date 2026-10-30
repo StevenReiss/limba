@@ -603,6 +603,10 @@ private void scanArgs(String [] args)
             else if (args[i].startsWith("-O")) {                // -Output (to stderr)
                log_stderr = true;
              }
+            else if (args[i].startsWith("-TX")) {               // -TX (clear) <file>
+               transcriptStart(args[++i],false);
+               continue;
+             }
             else if (args[i].startsWith("-T")) {                // -Transcript <file>
                transcriptStart(args[++i],true);
                continue;
@@ -767,6 +771,7 @@ private void process()
 
 void transcriptStart(String nm,boolean append)
 {
+   nm = nm.replace("~",System.getProperty("user.home"));
    IvyLog.logD("LIMBA","Start transcript " + nm);
    File ft = new File(nm);
    boolean fg = ft.exists() && append;
@@ -1025,6 +1030,7 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
       try {
          String resp = getChain(history,usectx,tools,
                context,null).chat(cmd);
+         resp = cleanResponse(resp);
          IvyLog.logD("LIMBA","Context Response: " + resp);
          IvyLog.logD("LIMBA","------------------------\n\n");
          if (resp == null) resp = NO_RESPONSE; 
@@ -1131,7 +1137,7 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
    bldr.chatModel(chat);
 
    ContentRetriever cr = null;
-   if (rag_model == null) {
+   if (rag_model == null && usectx) {
       setupRag();
     }
    if (rag_model != null && usectx) {
@@ -1254,6 +1260,17 @@ void removeDebugContext(String debugid)
     }
 }
 
+private String cleanResponse(String resp) 
+{
+   if (resp == null) return null;
+   resp = resp.replace("\u2192","->");
+   resp = resp.replace("\342\206\222","->");
+   resp = resp.replace("\u2190","<-");
+   resp = resp.replace("\u2191","/\\");
+   resp = resp.replace("\u2193","\\/");
+   
+   return resp;
+}
 
 
 private interface LimbaChatter {
@@ -1347,8 +1364,8 @@ static List<String> getCodeType(String resp,String find,boolean dflt)
        }
       else idx1 = idx1+1;
       int idx2 = resp.indexOf("```",idx1);
-      IvyLog.logD("LIMBA","Check code type `" + type + "' " + dflt + " " + idx2 + 
-            " " + find + " " + type.equals(find));
+//    IvyLog.logD("LIMBA","Check code type `" + type + "' " + dflt + " " + idx2 + 
+//          " " + find + " " + type.equals(find));
       if (idx2 < 0)  {
          break;
        }

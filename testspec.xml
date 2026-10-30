@@ -3,6 +3,7 @@
 <!-- <LIMBA DO='SETMODEL' MODEL='qwen3-coder:latest' /> -->
 <!-- <LIMBA DO='SETMODEL' MODEL='qwen3-coder:480b' /> -->
 <!-- <LIMBA DO='SETMODEL' MODEL='devstral-2:latest' /> -->
+<LIMBA DO='TRANSCRIPT' FILE='~/nextgen/limbatrans.html' APPEND='false' />
 <LIMBA DO='SETUPBUBBLES' MINT='limba_tutorial_debug' WORKSPACE='tutorial' />
 <LIMBA DO='PROJECT' />
 <LIMBA DO='STYLE'><STYLE>Do not use on-demand imports.
@@ -12,85 +13,484 @@ Do not use lambdas.
 Place right brace on a separate line.</STYLE></LIMBA>
 
 
-<LIMBA DO='SPECS1' TOOLS='' USECONTEXT='false'>
+<LIMBA DO='CLEAR' ID='LIMBA_SPEC_1' />
+<LIMBA DO='SPECS2' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
   <CONTENTS><![CDATA[
 OVERVIEW
 
-I have a HO railroad set up that I put together 25-30 years ago. Its somewhat complex, sitting on a 12 foot by 4 foot table, and can run
-two trains independently on the mainline and have one or two more operating in a rail yard complete with sidings and a turntable. There
-are 13 rail switches (Y's) (with 11 controls since  there are two pairs that operate together). There is a crossover and a reversing
-track on the main line. And there are 14 track blocks, sections of track that have independent power controls.
+I have a HO railroad set up that I put together 25-30 years ago. Its somewhat complex, sitting
+on a 12 foot by 4 foot table, and can run two trains independently on the mainline and have one
+or two more operating in a rail yard complete with sidings and a turntable. There are 13 rail
+switches (Y's) (with 11 controls since  there are two pairs that are wired to operate
+together). There is a crossover and a reversing track on the main line. And there are 14 track
+blocks, sections of track that have independent power controls.
 
-Needless to say, this is rather complex to operate, especially for one person. In addition to the 11 buttons to control the 13 switches,
-there are 14 power controls for the different blocks, 3 rheostats to control speed, 4 forward-off-reverse controls, and a control for the
+Needless to say, this is rather complex to operate, especially for one person. In addition to
+the 11 buttons to control the 13 switches, there are 14 power controls for the different
+blocks, 3 rheostats to control speed, 4 forward-off-reverse controls, and a control for the
 turntable. These are spread over two control panels.
 
-One has to prevent trains from both derailing and crashing. Derailing occurs most commonly when a train tries to pass over a switch that
-is set incorrectly. It can also occur when a train is moving to fast around a curve or over a bridge. Collisions can occur when two
-trains converge on a switch or if two trains are on the same track and one is going faster than the other. The standard approach to
-preventing collisions is
-to ensure that only one train at a time is in a track block.
+One has to prevent trains from both derailing and crashing. Derailing occurs most commonly when
+a train tries to pass over a switch that is set incorrectly. It can also occur when a train is
+moving too fast around a curve or over a bridge. Collisions can occur when two trains converge
+on a switch or if two trains are on the same track and one is going faster than the other. The
+standard approach to preventing collisions is to ensure that only one train at a time is in a
+track block.
 
-I want to control this setup from my computer. Moreover, I want to have a high level control so I can say things like "Take train A out
-of the yard, go around the outer loop 3 times, then around the inner loop twice, then reverse directions and go around the outer loop
-twice more before bringing the train back into the yard."  At the same time, I want to ensure that the trains do not crash or derail.
-This is the system that should be written.  Moreover it should be written as
-a generic system, able to control other layouts.
+I want to control this setup from my computer. Moreover, I want to have a high level control so
+I can say things like "Take train A out of the yard, go around the outer loop 3 times, then
+around the inner loop twice, then reverse directions and go around the outer loop twice more
+before bringing the train back into the yard."  At the same time, I want to ensure that the
+trains do not crash or derail. This is the system that should be written.  Moreover it should
+be written as a generic system, able to control other layouts.
 
 UNDERLYING HARDWARE
 
-In order to have computer control of the HO layout, one needs to enable the computer to both understand the current conditions, for
-example, what state switches are in and where trains are, and to control things.
+In order to have computer control of the HO layout, one needs to enable the computer to both
+understand the current conditions, for example, what state switches are in and where trains
+are, and to control things.
 
-Our layout, because it is relatively old, uses all manual controls. These include rheostats, buttons for each switch, and controls to
-select the power source and direction for each track block. Shortly after the layout was built, trains started to supportDigital Command
-Control (DCC). Here there is continuous power to all rails and the control is in the engine. DCC sends signals to the engines via pulses
-on top of the rail power. This is done using special controllers that are attached to the circuit. This allows each engine to
-independently go forwards or backwards and to controls speed. This type of control is much simpler and closer to the real world.
+Our layout, because it is relatively old, used all manual controls. These include rheostats,
+buttons for each switch, and controls to select the power source and direction for each track
+block. Shortly after the layout was built, trains started to supportDigital Command Control
+(DCC). Here there is continuous power to all rails and the control is in the engine. DCC sends
+signals to the engines via pulses on top of the rail power. This is done using special
+controllers that are attached to the circuit. This allows each engine to independently go
+forwards or backwards and to controls speed. This type of control is much simpler and closer to
+the real world.
 
-DCC, however, is starting to fall out of favor. Today one can find the equivalent
-controls using WiFi so that the engines can be controlled from ones phone or tablet and no special hardware is required. While DCC has
-been standardized, WiFi control has not.
+DCC, however, is starting to fall out of favor. Today one can find the equivalent controls
+using WiFi so that the engines can be controlled from ones phone or tablet and no special
+hardware is required. While DCC has been standardized, WiFi control has not.
 
-While it is possible to create a circuit that would effectively actuate the original set of controls for the HO layout, we decided that
-it made more sense to upgrade the engines to use the latest technology. Again, while we could do this via DCC (there
-are Arduino-based DCC controllers), we decided that we wanted to go with WiFi and use the LocoFi  implementation.
+While it is possible to create a circuit that would effectively actuate the original set of
+controls for the HO layout, we decided that it made more sense to upgrade the engines to use
+the latest technology. Again, while we could do this via DCC (there are Arduino-based DCC
+controllers), we decided that we wanted to go with WiFi and use the LocoFi implementation for
+the engines.  Thus we have provided full power to all track segments and have the engines
+control their own speed and direction using embedded LocoFi controllers.
 
-This means that the system needs to control the switches and detect of the state of the trains. We inserted photo diodes in the tracks at
-key locations. These include on each side the gap between track blocks to detect when a train moves from one block to another; on entry
-to the two inputs to a switch to ensure the switch is set correctly before the train goes over it; and at locations where we might want a
-train to stop (red signal) before entering a new block.
+This means that the system needs to control the switches and signals, detect of the state of
+the trains, and control the speed and direction of the various engines.   It does not need to
+control the power to the blocks.  We inserted photo diodes in the tracks at key locations.
+These include on each side the gap between track blocks to detect when a train moves from one
+block to another; on entry to the two inputs to a switch to ensure the switch is set correctly
+before the train goes over it; and at locations where we might want a train to stop (red
+signal) before entering a new block.  The sensors we use are not perfect and can given
+occasional false positive and false negative outputs.  The program needs to accommodate this.
 
-To go along with the LocoFi engine control, we designed and built a set of track controllers. Each of these can control 3 switches,
-handle 8 sensors (photo-diodes),  and set 6 signals. An additional controller can handle up to 40 sensors. These communicate using WiFi
-using a protocol compatible with the LocoFi protocol. These are all Arduino-based. Note that the sensors are not prefect and can give
-occasional false positive and false negative outputs.
+To detect train positions and control switches and signals we designed and built a set of track
+controllers. Each of these can control 3 switches, handle 8 sensors (photo-diodes),  and set 6
+signals. An additional controller can handle up to 40 sensors. These compliment the LocoFi
+engine controllers which control engine speed and direction.  All controllers communicate over
+local WiFi using mDNS and short (4-64 byte) UDP messages.  For the purpose of the software, one
+can assume the hardware is stable and not part of the program.
+
 
 SOFTWARE OVERVIEW
 
-The software we envision would allow both manual and automatic control of the complete layout. The user interface would display the
-current state of the switches, signals, and trains as the system knows them. It would let the user control the switches and signals
-directly. It would provide control of the engines in a manner similar to that offered by the LocoFi phone app.
+The software we envision would allow both manual and automatic control of the complete layout.
+The user interface would display the current state of the switches, signals, and trains as the
+system knows them. It would let the user control the switches and signals directly. It would
+provide control of the engines using an interface similar to that offered by the LocoFi phone
+app, emulating the messages it sends to the engines.
 
-The standard way of displaying a train layout, both in model railroading and for real trains, is to have an display an abstraction of the
-actual layout. This has a one-to-one mapping with the actual layout, but may omit some details such as curves. For a complex layout,
-there can be multiple such abstract displays that have connections from one to another. This can be seen in our initial system where the
-two control panels each have their own abstraction.  The software we envision should provide such an abstraction as part of the
-interface.
+The standard way of displaying a train layout, both in model railroading and for real trains,
+is to have an display an abstraction of the actual layout. This has a homomorphic mapping with
+the actual layout, which may omit some details such as curves. For a complex layout, there can
+be multiple such abstract displays that have connections from one to another. This can be seen
+in our initial system where the two control panels each have their own abstraction.  The
+software we envision should provide such an abstraction as part of the interface and allow the
+user to control the various layout components from this abstraction.  Note that since the
+system works in terms of this abstract layout, it cannot be dependent on absolute train
+positions.
 
-The software would also try to ensure the stability of the system. It would prevent two trains from being in the same block at the same
-time. It would ensure that a switch was set property when a train was passing over it. It would ensure that signals are set correctly and
-that trains obeyed the signals. It should enforce speed limits on specific sections of track.
+The abstract layout is described in an XML file that provides positions for the tracks,
+switches, signals, sensors, and block boundaries.  Tracks are indicated by connections between
+points (which may or may not relate to switches, signals or sensors). These are given in an
+arbitrary coordinate system and may not be exact.  The software should load this file, make
+almost-straight lines straight, ensure that the track layout makes sense, associate points with
+blocks, and generally ensure the consistency of the input and the layout.
 
-The software would also provide the type of high level control that we envision where one could define a route for a train and have the
-train correctly follow that route while obeying the various safety conditions.
+Both our hardware and the LocoFi hardware use mDNS over local WiFi to find the controlling
+application (or vice versa).  Both use short UDP messages containing commands (to the hardware,
+e.g., engine speed, set switch, set signal) and status reports (e.g., sensor changed).	The
+control software should find and connect to these devices, send them commands appropriately,
+and use them to monitor the state of the engines and layout.  Moreover, the software should
+attempt to correct sensor errors whenever possible.
 
-The system should also be flexible. The embedded sensors do not provide complete information about train position. They have problems
-understanding the initial conditions, can miss trains, especially in low light, and there are significant spans of track with no sensors.
-The system should optionally allow us to use a video camera aimed at the track to obtain better information about the current state of
-trains. Note this isn't perfect either since there might be portions of the track, for example, tunnels, that would not be visible to
-the camera. The system should also be flexible in that it should be able to handle layouts beyond ours. We do not include examples of all
-types of tracks and conditions. For example, we only have 2-way switches while 3-way switches exist, and we have no X-crossings which
-induce other types of anti-collision constraints.
+The software should to ensure the stability and safety of the system. It should prevent two
+trains from being in the same block at the same time.  Because the system does not have
+absolute train position information, this is sufficient to prevent collisions.	The system
+should ensure that a switch is set property before a train can pass over it. It should ensure
+that signals are set correctly and that trains obeyed the signals. It should enforce speed
+limits on specific sections of track (between two specified sensors).
+
+The software should also provide the type of high level control that we envision where one
+could define a route for a train and have the train correctly follow that route while obeying
+the various safety conditions.	It should identify loops from the layout as well as possible
+starting and ending points for a route.
+
+The system should also be flexible and extensible. The embedded sensors do not provide complete
+information about train position. They have problems understanding the initial conditions, can
+miss trains at times, and there are significant spans of track with no sensors.
+The system should optionally allow a video camera aimed at the track to be used to obtain
+better information about the current state of trains. Note this isn't perfect either since
+there might be portions of the track, for example, tunnels, that would not be visible to the
+camera.  The system should also be flexible in that it should be able to handle layouts beyond
+ours. We do not include examples of all types of tracks and conditions. For example, initially
+we only have 2-way switches while 3-way switches exist, and we have no X-crossings which induce
+other types of anti-collision constraints.
+
+The system is being designed for personal, local use.  As such no access control is needed and
+data protection, backup, and system integreity are not particularly important.
+]]></CONTENTS>
+</LIMBA>
+<LIMBA DO='SPECS3' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1' />
+
+
+<LIMBA DO='CLEAR' ID='LIMBA_SPEC_1' />
+<LIMBA DO='SPECS2' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
+  <CONTENTS><![CDATA[
+# HO Railroad Control System - Requirements Specification
+
+## 1. SYSTEM OVERVIEW AND SCOPE
+
+### 1.1 System Purpose
+The HO Railroad Control System provides computer-based control of a complex model railroad
+layout with the capability for both manual and automatic train operation while ensuring safety
+through collision and derailment prevention.
+
+### 1.2 System Scope
+- Control of switches, signals, and trains on complex layout (13 switches, 14 track blocks)
+- Manual and high-level automatic train control interfaces
+- Safety enforcement mechanisms to prevent collisions and derailments
+- Support for multiple layout abstraction layers
+- Generic architecture supporting various railroad layouts
+- Integration with existing hardware including WiFi-enabled controllers
+
+## 2. SYSTEM COMPONENTS
+
+### 2.1 Layout Abstraction Engine
+- XML-based layout definition parser
+- Coordinate system normalization and track validation
+- Block boundary identification and association
+- Abstract display generation for user interface
+- Route identification and loop detection algorithms
+
+### 2.2 Hardware Communication Layer
+- mDNS discovery of track controllers over local WiFi
+- UDP message handling for commands and status reports
+- Device connection management and monitoring
+- Command queuing and error handling
+- Sensor data processing with noise filtering
+
+### 2.3 Train Control Module
+- Engine speed and direction control (emulating LocoFi protocol)
+- Route planning and execution engine
+- Automatic train scheduling and pathfinding
+- Speed limit enforcement between sensors
+- Engine state monitoring and reporting
+
+### 2.4 Safety Management System
+- Block occupancy detection and management
+- Switch position validation before train passage
+- Signal enforcement and train compliance monitoring
+- Collision prevention algorithms (single train per block)
+- Derailment prevention mechanisms
+- Emergency stop capabilities
+
+### 2.5 User Interface Layer
+- Real-time layout visualization with current state display
+- Manual control of switches, signals, and trains
+- High-level route definition interface
+- Sensor status monitoring
+- Video camera integration for enhanced position tracking
+
+### 2.6 Data Management System
+- Layout configuration storage and retrieval (XML format)
+- Train movement history logging
+- System state persistence
+- Configuration backup and restore capabilities
+
+## 3. REQUIREMENTS SPECIFICATIONS
+
+### 3.1 Functional Requirements
+
+#### 3.1.1 Layout Abstraction
+- **R-3.1.1**: Parse XML layout definition files containing track points, switches, signals,
+sensors, and block boundaries
+- **R-3.1.2**: Validate track topology for consistency and logical connections
+- **R-3.1.3**: Normalize coordinate system to ensure straight lines appear straight in display
+- **R-3.1.4**: Automatically associate points with track blocks based on sensor locations
+- **R-3.1.5**: Identify and mark loop structures within the layout for route planning
+- **R-3.1.6**: Determine valid starting and ending points for train routes
+
+#### 3.1.2 Hardware Integration
+- **R-3.1.7**: Discover track controllers using mDNS over local WiFi network
+- **R-3.1.8**: Establish stable UDP communication channels with all controllers
+- **R-3.1.9**: Send control commands (switch set, signal set, engine speed/direction) to
+appropriate controllers
+- **R-3.1.10**: Receive and process sensor status reports from controllers
+- **R-3.1.11**: Handle intermittent communication failures with graceful degradation
+- **R-3.1.12**: Implement message acknowledgment and retransmission for critical commands
+
+#### 3.1.3 Train Control
+- **R-3.1.13**: Provide engine control interface similar to LocoFi mobile app
+- **R-3.1.14**: Support speed and direction control for individual engines
+- **R-3.1.15**: Implement automatic route execution with pathfinding algorithms
+- **R-3.1.16**: Enforce speed limits between specified sensor points
+- **R-3.1.17**: Track train positions within the abstract layout space
+- **R-3.1.18**: Support multiple trains operating simultaneously on different routes
+
+#### 3.1.4 Safety Management
+- **R-3.1.19**: Prevent multiple trains from occupying the same track block simultaneously
+- **R-3.1.20**: Validate switch positions before allowing train passage through switches
+- **R-3.1.21**: Monitor signal states and ensure trains respect signal indications
+- **R-3.1.22**: Implement speed limit enforcement for specific track sections
+- **R-3.1.23**: Detect and prevent potential collision scenarios
+- **R-3.1.24**: Handle sensor false positives and negatives with error correction mechanisms
+
+#### 3.1.5 User Interface
+- **R-3.1.25**: Display real-time layout state with visual representation of switches, signals,
+and trains
+- **R-3.1.26**: Provide manual control interface for switches, signals, and engines
+- **R-3.1.27**: Enable high-level route definition through intuitive graphical interface
+- **R-3.1.28**: Show sensor status and error conditions to user
+- **R-3.1.29**: Integrate video camera feed for enhanced train position tracking when available
+
+### 3.2 Non-Functional Requirements
+
+#### 3.2.1 Performance
+- **R-3.2.1**: Real-time response time for sensor data processing (<50ms)
+- **R-3.2.2**: Command execution latency for control operations (<100ms)
+- **R-3.2.3**: Support for real-time display updates (30+ FPS)
+- **R-3.2.4**: Efficient route planning algorithms for complex layouts
+
+#### 3.2.2 Reliability
+- **R-3.2.5**: System stability with no user intervention required for normal operation
+- **R-3.2.6**: Graceful degradation when hardware components fail
+- **R-3.2.7**: Automatic recovery from communication failures
+- **R-3.2.8**: Data integrity maintenance during system operation
+
+#### 3.2.3 Safety and Security
+- **R-3.2.9**: Complete prevention of train collisions through block occupancy management
+- **R-3.2.10**: Prevention of derailments through proper switch positioning enforcement
+- **R-3.2.11**: Emergency stop capability for immediate system halt
+- **R-3.2.12**: No external access control required (local use only)
+
+#### 3.2.4 Extensibility
+- **R-3.2.13**: Generic architecture supporting different types of track layouts
+- **R-3.2.14**: Support for additional switch types (3-way, X-crossings)
+- **R-3.2.15**: Modular design allowing addition of new hardware controllers
+- **R-3.2.16**: Configurable sensor types and integration capabilities
+
+#### 3.2.5 Usability
+- **R-3.2.17**: Intuitive graphical user interface for manual control operations
+- **R-3.2.18**: Clear visual feedback for all system states and operations
+- **R-3.2.19**: Easy route definition and modification capabilities
+- **R-3.2.20**: Comprehensive error reporting and troubleshooting information
+
+### 3.3 Data Requirements
+
+#### 3.3.1 Layout Data
+- **R-3.3.1**: XML configuration files describing track topology
+- **R-3.3.2**: Coordinate point definitions for all layout elements
+- **R-3.3.3**: Switch configuration and control mappings
+- **R-3.3.4**: Sensor placement and identification data
+- **R-3.3.5**: Block boundary definitions and associated track segments
+
+#### 3.3.2 System State Data
+- **R-3.3.6**: Current switch positions (active/inactive)
+- **R-3.3.7**: Signal states (red/yellow/green/unknown)
+- **R-3.3.8**: Train positions within abstract layout space
+- **R-3.3.9**: Block occupancy status (occupied/free)
+- **R-3.3.10**: Engine speed and direction settings
+
+### 3.4 Interface Requirements
+
+#### 3.4.1 User Interface
+- **R-3.4.1**: Graphical display of abstract layout with current state visualization
+- **R-3.4.2**: Interactive controls for switches, signals, and train operations
+- **R-3.4.3**: Route definition and execution interface
+- **R-3.4.4**: Sensor status monitoring panel
+- **R-3.4.5**: Video feed integration with position tracking overlay
+
+#### 3.4.2 Hardware Interface
+- **R-3.4.6**: mDNS discovery protocol implementation for device detection
+- **R-3.4.7**: UDP communication layer for command and status transmission
+- **R-3.4.8**: Command message format specification for controller compatibility
+- **R-3.4.9**: Status report format for sensor and device state information
+
+## 4. SYSTEM CONSTRAINTS
+
+### 4.1 Hardware Constraints
+- **C-4.1**: Existing layout uses WiFi-enabled controllers with UDP communication protocol
+- **C-4.2**: Switches are limited to 13 physical switches with specific control requirements
+- **C-4.3**: Track blocks defined by sensor placement and connection topology
+- **C-4.4**: Video camera integration is optional but supported
+
+### 4.2 Operational Constraints
+- **C-4.5**: System designed for local network operation only (no external access)
+- **C-4.6**: Real-time safety enforcement required for collision prevention
+- **C-4.7**: No data backup or integrity protection requirements
+- **C-4.8**: No concurrent user access restrictions
+
+### 4.3 Development Constraints
+- **C-4.9**: Must support existing LocoFi protocol for engine control
+- **C-4.10**: XML-based configuration format required for layout definition
+- **C-4.11**: No external dependencies or third-party software requirements
+- **C-4.12**: Local system performance optimization required
+
+## 5. ASSUMPTIONS AND DEPENDENCIES
+
+### 5.1 Assumptions
+- **A-5.1**: All hardware controllers will support standard UDP communication protocol
+- **A-5.2**: Network connectivity will be stable for local operation
+- **A-5.3**: Users will have basic understanding of railroad operations and terminology
+- **A-5.4**: Layout topology will remain relatively static during system operation
+
+### 5.2 Dependencies
+- **D-5.1**: Successful hardware discovery requires active network connectivity
+- **D-5.2**: Sensor data accuracy depends on proper physical sensor placement
+- **D-5.3**: Route planning algorithms depend on accurate layout topology data
+- **D-5.4**: Video integration requires compatible camera hardware and drivers
+]]></CONTENTS>
+</LIMBA>
+<LIMBA DO='SPECS3' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1' />
+
+
+
+<LIMBA DO='CLEAR' ID='LIMBA_SPEC_1' />
+<LIMBA DO='SPECS1' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
+  <CONTENTS><![CDATA[
+OVERVIEW
+
+I have a HO railroad set up that I put together 25-30 years ago. Its somewhat complex, sitting
+on a 12 foot by 4 foot table, and can run two trains independently on the mainline and have one
+or two more operating in a rail yard complete with sidings and a turntable. There are 13 rail
+switches (Y's) (with 11 controls since  there are two pairs that are wired to operate
+together). There is a crossover and a reversing track on the main line. And there are 14 track
+blocks, sections of track that have independent power controls.
+
+Needless to say, this is rather complex to operate, especially for one person. In addition to
+the 11 buttons to control the 13 switches, there are 14 power controls for the different
+blocks, 3 rheostats to control speed, 4 forward-off-reverse controls, and a control for the
+turntable. These are spread over two control panels.
+
+One has to prevent trains from both derailing and crashing. Derailing occurs most commonly when
+a train tries to pass over a switch that is set incorrectly. It can also occur when a train is
+moving too fast around a curve or over a bridge. Collisions can occur when two trains converge
+on a switch or if two trains are on the same track and one is going faster than the other. The
+standard approach to preventing collisions is to ensure that only one train at a time is in a
+track block.
+
+I want to control this setup from my computer. Moreover, I want to have a high level control so
+I can say things like "Take train A out of the yard, go around the outer loop 3 times, then
+around the inner loop twice, then reverse directions and go around the outer loop twice more
+before bringing the train back into the yard."  At the same time, I want to ensure that the
+trains do not crash or derail. This is the system that should be written.  Moreover it should
+be written as a generic system, able to control other layouts.
+
+UNDERLYING HARDWARE
+
+In order to have computer control of the HO layout, one needs to enable the computer to both
+understand the current conditions, for example, what state switches are in and where trains
+are, and to control things.
+
+Our layout, because it is relatively old, used all manual controls. These include rheostats,
+buttons for each switch, and controls to select the power source and direction for each track
+block. Shortly after the layout was built, trains started to supportDigital Command Control
+(DCC). Here there is continuous power to all rails and the control is in the engine. DCC sends
+signals to the engines via pulses on top of the rail power. This is done using special
+controllers that are attached to the circuit. This allows each engine to independently go
+forwards or backwards and to controls speed. This type of control is much simpler and closer to
+the real world.
+
+DCC, however, is starting to fall out of favor. Today one can find the equivalent controls
+using WiFi so that the engines can be controlled from ones phone or tablet and no special
+hardware is required. While DCC has been standardized, WiFi control has not.
+
+While it is possible to create a circuit that would effectively actuate the original set of
+controls for the HO layout, we decided that it made more sense to upgrade the engines to use
+the latest technology. Again, while we could do this via DCC (there are Arduino-based DCC
+controllers), we decided that we wanted to go with WiFi and use the LocoFi implementation for
+the engines.  Thus we have provided full power to all track segments and have the engines
+control their own speed and direction using embedded LocoFi controllers.
+
+This means that the system needs to control the switches and signals, detect of the state of
+the trains, and control the speed and direction of the various engines.   It does not need to
+control the power to the blocks.  We inserted photo diodes in the tracks at key locations.
+These include on each side the gap between track blocks to detect when a train moves from one
+block to another; on entry to the two inputs to a switch to ensure the switch is set correctly
+before the train goes over it; and at locations where we might want a train to stop (red
+signal) before entering a new block.  The sensors we use are not perfect and can given
+occasional false positive and false negative outputs.  The program needs to accommodate this.
+
+To detect train positions and control switches and signals we designed and built a set of track
+controllers. Each of these can control 3 switches, handle 8 sensors (photo-diodes),  and set 6
+signals. An additional controller can handle up to 40 sensors. These compliment the LocoFi
+engine controllers which control engine speed and direction.  All controllers communicate over
+local WiFi using mDNS and short (4-64 byte) UDP messages.  For the purpose of the software, one
+can assume the hardware is stable and not part of the program.
+
+
+SOFTWARE OVERVIEW
+
+The software we envision would allow both manual and automatic control of the complete layout.
+The user interface would display the current state of the switches, signals, and trains as the
+system knows them. It would let the user control the switches and signals directly. It would
+provide control of the engines using an interface similar to that offered by the LocoFi phone
+app, emulating the messages it sends to the engines.
+
+The standard way of displaying a train layout, both in model railroading and for real trains,
+is to have an display an abstraction of the actual layout. This has a homomorphic mapping with
+the actual layout, which may omit some details such as curves. For a complex layout, there can
+be multiple such abstract displays that have connections from one to another. This can be seen
+in our initial system where the two control panels each have their own abstraction.  The
+software we envision should provide such an abstraction as part of the interface and allow the
+user to control the various layout components from this abstraction.  Note that since the
+system works in terms of this abstract layout, it cannot be dependent on absolute train
+positions.
+
+The abstract layout is described in an XML file that provides positions for the tracks,
+switches, signals, sensors, and block boundaries.  Tracks are indicated by connections between
+points (which may or may not relate to switches, signals or sensors). These are given in an
+arbitrary coordinate system and may not be exact.  The software should load this file, make
+almost-straight lines straight, ensure that the track layout makes sense, associate points with
+blocks, and generally ensure the consistency of the input and the layout.
+
+Both our hardware and the LocoFi hardware use mDNS over local WiFi to find the controlling
+application (or vice versa).  Both use short UDP messages containing commands (to the hardware,
+e.g., engine speed, set switch, set signal) and status reports (e.g., sensor changed).	The
+control software should find and connect to these devices, send them commands appropriately,
+and use them to monitor the state of the engines and layout.  Moreover, the software should
+attempt to correct sensor errors whenever possible.
+
+The software should to ensure the stability and safety of the system. It should prevent two
+trains from being in the same block at the same time.  Because the system does not have
+absolute train position information, this is sufficient to prevent collisions.	The system
+should ensure that a switch is set property before a train can pass over it. It should ensure
+that signals are set correctly and that trains obeyed the signals. It should enforce speed
+limits on specific sections of track (between two specified sensors).
+
+The software should also provide the type of high level control that we envision where one
+could define a route for a train and have the train correctly follow that route while obeying
+the various safety conditions.	It should identify loops from the layout as well as possible
+starting and ending points for a route.
+
+The system should also be flexible and extensible. The embedded sensors do not provide complete
+information about train position. They have problems understanding the initial conditions, can
+miss trains at times, and there are significant spans of track with no sensors.
+The system should optionally allow a video camera aimed at the track to be used to obtain
+better information about the current state of trains. Note this isn't perfect either since
+there might be portions of the track, for example, tunnels, that would not be visible to the
+camera.  The system should also be flexible in that it should be able to handle layouts beyond
+ours. We do not include examples of all types of tracks and conditions. For example, initially
+we only have 2-way switches while 3-way switches exist, and we have no X-crossings which induce
+other types of anti-collision constraints.
+
+The system is being designed for personal, local use.  As such no access control is needed and
+data protection, backup, and system integreity are not particularly important.
 ]]></CONTENTS>
 </LIMBA>

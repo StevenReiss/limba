@@ -132,7 +132,10 @@ LimbaCommand createCommand(Element xml)
       case "CHANGE" :
          return new CommandQuery(cmd,prompt,xml);
       case "SPECS1" :
-         return new CommandQuery("SPECS1",prompt,xml);
+      case "SPECS2" :
+      case "SPECS3" :
+      case "SPECS4" :
+         return new CommandQuery(cmd,prompt,xml);
       case "PROJECT" :
          return new CommandProject(xml);
       case "FIND" :
@@ -419,6 +422,7 @@ private final class CommandQuery extends CommandBase {
    private EnumSet<LimbaToolSet> tool_set;
    private CommandArgs query_context;
    private boolean no_history;
+   private boolean no_rag;
    private String limba_model;
    
    CommandQuery(String nm,String prompt,Element xml) {
@@ -444,6 +448,7 @@ private final class CommandQuery extends CommandBase {
           }
        }
       no_history = IvyXml.getAttrBool(xml,"NOHISTORY");
+      no_rag = IvyXml.getAttrBool(xml,"NORAG");
       
       limba_model = null;
       String mdl = IvyXml.getAttrString(xml,"MODEL");
@@ -463,8 +468,9 @@ private final class CommandQuery extends CommandBase {
       boolean usectx = false;
       if (programmer_prompt != null) {
          cmd = programmer_prompt + "\n\n" + query_text;
-         usectx = true;
+         if (!no_rag) usectx = true;
        }
+     
       ChatMemory history = null;
       if (command_id != null && !no_history) {
          history = memory_map.get(command_id);
