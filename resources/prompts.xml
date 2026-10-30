@@ -177,6 +177,10 @@
      operate and demonstrate that the set of entry points specified is complete
      and consistent.
 
+     The scenario should include as many of the entry points as possible to give a
+     more complete view of the system.	It should also include examples of as many
+     of the different types of inputs as possible.
+
      To make this more understandable, you should document the sequence of inputs,
      outputs, entry points, and callbacks that are invoked by the system in handling
      the scenario.

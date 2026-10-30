@@ -490,6 +490,9 @@ ours. We do not include examples of all types of tracks and conditions. For exam
 we only have 2-way switches while 3-way switches exist, and we have no X-crossings which induce
 other types of anti-collision constraints.
 
+The system should be reactive and event driven.  It should handle notifications from the
+various sensors and act based on them.	It should not use polling.
+
 The system is being designed for personal, local use.  As such no access control is needed and
 data protection, backup, and system integreity are not particularly important.
 ]]></CONTENTS>
