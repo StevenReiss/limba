@@ -154,7 +154,7 @@ LimbaTestCase findTestCase(String nm)
 void process(IvyXmlWriter xw) throws Exception
 {
    ChatMemory history = MessageWindowChatMemory.builder()
-      .maxMessages(10)
+      .maxMessages(20)
       .build();
    
    PriorityQueue<LimbaSolution> finalset = new PriorityQueue<>();

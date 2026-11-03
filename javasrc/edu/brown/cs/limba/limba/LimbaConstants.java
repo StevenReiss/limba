@@ -82,6 +82,15 @@ enum LimbaToolSet {
 }
 
 
+Class<?> [] AGENT_CLASSES = {
+   LimbaTools.class,
+   LimbaToolsDebug.class,
+   LimbaToolsDiad.class,
+   LimbaToolsFait.class,
+   LimbaToolsStack.class,
+   LimbaToolsStruct.class,
+};
+
 
 
 /********************************************************************************/

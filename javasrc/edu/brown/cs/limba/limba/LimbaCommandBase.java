@@ -23,9 +23,7 @@
 package edu.brown.cs.limba.limba;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.http.HttpTimeoutException;
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +37,7 @@ import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
+import edu.brown.cs.limba.specer.SpecerCommand;
 import io.github.ollama4j.exceptions.OllamaBaseException;
 
 
@@ -55,14 +54,7 @@ class LimbaCommandFactory implements LimbaConstants
 private LimbaMain                limba_main;
 private Map<String,ChatMemory>   memory_map;
 
-private static final Class<?> [] AGENT_CLASSES = {
-   LimbaTools.class,
-   LimbaToolsDebug.class,
-   LimbaToolsDiad.class,
-   LimbaToolsFait.class,
-   LimbaToolsStack.class,
-   LimbaToolsStruct.class,
-};
+
       
 
 /********************************************************************************/
@@ -136,6 +128,11 @@ LimbaCommand createCommand(Element xml)
       case "SPECS3" :
       case "SPECS4" :
          return new CommandQuery(cmd,prompt,xml);
+      case "SPEC1" :
+      case "SPEC2" :
+      case "SPEC3" :
+      case "SPEC4" :
+         return new CommandSpec(cmd,prompt,xml);
       case "PROJECT" :
          return new CommandProject(xml);
       case "FIND" :
@@ -297,9 +294,6 @@ private class CommandSetModel extends CommandBase {
 
 
 
-
-
-
 /********************************************************************************/
 /*                                                                              */
 /*      Context and style commands                                              */
@@ -414,16 +408,16 @@ private final class CommandMessage extends CommandBase {
 /*                                                                              */
 /********************************************************************************/
 
-private final class CommandQuery extends CommandBase {
+private class CommandQuery extends CommandBase {
    
-   private String programmer_prompt;
+   protected String programmer_prompt;
    private String command_name;
-   private String query_text;
+   protected String query_text;
    private EnumSet<LimbaToolSet> tool_set;
    private CommandArgs query_context;
-   private boolean no_history;
-   private boolean no_rag;
-   private String limba_model;
+   protected boolean no_history;
+   protected boolean no_rag;
+   protected String limba_model;
    
    CommandQuery(String nm,String prompt,Element xml) {
       super(xml);
@@ -485,38 +479,9 @@ private final class CommandQuery extends CommandBase {
        } 
        
       String resp = null;
-      boolean retrymsg = false;
-      String send = cmd;
-      for (int i = 0; i < 20; ++i) {
-         resp = limba_main.askOllama(send,usectx,
-               history,tool_set,query_context,limba_model,
-               send.equals(cmd));  
-         send = cmd;
-         if (resp != null && 
-               !resp.contains("<function=get") && 
-               !resp.equals(NO_RESPONSE)) {
-            break;
-          }
-         
-         IvyLog.logI("LIMBA","Ollama missed agent call: " + resp);
-         if (resp != null && resp.contains("<function")) {
-            String rply = handleAgentCall(resp);
-            if (rply != null) {
-               send = rply;
-               --i;
-               continue;
-             }
-          }
-         
-         limba_main.transcriptMessage("OLLAMA BAD AGENT CALL");
-         if (!retrymsg && resp != null && !resp.equals(NO_RESPONSE)) {
-            retrymsg = true;
-            cmd += "\nThe previous response included a failed attempt at making an agent call. ";
-            cmd += "Try again.\n";
-            send = cmd;
-          }
-         resp = NO_RESPONSE;
-       }
+     
+      resp = limba_main.askOllamaWithFunctions(cmd,usectx,
+            history,tool_set,query_context,limba_model);
       
       xw.cdataElement("RESPONSE",resp);
       List<String> jcodes = LimbaMain.getJavaCode(resp);
@@ -543,96 +508,48 @@ private final class CommandQuery extends CommandBase {
        }
     }
    
-   private String handleAgentCall(String text)
-   {
-      int idx0 = text.indexOf("<function");
-      int idx1 = text.lastIndexOf("</function>");
-      if (idx0 < 0 || idx1 < 0) return null;
-      text = text.substring(idx0,idx1+11);
-      
-      int idx2 = text.indexOf("=");
-      int idx3 = text.indexOf(">",idx2);
-      String fct = text.substring(idx2+1,idx3).trim();
-      if (fct.isEmpty()) return null;
-      
-      List<String> args = new ArrayList<>();
-      for ( ; ; ) {
-         int idx4 = text.indexOf("<parameter",idx3);
-         if (idx4 < 0) break;
-         int idx5 = text.indexOf(">",idx4);
-         int idx6 = text.indexOf("</parameter",idx4);
-         if (idx5 < 0 || idx6 < 0) return null;
-         String arg = text.substring(idx5+1,idx6).trim();
-         args.add(arg);
-         idx3 = idx6;
-       }
-      
-      Method method = null;
-      Class<?> agent = null;
-      for (Class<?> cls : AGENT_CLASSES) {
-         for (Method m : cls.getMethods()) {
-            if (m.getName().equals(fct)) {
-               agent = cls;
-               method = m;
-               break;
-             }
-          }
-       }
-      if (method == null) return null;
-      if (method.getParameterCount() != args.size()) return null;
-      Object [] argarr = new Object[method.getParameterCount()];
-      Class<?> [] ptyps = method.getParameterTypes();
-      for (int i = 0; i < ptyps.length; ++i) {
-         String arg = args.get(i);
-         if (ptyps[i] == String.class) {
-            argarr[i] = arg;
-          }
-         else if (ptyps[i] == int.class) {
-            try {
-               int v = Integer.parseInt(arg);
-               argarr[i] = v;
-             }
-            catch (NumberFormatException e) {
-               return null;
-             }
-          }
-         else if (ptyps[i] == long.class) {
-            try {
-               long v = Long.parseLong(arg);
-               argarr[i] = v;
-             }
-            catch (NumberFormatException e) {
-               return null;
-             }
-          }
-       }
-      
-      EnumSet<LimbaToolSet> toolset = EnumSet.allOf(LimbaToolSet.class);
-      List<Object> tools = limba_main.getTools(toolset,query_context);
-      Object tool = null;
-      for (Object o : tools) {
-         if (o.getClass() == agent) {
-            tool = o;
-            break;
-          }
-       }
-      if (tool == null) return null;
-      
-      try {
-         Object orslt = method.invoke(tool,argarr);
-         if (orslt != null) {
-            String rslt = orslt.toString();
-            return rslt;
-          }
-       }
-      catch (Throwable t) {
-         IvyLog.logE("LIMBA","Problem invoking tool agent",t);
-       }
-      
-      return null;
-   }
-   
 }       // end of inner class CommandQuery
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Specification commands                                                  */
+/*                                                                              */
+/********************************************************************************/
+
+private class CommandSpec extends CommandQuery {
+   
+   CommandSpec(String nm,String prompt,Element xml) {
+       super(nm,prompt,xml);
+    }
+   
+   @Override public void localProcess(IvyXmlWriter xw) throws Exception {
+      String cmd = query_text;
+      if (programmer_prompt != null) {
+         cmd = programmer_prompt + "\n\n" + query_text;
+       }
+      
+      ChatMemory history = null;
+      if (command_id != null && !no_history) {
+         history = memory_map.get(command_id);
+         if (history == null) {
+            IvyLog.logD("LIMBA","Create new history for " + command_id);
+            history = MessageWindowChatMemory.builder()
+                  .maxMessages(20)
+                  .build();
+            memory_map.put(command_id,history);
+          }
+         IvyLog.logD("LIMBA","Use history " + command_id + " " + history);
+       } 
+      
+      SpecerCommand scmd = new SpecerCommand(limba_main,cmd,history,
+            limba_model);
+      
+      scmd.process(xw);
+    }
+   
+}       // end of inner class CommandSpec
 
 
 
@@ -693,13 +610,11 @@ private class CommandSetupBubbles extends CommandBase {
 
 private class CommandFind extends CommandBase {
 
-   private String use_prompt;
    private LimbaFinder limba_finder;
    
    CommandFind(String prompt,Element xml) {
       super(xml);
-      use_prompt = prompt;
-      limba_finder = new LimbaFinder(limba_main,use_prompt,xml); 
+      limba_finder = new LimbaFinder(limba_main,prompt,xml); 
     }
    
    @Override public String getCommandName()             { return "FIND"; }

@@ -110,7 +110,7 @@
      iterations is explicit and bounded; when indexing an array or a
      list, ensure the index is within bounds.
    </PROMPT>
-   <PROMPT COMMAND='SPECS1'>
+   <PROMPT COMMAND='SPEC1,SPECS1'>
      You are an expert Java programmer with a strong knowledge of Java systems, design,
      and requirements specifications.
 
@@ -125,7 +125,7 @@
 
      The system description is :
    </PROMPT>
-   <PROMPT COMMAND='SPECS2'>
+   <PROMPT COMMAND='SPEC2,SPECS2'>
      You are an expert Java programmer with a strong knowledge of Java systems, design,
      and requirements specifications.
 
@@ -164,7 +164,7 @@
 
      The system description is :
    </PROMPT>
-   <PROMPT COMMAND='SPECS3'>
+   <PROMPT COMMAND='SPEC3,SPECS3'>
      You are an expert Java programmer with a strong knowledge of Java systems, design,
      and requirements specifications.
 

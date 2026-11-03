@@ -14,6 +14,15 @@ Place right brace on a separate line.</STYLE></LIMBA>
 
 
 <LIMBA DO='CLEAR' ID='LIMBA_SPEC_1' />
+<LIMBA DO='SPEC2' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1' MODEL='qwen3.8:27b' >
+  <CONTENTS><![CDATA[
+~ /home/spr/nextgen/spec02.txt
+]]></CONTENTS>
+</LIMBA>
+
+
+
+<LIMBA DO='CLEAR' ID='LIMBA_SPEC_1' />
 <LIMBA DO='SPECS2' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
   <CONTENTS><![CDATA[
 OVERVIEW
@@ -126,6 +135,21 @@ should ensure that a switch is set property before a train can pass over it. It 
 that signals are set correctly and that trains obeyed the signals. It should enforce speed
 limits on specific sections of track (between two specified sensors).
 
+The software should use the signals to ensure no two trains are in the same block.   Each block
+has 3 states: EMPTY, INUSE, and RESERVED; where the RESERVED state is associated with a
+particular train.   Signals can be RED or GREEN.  Each signal is associated with an exit from a
+block and as sensor (point).  The software should determine, based on the current switch
+settings, what block a train would go to from this signal (the target block).  The signal
+should be set to GREEN only if the target block is EMPTY or if the target block is RESERVED for
+a train that is in the current block.  Otherwise it should set it to RED. The software should
+stop a train at the sensor for a RED signal. To facilitate this, it should slow a train down in
+a block where an exit signal is RED. Note that RESERVED state and the target block need to be
+recomputed when the state of a block changes (e.g. when it goes to EMPTY) and when the state of
+switches change.
+
+Switches can be either in state N (normal) or R (reverse).  Generally N means that the
+switch is effectively a straight track while R means it is a curve.
+
 The software should also provide the type of high level control that we envision where one
 could define a route for a train and have the train correctly follow that route while obeying
 the various safety conditions.	It should identify loops from the layout as well as possible
@@ -142,8 +166,11 @@ ours. We do not include examples of all types of tracks and conditions. For exam
 we only have 2-way switches while 3-way switches exist, and we have no X-crossings which induce
 other types of anti-collision constraints.
 
+The system should be reactive and event driven.  It should handle notifications from the
+various sensors and act based on them.	It should not use polling.
+
 The system is being designed for personal, local use.  As such no access control is needed and
-data protection, backup, and system integreity are not particularly important.
+data protection, backup, and system integrity are not particularly important.
 ]]></CONTENTS>
 </LIMBA>
 <LIMBA DO='SPECS3' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1' />
@@ -152,209 +179,296 @@ data protection, backup, and system integreity are not particularly important.
 <LIMBA DO='CLEAR' ID='LIMBA_SPEC_1' />
 <LIMBA DO='SPECS2' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
   <CONTENTS><![CDATA[
-# HO Railroad Control System - Requirements Specification
-
-## 1. SYSTEM OVERVIEW AND SCOPE
+## 1. SYSTEM OVERVIEW AND ARCHITECTURE
 
 ### 1.1 System Purpose
-The HO Railroad Control System provides computer-based control of a complex model railroad
-layout with the capability for both manual and automatic train operation while ensuring safety
-through collision and derailment prevention.
+The HO Railroad Control System provides computer-based control and management of model railroad
+layouts with safety enforcement, automated route following, and manual operation capabilities.
 
-### 1.2 System Scope
-- Control of switches, signals, and trains on complex layout (13 switches, 14 track blocks)
-- Manual and high-level automatic train control interfaces
-- Safety enforcement mechanisms to prevent collisions and derailments
-- Support for multiple layout abstraction layers
-- Generic architecture supporting various railroad layouts
-- Integration with existing hardware including WiFi-enabled controllers
+### 1.2 System Architecture
+- **Core Components**: Layout Abstraction Engine, Data Management System, Hardware
+Communication Layer, Safety Management System, Train Control Module, User Interface Layer
+- **Communication Protocol**: Local WiFi using mDNS discovery and UDP messaging (4-64 byte
+packets)
+- **Deployment Model**: Personal/local use, no network access or security requirements
 
-## 2. SYSTEM COMPONENTS
+## 2. LAYOUT ABSTRACTION AND DATA MANAGEMENT
 
-### 2.1 Layout Abstraction Engine
-- XML-based layout definition parser
-- Coordinate system normalization and track validation
-- Block boundary identification and association
-- Abstract display generation for user interface
-- Route identification and loop detection algorithms
+### 2.1 Layout Description Format
+- **Input Format**: XML files describing layout components
+- **Required Elements**:
+  - Track segments with coordinate points and connections
+  - Switches (Y-shaped) with position definitions and control mappings
+  - Signals with sensor associations and block exit mappings
+  - Sensors (photo-diodes) at key locations
+  - Track blocks with boundary definitions
+  - Block power control information (not controlled by system)
+- **Coordinate System**: Arbitrary coordinate system, not necessarily exact
 
-### 2.2 Hardware Communication Layer
-- mDNS discovery of track controllers over local WiFi
-- UDP message handling for commands and status reports
-- Device connection management and monitoring
-- Command queuing and error handling
-- Sensor data processing with noise filtering
+### 2.2 Layout Processing Requirements
+- **XML Parsing**: Load and parse layout description files
+- **Data Validation**: Validate track connectivity, switch configurations, block boundaries
+- **Layout Consistency**:
+  - Make almost-straight lines straight
+  - Ensure track layout makes logical sense
+  - Associate points with blocks
+  - Detect and report layout inconsistencies
+- **Block Management**:
+  - Define 14 track blocks with independent power control
+  - Map sensors to specific block boundaries
+  - Validate block connectivity and topology
 
-### 2.3 Train Control Module
-- Engine speed and direction control (emulating LocoFi protocol)
-- Route planning and execution engine
-- Automatic train scheduling and pathfinding
-- Speed limit enforcement between sensors
-- Engine state monitoring and reporting
+### 2.3 Data Persistence
+- **State Management**: Load and save system state information
+- **Configuration Storage**: Save layout configurations and user preferences
+- **Backup Mechanisms**: Periodic system state backup capability
 
-### 2.4 Safety Management System
-- Block occupancy detection and management
-- Switch position validation before train passage
-- Signal enforcement and train compliance monitoring
-- Collision prevention algorithms (single train per block)
-- Derailment prevention mechanisms
-- Emergency stop capabilities
+## 3. HARDWARE COMMUNICATION AND CONTROL
 
-### 2.5 User Interface Layer
-- Real-time layout visualization with current state display
-- Manual control of switches, signals, and trains
-- High-level route definition interface
-- Sensor status monitoring
-- Video camera integration for enhanced position tracking
+### 3.1 Device Discovery and Connection
+- **Discovery Protocol**: mDNS over local WiFi network discovery
+- **Device Types**:
+  - Track controllers (3 switches, 8 sensors, 6 signals per controller)
+  - Sensor controllers (up to 40 sensors per controller)
+  - LocoFi engine controllers
+- **Connection Management**: Establish and maintain connections with discovered devices
 
-### 2.6 Data Management System
-- Layout configuration storage and retrieval (XML format)
-- Train movement history logging
-- System state persistence
-- Configuration backup and restore capabilities
+### 3.2 Communication Protocol
+- **Message Format**: UDP packets of 4-64 bytes
+- **Command Types**:
+  - Switch control commands (set position)
+  - Signal control commands (set state)
+  - Engine speed/direction commands
+  - Sensor reporting
+- **Status Reporting**: Device status updates and sensor change notifications
 
-## 3. REQUIREMENTS SPECIFICATIONS
+### 3.3 Hardware Control Operations
+- **Switch Control**:
+  - Set switch positions based on route planning
+  - Validate switch settings before allowing train passage
+- **Signal Control**:
+  - Set signal states (RED/GREEN) based on safety logic
+  - Associate signals with block exits and target blocks
+- **Engine Control**:
+  - Emulate LocoFi phone app interface
+  - Control engine speed and direction
 
-### 3.1 Functional Requirements
+## 4. SAFETY AND SITUATION MANAGEMENT
 
-#### 3.1.1 Layout Abstraction
-- **R-3.1.1**: Parse XML layout definition files containing track points, switches, signals,
-sensors, and block boundaries
-- **R-3.1.2**: Validate track topology for consistency and logical connections
-- **R-3.1.3**: Normalize coordinate system to ensure straight lines appear straight in display
-- **R-3.1.4**: Automatically associate points with track blocks based on sensor locations
-- **R-3.1.5**: Identify and mark loop structures within the layout for route planning
-- **R-3.1.6**: Determine valid starting and ending points for train routes
+### 4.1 Block Management System
+- **Block States**:
+  - EMPTY: No train in block
+  - INUSE: Train currently in block
+  - RESERVED: Block reserved for specific train
+- **State Transitions**:
+  - Automatic state change based on sensor detection
+  - Manual override capability
+- **Block Boundary Detection**:
+  - Use photo-diode sensors at block boundaries
+  - Handle false positive/negative sensor outputs
 
-#### 3.1.2 Hardware Integration
-- **R-3.1.7**: Discover track controllers using mDNS over local WiFi network
-- **R-3.1.8**: Establish stable UDP communication channels with all controllers
-- **R-3.1.9**: Send control commands (switch set, signal set, engine speed/direction) to
-appropriate controllers
-- **R-3.1.10**: Receive and process sensor status reports from controllers
-- **R-3.1.11**: Handle intermittent communication failures with graceful degradation
-- **R-3.1.12**: Implement message acknowledgment and retransmission for critical commands
+### 4.2 Signal Control Logic
+- **Signal State Determination**:
+  - GREEN: Target block is EMPTY or RESERVED for current train
+  - RED: Target block is INUSE by different train
+- **Signal Assignment**:
+  - Associate each signal with specific block exit and sensor point
+  - Compute target blocks based on current switch settings
+- **Train Stopping**:
+  - Stop trains at sensors before RED signals
+  - Slow trains in blocks with RED exit signals
 
-#### 3.1.3 Train Control
-- **R-3.1.13**: Provide engine control interface similar to LocoFi mobile app
-- **R-3.1.14**: Support speed and direction control for individual engines
-- **R-3.1.15**: Implement automatic route execution with pathfinding algorithms
-- **R-3.1.16**: Enforce speed limits between specified sensor points
-- **R-3.1.17**: Track train positions within the abstract layout space
-- **R-3.1.18**: Support multiple trains operating simultaneously on different routes
+### 4.3 Collision Prevention
+- **Block-Based Safety**: Prevent two trains in same block simultaneously
+- **Switch Verification**: Ensure switches are set correctly before train passage
+- **Signal Enforcement**: Enforce signal compliance for train movement
+- **Speed Limit Management**: Apply speed limits on specific track sections
 
-#### 3.1.4 Safety Management
-- **R-3.1.19**: Prevent multiple trains from occupying the same track block simultaneously
-- **R-3.1.20**: Validate switch positions before allowing train passage through switches
-- **R-3.1.21**: Monitor signal states and ensure trains respect signal indications
-- **R-3.1.22**: Implement speed limit enforcement for specific track sections
-- **R-3.1.23**: Detect and prevent potential collision scenarios
-- **R-3.1.24**: Handle sensor false positives and negatives with error correction mechanisms
+## 5. TRAIN CONTROL AND ROUTE PLANNING
 
-#### 3.1.5 User Interface
-- **R-3.1.25**: Display real-time layout state with visual representation of switches, signals,
-and trains
-- **R-3.1.26**: Provide manual control interface for switches, signals, and engines
-- **R-3.1.27**: Enable high-level route definition through intuitive graphical interface
-- **R-3.1.28**: Show sensor status and error conditions to user
-- **R-3.1.29**: Integrate video camera feed for enhanced train position tracking when available
+### 5.1 Manual Train Control
+- **Engine Interface**:
+  - Speed control (0-100%)
+  - Direction control (forward/reverse)
+  - Emergency stop functionality
+- **Control Emulation**:
+  - Replicate LocoFi phone app messaging interface
+  - Support all standard engine control commands
 
-### 3.2 Non-Functional Requirements
+### 5.2 Automated Route Following
+- **Route Definition**:
+  - Define routes for trains using abstract layout coordinates
+  - Specify starting and ending points
+- **Loop Detection**: Identify loops in the layout topology
+- **Route Planning**:
+  - Compute optimal paths between specified points
+  - Handle multiple possible routes
+- **Safety Integration**:
+  - Ensure route following maintains safety constraints
+  - Adjust routes dynamically based on current conditions
 
-#### 3.2.1 Performance
-- **R-3.2.1**: Real-time response time for sensor data processing (<50ms)
-- **R-3.2.2**: Command execution latency for control operations (<100ms)
-- **R-3.2.3**: Support for real-time display updates (30+ FPS)
-- **R-3.2.4**: Efficient route planning algorithms for complex layouts
+### 5.3 Route Execution
+- **Step-by-Step Movement**: Execute routes one segment at a time
+- **Switch Management**: Automatically set switches required for route
+- **Signal Coordination**: Coordinate with signal system during route execution
+- **Dynamic Adaptation**: Modify route execution in response to changing conditions
 
-#### 3.2.2 Reliability
-- **R-3.2.5**: System stability with no user intervention required for normal operation
-- **R-3.2.6**: Graceful degradation when hardware components fail
-- **R-3.2.7**: Automatic recovery from communication failures
-- **R-3.2.8**: Data integrity maintenance during system operation
+## 6. SENSOR MANAGEMENT AND ERROR CORRECTION
 
-#### 3.2.3 Safety and Security
-- **R-3.2.9**: Complete prevention of train collisions through block occupancy management
-- **R-3.2.10**: Prevention of derailments through proper switch positioning enforcement
-- **R-3.2.11**: Emergency stop capability for immediate system halt
-- **R-3.2.12**: No external access control required (local use only)
+### 6.1 Sensor Data Processing
+- **Sensor Integration**:
+  - Handle 8 sensors per track controller
+  - Handle up to 40 sensors per sensor controller
+- **Data Quality Management**:
+  - Detect and correct false positive/negative readings
+  - Implement sensor redundancy strategies
+- **Position Estimation**:
+  - Estimate train positions in unsensed sections
+  - Use historical data for position prediction
 
-#### 3.2.4 Extensibility
-- **R-3.2.13**: Generic architecture supporting different types of track layouts
-- **R-3.2.14**: Support for additional switch types (3-way, X-crossings)
-- **R-3.2.15**: Modular design allowing addition of new hardware controllers
-- **R-3.2.16**: Configurable sensor types and integration capabilities
+### 6.2 Error Correction Capabilities
+- **Sensor Validation**:
+  - Cross-reference multiple sensors for verification
+  - Implement consistency checking algorithms
+- **False Reading Handling**:
+  - Filter out spurious sensor readings
+  - Apply temporal smoothing techniques
+- **Recovery Mechanisms**:
+  - Reinitialize sensor states when errors detected
+  - Maintain system reliability despite sensor imperfections
 
-#### 3.2.5 Usability
-- **R-3.2.17**: Intuitive graphical user interface for manual control operations
-- **R-3.2.18**: Clear visual feedback for all system states and operations
-- **R-3.2.19**: Easy route definition and modification capabilities
-- **R-3.2.20**: Comprehensive error reporting and troubleshooting information
+## 7. USER INTERFACE REQUIREMENTS
 
-### 3.3 Data Requirements
+### 7.1 Display Abstraction
+- **Visual Layout**:
+  - Abstract representation of physical layout
+  - Homomorphic mapping to actual track configuration
+  - Support for multiple display views
+- **Component Visualization**:
+  - Switch positions (current state)
+  - Signal states (RED/GREEN)
+  - Train positions and movement indicators
+  - Block status indicators
 
-#### 3.3.1 Layout Data
-- **R-3.3.1**: XML configuration files describing track topology
-- **R-3.3.2**: Coordinate point definitions for all layout elements
-- **R-3.3.3**: Switch configuration and control mappings
-- **R-3.3.4**: Sensor placement and identification data
-- **R-3.3.5**: Block boundary definitions and associated track segments
+### 7.2 Control Interface
+- **Manual Controls**:
+  - Direct switch position control
+  - Signal state setting
+  - Engine speed/direction control
+- **Route Planning Tools**:
+  - Route definition interface
+  - Start/stop route execution
+  - Route modification capabilities
+- **Status Monitoring**:
+  - Real-time system status display
+  - Error and warning notifications
+  - Historical data access
 
-#### 3.3.2 System State Data
-- **R-3.3.6**: Current switch positions (active/inactive)
-- **R-3.3.7**: Signal states (red/yellow/green/unknown)
-- **R-3.3.8**: Train positions within abstract layout space
-- **R-3.3.9**: Block occupancy status (occupied/free)
-- **R-3.3.10**: Engine speed and direction settings
+## 8. EXTENSIBILITY AND FLEXIBILITY
 
-### 3.4 Interface Requirements
+### 8.1 Layout Flexibility
+- **Component Support**:
+  - Handle different switch types (2-way, 3-way)
+  - Support various track configurations
+  - Accommodate X-crossings and other complex geometries
+- **Configuration Management**:
+  - Support for multiple layout configurations
+  - Easy configuration switching
 
-#### 3.4.1 User Interface
-- **R-3.4.1**: Graphical display of abstract layout with current state visualization
-- **R-3.4.2**: Interactive controls for switches, signals, and train operations
-- **R-3.4.3**: Route definition and execution interface
-- **R-3.4.4**: Sensor status monitoring panel
-- **R-3.4.5**: Video feed integration with position tracking overlay
+### 8.2 Video Integration
+- **Camera Interface**:
+  - Integrate video feeds from track cameras
+  - Provide enhanced train position detection
+- **Visibility Limitations**:
+  - Handle tunnel and obscured sections
+  - Combine camera data with sensor information
+- **Fallback Mechanisms**:
+  - Operate without camera integration
+  - Use sensor data as primary source
 
-#### 3.4.2 Hardware Interface
-- **R-3.4.6**: mDNS discovery protocol implementation for device detection
-- **R-3.4.7**: UDP communication layer for command and status transmission
-- **R-3.4.8**: Command message format specification for controller compatibility
-- **R-3.4.9**: Status report format for sensor and device state information
+## 9. SYSTEM OPERATIONS AND EVENTS
 
-## 4. SYSTEM CONSTRAINTS
+### 9.1 Event-Driven Architecture
+- **Real-time Processing**:
+  - React to sensor changes immediately
+  - Process device status updates asynchronously
+- **Notification System**:
+  - Push notifications for system events
+  - Alert mechanisms for safety violations
+- **Event Queue Management**:
+  - Prioritize critical safety events
+  - Handle concurrent event processing
 
-### 4.1 Hardware Constraints
-- **C-4.1**: Existing layout uses WiFi-enabled controllers with UDP communication protocol
-- **C-4.2**: Switches are limited to 13 physical switches with specific control requirements
-- **C-4.3**: Track blocks defined by sensor placement and connection topology
-- **C-4.4**: Video camera integration is optional but supported
+### 9.2 System Responsiveness
+- **Latency Requirements**:
+  - Real-time response to sensor changes
+  - Immediate command execution
+- **Resource Management**:
+  - Efficient memory usage
+  - Optimize processing for real-time constraints
 
-### 4.2 Operational Constraints
-- **C-4.5**: System designed for local network operation only (no external access)
-- **C-4.6**: Real-time safety enforcement required for collision prevention
-- **C-4.7**: No data backup or integrity protection requirements
-- **C-4.8**: No concurrent user access restrictions
+## 10. PERFORMANCE AND RELIABILITY REQUIREMENTS
 
-### 4.3 Development Constraints
-- **C-4.9**: Must support existing LocoFi protocol for engine control
-- **C-4.10**: XML-based configuration format required for layout definition
-- **C-4.11**: No external dependencies or third-party software requirements
-- **C-4.12**: Local system performance optimization required
+### 10.1 System Reliability
+- **Stable Operation**:
+  - Continuous operation without system crashes
+  - Graceful handling of hardware failures
+- **Fault Tolerance**:
+  - Continue operation with degraded sensor performance
+  - Maintain safety enforcement despite individual component failures
 
-## 5. ASSUMPTIONS AND DEPENDENCIES
+### 10.2 Performance Characteristics
+- **Response Time**:
+  - Sensor event processing within 50ms
+  - Command execution within 100ms
+- **Throughput**:
+  - Handle multiple concurrent trains
+  - Process sensor updates at required frequency
+- **Scalability**:
+  - Support for expanded layout configurations
+  - Efficient handling of increased component counts
 
-### 5.1 Assumptions
-- **A-5.1**: All hardware controllers will support standard UDP communication protocol
-- **A-5.2**: Network connectivity will be stable for local operation
-- **A-5.3**: Users will have basic understanding of railroad operations and terminology
-- **A-5.4**: Layout topology will remain relatively static during system operation
+## 11. SYSTEM INTEGRATION REQUIREMENTS
 
-### 5.2 Dependencies
-- **D-5.1**: Successful hardware discovery requires active network connectivity
-- **D-5.2**: Sensor data accuracy depends on proper physical sensor placement
-- **D-5.3**: Route planning algorithms depend on accurate layout topology data
-- **D-5.4**: Video integration requires compatible camera hardware and drivers
+### 11.1 Hardware Integration
+- **Controller Compatibility**:
+  - Support all track controllers (3 switches, 8 sensors, 6 signals)
+  - Support sensor controllers (40 sensors)
+  - Integrate with LocoFi engine controllers
+- **Network Integration**:
+  - Local WiFi network communication
+  - mDNS discovery compatibility
+
+### 11.2 Software Integration
+- **External Dependencies**:
+  - Minimal external libraries required
+  - Standard networking and XML processing libraries
+- **API Compatibility**:
+  - Support for LocoFi protocol emulation
+  - Extensible architecture for future enhancements
+
+## 12. TESTING AND VALIDATION
+
+### 12.1 Safety Validation
+- **Collision Prevention Testing**:
+  - Verify block-based safety enforcement
+  - Test switch verification logic
+  - Validate signal control algorithms
+- **Sensor Error Handling**:
+  - Test false positive/negative handling
+  - Validate error recovery mechanisms
+
+### 12.2 Functional Testing
+- **Route Following Validation**:
+  - Test automated route execution
+  - Verify safety constraint enforcement
+- **Interface Testing**:
+  - Validate user control capabilities
+  - Test display accuracy and responsiveness
+
+This comprehensive requirement specification ensures the HO Railroad Control System meets all
+functional, safety, and operational needs while maintaining flexibility for future
+enhancements.
 ]]></CONTENTS>
 </LIMBA>
 <LIMBA DO='SPECS3' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1' />
@@ -474,6 +588,21 @@ should ensure that a switch is set property before a train can pass over it. It 
 that signals are set correctly and that trains obeyed the signals. It should enforce speed
 limits on specific sections of track (between two specified sensors).
 
+The software should use the signals to ensure no two trains are in the same block.   Each block
+has 3 states: EMPTY, INUSE, and RESERVED; where the RESERVED state is associated with a
+particular train.   Signals can be RED or GREEN.  Each signal is associated with an exit from a
+block and as sensor (point).  The software should determine, based on the current switch
+settings, what block a train would go to from this signal (the target block).  The signal
+should be set to GREEN only if the target block is EMPTY or if the target block is RESERVED for
+a train that is in the current block.  Otherwise it should set it to RED. The software should
+stop a train at the sensor for a RED signal. To facilitate this, it should slow a train down in
+a block where an exit signal is RED. Note that RESERVED state and the target block need to be
+recomputed when the state of a block changes (e.g. when it goes to EMPTY) and when the state of
+switches change.
+
+Switches can be either in state N (normal) or R (reverse).  Generally N means that the
+switch is effectively a straight track while R means it is a curve.
+
 The software should also provide the type of high level control that we envision where one
 could define a route for a train and have the train correctly follow that route while obeying
 the various safety conditions.	It should identify loops from the layout as well as possible
@@ -494,6 +623,6 @@ The system should be reactive and event driven.  It should handle notifications 
 various sensors and act based on them.	It should not use polling.
 
 The system is being designed for personal, local use.  As such no access control is needed and
-data protection, backup, and system integreity are not particularly important.
+data protection, backup, and system integrity are not particularly important.
 ]]></CONTENTS>
 </LIMBA>

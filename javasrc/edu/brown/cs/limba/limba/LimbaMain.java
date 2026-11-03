@@ -24,11 +24,12 @@ package edu.brown.cs.limba.limba;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.io.Reader;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -45,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -70,10 +72,12 @@ import io.github.ollama4j.OllamaAPI;
 import io.github.ollama4j.models.response.Model;
 import io.github.ollama4j.utils.Options;
 import io.github.ollama4j.utils.OptionsBuilder;
+
 import edu.brown.cs.ivy.exec.IvyExec;
 import edu.brown.cs.ivy.file.IvyFile;
 import edu.brown.cs.ivy.file.IvyFileLocker;
 import edu.brown.cs.ivy.file.IvyFormat;
+import edu.brown.cs.ivy.file.IvyIncludeReader;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.jcomp.JcompControl;
 import edu.brown.cs.ivy.mint.MintControl;
@@ -518,8 +522,15 @@ String getPrompt(String cmd)
    String ptxt = null;
    for (Element pmpt : IvyXml.children(xml,"PROMPT")) {
       String what = IvyXml.getAttrString(pmpt,"COMMAND");
+      Set<String> whats = new HashSet<>();
+      if (what != null) {
+         StringTokenizer tok = new StringTokenizer(what," ,;");
+         while (tok.hasMoreTokens()) {
+            whats.add(tok.nextToken());
+          }
+       }
       if (what == null) base = IvyXml.getText(pmpt).trim();
-      else if (what.equals(cmd)) {
+      else if (what.equals(cmd) || whats.contains(cmd)) {
          ptxt = IvyXml.getText(pmpt).trim();
          if (IvyXml.getAttrBool(pmpt,"COMPLETE")) {
             base = null;
@@ -732,7 +743,7 @@ private void process()
     }
 
    if (input_file != null) {
-      try (FileReader fr = new FileReader(input_file)) {
+      try (Reader fr = new IvyIncludeReader(input_file.getPath())) {
          processXmlFile(fr);
        }
       catch (IOException e) {
@@ -861,7 +872,7 @@ void transcriptMessage(String cnts)
 /*                                                                              */
 /********************************************************************************/
 
-private void processXmlFile(FileReader fr)
+private void processXmlFile(Reader fr)
 {
    try (IvyXmlReader xr = new IvyXmlReader(fr)) {
       for ( ; ; ) {
@@ -1065,6 +1076,140 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
    String rslt = NO_RESPONSE;
    transcriptResponse(rslt);
    return rslt;
+}
+
+
+
+public String askOllamaWithFunctions(String cmd,boolean usectx,
+      ChatMemory history,EnumSet<LimbaToolSet> tools,Map<String,?> context,String model)
+   throws Exception
+{
+   String send = cmd;
+   String resp = null;
+   boolean retrymsg = false;
+   for (int i = 0; i < 20; ++i) {
+      resp = askOllama(send,usectx,
+            history,tools,
+            context,model,
+            send.equals(cmd));  
+      send = cmd;
+      if (resp != null && 
+            !resp.contains("<function=get") && 
+            !resp.equals(NO_RESPONSE)) {
+         break;
+       }
+      
+      IvyLog.logI("LIMBA","Ollama missed agent call: " + resp);
+      if (resp != null && resp.contains("<function")) {
+         String rply = handleAgentCall(resp,context);
+         if (rply != null) {
+            send = rply;
+            --i;
+            continue;
+          }
+       }
+      
+      transcriptMessage("OLLAMA BAD AGENT CALL");
+      if (!retrymsg && resp != null && !resp.equals(NO_RESPONSE)) {
+         retrymsg = true;
+         cmd += "\nThe previous response included a failed attempt at making an agent call. ";
+         cmd += "Try again.\n";
+         send = cmd;
+       }
+      resp = NO_RESPONSE;
+    }
+   
+   return resp;
+}
+
+
+private String handleAgentCall(String text,Map<String,?> context)
+{
+   int idx0 = text.indexOf("<function");
+   int idx1 = text.lastIndexOf("</function>");
+   if (idx0 < 0 || idx1 < 0) return null;
+   text = text.substring(idx0,idx1+11);
+   
+   int idx2 = text.indexOf("=");
+   int idx3 = text.indexOf(">",idx2);
+   String fct = text.substring(idx2+1,idx3).trim();
+   if (fct.isEmpty()) return null;
+   
+   List<String> args = new ArrayList<>();
+   for ( ; ; ) {
+      int idx4 = text.indexOf("<parameter",idx3);
+      if (idx4 < 0) break;
+      int idx5 = text.indexOf(">",idx4);
+      int idx6 = text.indexOf("</parameter",idx4);
+      if (idx5 < 0 || idx6 < 0) return null;
+      String arg = text.substring(idx5+1,idx6).trim();
+      args.add(arg);
+      idx3 = idx6;
+    }
+   
+   Method method = null;
+   Class<?> agent = null;
+   for (Class<?> cls : AGENT_CLASSES) {
+      for (Method m : cls.getMethods()) {
+         if (m.getName().equals(fct)) {
+            agent = cls;
+            method = m;
+            break;
+          }
+       }
+    }
+   if (method == null) return null;
+   if (method.getParameterCount() != args.size()) return null;
+   Object [] argarr = new Object[method.getParameterCount()];
+   Class<?> [] ptyps = method.getParameterTypes();
+   for (int i = 0; i < ptyps.length; ++i) {
+      String arg = args.get(i);
+      if (ptyps[i] == String.class) {
+         argarr[i] = arg;
+       }
+      else if (ptyps[i] == int.class) {
+         try {
+            int v = Integer.parseInt(arg);
+            argarr[i] = v;
+          }
+         catch (NumberFormatException e) {
+            return null;
+          }
+       }
+      else if (ptyps[i] == long.class) {
+         try {
+            long v = Long.parseLong(arg);
+            argarr[i] = v;
+          }
+         catch (NumberFormatException e) {
+            return null;
+          }
+       }
+    }
+   
+   EnumSet<LimbaToolSet> toolset = EnumSet.allOf(LimbaToolSet.class);
+   List<Object> tools = getTools(toolset,context);
+   Object tool = null;
+   for (Object o : tools) {
+      if (o.getClass() == agent) {
+         tool = o;
+         break;
+       }
+    }
+   if (tool == null) return null;
+   
+   try {
+      Object orslt = method.invoke(tool,argarr);
+      if (orslt != null) {
+         String rslt = orslt.toString();
+         return rslt;
+       }
+    }
+   catch (Throwable t) {
+      IvyLog.logE("LIMBA","Problem invoking tool agent",t);
+    }
+   
+   return null;
 }
 
 
@@ -1312,7 +1457,7 @@ private static final class EmptyContentRetriever implements ContentRetriever {
 /*                                                                              */
 /********************************************************************************/
 
-static List<String> getJavaCode(String resp)
+public static List<String> getJavaCode(String resp)
 {
    return getCodeType(resp,"java",false);
 }
@@ -1399,7 +1544,7 @@ private static void extractFragments(String text,List<String> rslt)
 }
 
 
-static Map<String,String> getJavaDoc(String resp,boolean json)
+public static Map<String,String> getJavaDoc(String resp,boolean json)
 {
    Map<String,String> jcodes = null;
    if (json) jcodes = checkForJson(resp);
