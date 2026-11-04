@@ -509,7 +509,7 @@ Map<String,LimbaModelType> listModels()
 }
 
 
-String getPrompt(String cmd)
+public String getPrompt(String cmd)
 {
    InputStream ins = getClass().getClassLoader().getResourceAsStream("resources/prompts.xml");
    if (ins == null) {
@@ -792,6 +792,7 @@ void transcriptStart(String nm,boolean append)
          transcript("<html>");
        }
       transcriptMessage(new Date().toString());
+      transcriptModel();
     }
    catch (IOException e) {
       IvyLog.logE("LIMBA","Can't open transcript file " + ft);
@@ -1099,17 +1100,21 @@ public String askOllamaWithFunctions(String cmd,boolean usectx,
          break;
        }
       
-      IvyLog.logI("LIMBA","Ollama missed agent call: " + resp);
       if (resp != null && resp.contains("<function")) {
          String rply = handleAgentCall(resp,context);
+         transcriptMessage("OLLAMA BAD AGENT CALL");
+         IvyLog.logI("LIMBA","Ollama missed agent call: " + resp);
          if (rply != null) {
             send = rply;
             --i;
             continue;
           }
        }
+      else if (resp == null || resp.contains("No response form LLM")) {
+         IvyLog.logI("LIMBA","Ollama no response from LLM: " + resp);
+         transcriptMessage("OLLAMA -- NO RESONSE FROM LLM");
+       }
       
-      transcriptMessage("OLLAMA BAD AGENT CALL");
       if (!retrymsg && resp != null && !resp.equals(NO_RESPONSE)) {
          retrymsg = true;
          cmd += "\nThe previous response included a failed attempt at making an agent call. ";

@@ -127,11 +127,21 @@ LimbaCommand createCommand(Element xml)
       case "SPECS2" :
       case "SPECS3" :
       case "SPECS4" :
+      case "SPECS5" :
+      case "SPECS6" :
+      case "SPECS7" :
+      case "SPECS8" :
+      case "SPECS9" :
          return new CommandQuery(cmd,prompt,xml);
       case "SPEC1" :
       case "SPEC2" :
       case "SPEC3" :
       case "SPEC4" :
+      case "SPEC5" :
+      case "SPEC6" :
+      case "SPEC7" :
+      case "SPEC8" :
+      case "SPEC9" :
          return new CommandSpec(cmd,prompt,xml);
       case "PROJECT" :
          return new CommandProject(xml);
@@ -461,7 +471,12 @@ private class CommandQuery extends CommandBase {
       String cmd = query_text;
       boolean usectx = false;
       if (programmer_prompt != null) {
-         cmd = programmer_prompt + "\n\n" + query_text;
+         if (query_text == null) {
+            cmd = programmer_prompt;
+          }
+         else {         
+            cmd = programmer_prompt + "\n\n" + query_text;
+          }
          if (!no_rag) usectx = true;
        }
      
@@ -708,7 +723,7 @@ private class CommandDebugRemove extends CommandBase {
 
 
 
-}       // end of class LimbaCommandBase
+}       // end of class LimbaCommandFacotry
 
 
 

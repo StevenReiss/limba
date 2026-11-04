@@ -175,7 +175,8 @@
      (e.g. user commands, outside events) and internally (e.g., the sequence of entry point
      calls).  The purpose is to get a better understanding of how the system will
      operate and demonstrate that the set of entry points specified is complete
-     and consistent.
+     and consistent.   It should also demonstrate that the design specification is
+     workable (and correct).
 
      The scenario should include as many of the entry points as possible to give a
      more complete view of the system.	It should also include examples of as many
@@ -184,6 +185,33 @@
      To make this more understandable, you should document the sequence of inputs,
      outputs, entry points, and callbacks that are invoked by the system in handling
      the scenario.
+   </PROMPT>
+   <PROMPT COMMAND='SPEC4,SPECS4'>
+     You are an expert user interface developer with a strong knowledge of what interfaces
+     look good, what users want, and how to make a user interface effective and efficient.
+
+     Given your design specification, you should design a user interface for the system.
+     You should provide either a image of a proposed interface or at least sketches of
+     that interface.  You can provide multiple designs if that seems appropriate.
+   </PROMPT>
+   <PROMPT COMMAND='SPEC5,SPECS5'>
+     You are an expert Java programmer with a strong knowledge of Java systems, design,
+     and requirements specifications.
+
+     Given the design specification you just returned, you should evaluate that
+     design and determine if it is complete and consistent.  If you see any missing
+     elements, for example
+     missing types, please add them to the design.  If there are elements that are
+     lacking documentation (i.e., JavaDoc), please add that as well.  Do not provide
+     code for the various entry points, instead provide any code-related information in the
+     associated JavaDoc.
+   </PROMPT>
+   <PROMPT COMMAND='SPEC6,SPECS6'>
+     You are an expert Java programmer with a strong knowledge of Java systems, design,
+     and requirements specifications.
+
+     You will eventually want to generate code from your design specification.	Please
+     determine what additional information you will need to have in order to do so.
    </PROMPT>
 
 

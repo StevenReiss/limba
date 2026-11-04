@@ -39,8 +39,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
-
+import java.util.Set;
 
 import dev.langchain4j.memory.ChatMemory;
 import edu.brown.cs.ivy.file.IvyLog;
@@ -90,12 +92,64 @@ public SpecerCommand(LimbaMain lm,String cnts,ChatMemory history,String model)
 
 public void process(IvyXmlWriter xw) throws Exception 
 {
-   String resp = limba_main.askOllamaWithFunctions(cmd_contents,
-         false,cmd_history,
-         EnumSet.noneOf(LimbaToolSet.class),null,
-         limba_model);
-   
+   String ask = cmd_contents;
+   Set<String> priorerrs = new HashSet<>();
+   for (int i = 0; i < 3; ++i) {
+      String resp = limba_main.askOllamaWithFunctions(ask,
+            false,cmd_history,
+            EnumSet.noneOf(LimbaToolSet.class),null,
+            limba_model);
+      
+      String code = getCode(resp);
+      if (code == null) {
+         ask = "You were supposed to provide a functional description " +
+            "in terms of Java interfaces with appropriate JavaDoc.\n" +
+            "Please try again.";
+         continue;
+       }
+      
+      IvyLog.logD("SPECER","Work on specification:\n " + code);
+      
+      SpecerChecker chk = new SpecerChecker(code);
+      List<String> errs = chk.process();
+      for (Iterator<String> it = errs.iterator(); it.hasNext(); ) {
+         String e = it.next();
+         if (!priorerrs.add(e)) {
+            IvyLog.logD("SPECER","Remove duplicate error " + e);
+            it.remove();
+          }
+       }
+      
+      IvyLog.logD("SPECER","Errors detected: " + errs);
+      
+      if (i == 1) errs.clear();
+      
+      if (errs.isEmpty()) {
+         code = checkWithLLM(code);
+         xw.begin("SPECIFICATION");
+         xw.textElement("CONTENTS",code);
+         xw.end("SPECIFICATION");
+         return;
+       }
+      
+      StringBuffer buf = new StringBuffer();
+      buf.append("That specification is incomplete.  Please address the ");
+      buf.append("following issues and regenerate it.  Remember that the ");
+      buf.append("output should be Java abstract classes, interfaces, enums ");
+      buf.append("and JavaDoc.  Include all the code from the previous ");
+      buf.append("specification, augmented as necessary.  The problems are: ");
+      for (String s : errs) {
+         buf.append("\n * " + s + "\n");
+       }
+      ask = buf.toString();
+    }
+}
+
+
+private String getCode(String resp)
+{
    List<String> jcodes = LimbaMain.getJavaCode(resp);
+   if (jcodes == null || jcodes.isEmpty()) return null;
    String prefix = getPrefix(resp);
    StringBuffer code = new StringBuffer();
    if (prefix != null) {
@@ -107,21 +161,49 @@ public void process(IvyXmlWriter xw) throws Exception
    
    for (String jc : jcodes) {
       code.append("\n\n");
-      code.append(jc);
+      int idx = jc.indexOf("{");
+      boolean embed = false;
+      if (idx < 0) embed = true;
+      else {
+         int idx1 = jc.indexOf("class");
+         int idx2 = jc.indexOf("interface");
+         int idx3 = jc.indexOf("enum");
+         if (idx1 < 0) idx1 = idx+10;
+         if (idx2 < 0) idx2 = idx+10;
+         if (idx3 < 0) idx3 = idx+10;
+         idx1 = Math.min(idx1,idx2);
+         idx1 = Math.min(idx1,idx3);
+         if (idx1 > idx) embed = true;
+       }
+      if (embed) {
+         IvyLog.logD("SPECER","Code skipped: " + jc);
+       }
+      else {
+         jc = jc.replace("##","//");
+//       jc = jc.replaceAll("^\\*\\* ","//*");
+         code.append(jc);
+       }
     }
    
-   IvyLog.logD("SPECER","Work on specification:\n " + code);
-   
-   SpecerChecker chk = new SpecerChecker(code.toString());
-   List<String> errs = chk.process();
-   
-   if (errs.isEmpty()) {
-      xw.begin("SPECIFICATION");
-      xw.textElement("CONTENTS",code);
-      xw.end("SPECIFICATION");
-    }
-   
+   return code.toString();
 }
+
+
+private String checkWithLLM(String code) throws Exception
+{
+   String ask = limba_main.getPrompt("SPEC5");
+   ask += "\nPlease return the complete refined design";
+   String resp = limba_main.askOllamaWithFunctions(ask,
+         false,cmd_history,
+         EnumSet.noneOf(LimbaToolSet.class),null,
+         limba_model);
+   
+   String code1 = getCode(resp);
+   if (code1 == null) return code;
+   
+   return code1;
+}
+
 
 
 private String getPrefix(String resp)
