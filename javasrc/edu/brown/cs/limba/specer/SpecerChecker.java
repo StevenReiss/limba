@@ -50,7 +50,10 @@ import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.Message;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.ParameterizedType;
+import org.eclipse.jdt.core.dom.RecordDeclaration;
 import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
 import edu.brown.cs.ivy.jcomp.JcompAst;
@@ -140,6 +143,10 @@ private void addErrors(CompilationUnit cu,List<String> errors)
    CheckMissingJavaDoc mjd = new CheckMissingJavaDoc(cu,errors);
    mjd.process();
    
+   
+   CheckNotInterface cni = new CheckNotInterface(cu,errors);
+   cni.process();
+   
    // check that there are methods that return items of each type
    //    that isn't an enum, exception, or callback for items that
    //    are used as parameters
@@ -222,7 +229,8 @@ private class CheckTypesDefined extends ASTVisitor {
    void process() {
       comp_unit.accept(this);
       for (String bt : bad_types) {
-         String err = "The type " + bt + " is not defined.";
+         String err = "The type " + bt + " is not defined. " + 
+            "Please include it as well as appropriate JavaDoc";
          error_list.add(err);
        }
       if (uses_object) {
@@ -261,7 +269,7 @@ private class CheckTypesDefined extends ASTVisitor {
        }
     }
    
-}       // end of inner class CheckTypesDefines
+}       // end of inner class CheckTypesDefined
 
 
 
@@ -310,7 +318,57 @@ private class CheckMissingJavaDoc extends ASTVisitor {
        }
     }
 
-}       // end of inner class CheckTypesDefines
+}       // end of inner class CheckMissingJavaDoc
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Check for missing JavaDoc                                               */
+/*                                                                              */
+/********************************************************************************/
+
+private class CheckNotInterface extends ASTVisitor {
+   
+   private CompilationUnit comp_unit;
+   private List<String> error_list;
+   
+   CheckNotInterface(CompilationUnit cu,List<String> errs) {
+      comp_unit = cu;
+      error_list = errs;
+    }
+   
+   void process() {
+      comp_unit.accept(this);
+    }
+   
+   @Override public void endVisit(RecordDeclaration rd) {
+      String msg = "You should generate an interface not a record for " +
+         rd.getName().getIdentifier();
+      error_list.add(msg);
+    }
+   
+   @Override public void endVisit(TypeDeclaration td) {
+      if (td.isInterface()) return;
+      Type t = td.getSuperclassType();
+      if (t != null) {
+         String tnm = t.toString();
+         if (tnm.contains("Exception")) return;
+       }
+      for (Object o : td.bodyDeclarations()) {
+         if (o instanceof MethodDeclaration) {
+            MethodDeclaration md = (MethodDeclaration) o;
+            if (md.getName().getIdentifier().equals("equals")) return;
+          }
+       }
+      String msg = "You should generate an interface not a class for " +
+         td.getName().getIdentifier() + ".\nJust generate getters and setters " +
+         "as part of the interface here.  Suggested fields can be provided " +
+         "with comments.";
+      error_list.add(msg);
+    }
+   
+}       // end of inner class CheckNotInterface
 
 
 

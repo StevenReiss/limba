@@ -21,6 +21,16 @@ Place right brace on a separate line.</STYLE></LIMBA>
 ~ /home/spr/nextgen/spec02.txt
 ]]></CONTENTS>
 </LIMBA>
+<LIMBA DO='SPECS3' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
+  <CONTENTS><![CDATA[
+~ /home/spr/nextgen/scene01.txt
+]]></CONTENTS>
+</LIMBA>
+<LIMBA DO='SPECS7' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
+  <CONTENTS><![CDATA[
+~ /home/spr/nextgen/spec02.txt
+]]></CONTENTS>
+</LIMBA>
 
 
 
@@ -30,7 +40,20 @@ Place right brace on a separate line.</STYLE></LIMBA>
 ~ /home/spr/nextgen/spec02.txt
 ]]></CONTENTS>
 </LIMBA>
-<LIMBA DO='SPECS3' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1' />
+<LIMBA DO='SPECS3' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
+  <CONTENTS><![CDATA[
+~ /home/spr/nextgen/scene01.txt
+]]></CONTENTS>
+</LIMBA>
+<LIMBA DO='SPECS7' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
+  <CONTENTS><![CDATA[
+~ /home/spr/nextgen/spec02.txt
+]]></CONTENTS>
+</LIMBA>
+
+
+
+
 <LIMBA DO='SPECS4' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1' >
   <CONTENTS><![CDATA[
 The user interface should be appropriate for a workstation or laptop, that
@@ -40,6 +63,7 @@ Provide a png image if possible.
 ]]></CONTENTS>
 </LIMBA>
 <LIMBA DO='SPECS5' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1' />
+<LIMBA DO='SPECS8' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1' />
 <LIMBA DO='SPECS6' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1' />
 
 
@@ -49,7 +73,11 @@ Provide a png image if possible.
 ~ /home/spr/nextgen/spec05.txt
 ]]></CONTENTS>
 </LIMBA>
-<LIMBA DO='SPECS3' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1' />
+<LIMBA DO='SPECS3' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
+  <CONTENTS><![CDATA[
+~ /home/spr/nextgen/scene01.txt
+]]></CONTENTS>
+</LIMBA>
 <LIMBA DO='SPECS4' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1' >
   <CONTENTS><![CDATA[
 The user interface should be appropriate for a workstation or laptop, that
