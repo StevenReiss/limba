@@ -1013,19 +1013,22 @@ String askOllamaWithRetry(String cmd0,boolean usectx) throws Exception
 
 
 String askOllama(String cmd0,boolean usectx,ChatMemory history,
-      EnumSet<LimbaToolSet> tools,Map<String,?> context,String model,
+      EnumSet<LimbaToolSet> tools,Map<String,Object> context,String model,
       boolean record)
    throws Exception
 {
    long start = System.currentTimeMillis();
    
    String cmd = cmd0;
-   if (user_style != null && cmd != null) {
-      cmd = cmd.replace("$STYLE",user_style);
+   if (user_style != null) {
+      if (context == null) context = new HashMap<>();
+      context.putIfAbsent("STYLE",user_style);
     }
-   if (user_context != null && cmd != null) {
-      cmd = cmd.replace("$CONTEXT",user_context);
+   if (user_context != null) {
+      if (context == null) context = new HashMap<>();
+      context.putIfAbsent("CONTEXT",user_context);
     }
+   cmd = IvyFile.expandText(cmd,context);
    
    if (model == null) model = getModel();
    if (model == null) return null;
@@ -1082,7 +1085,7 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
 
 
 public String askOllamaWithFunctions(String cmd,boolean usectx,
-      ChatMemory history,EnumSet<LimbaToolSet> tools,Map<String,?> context,String model)
+      ChatMemory history,EnumSet<LimbaToolSet> tools,Map<String,Object> context,String model)
    throws Exception
 {
    String send = cmd;
@@ -1464,15 +1467,50 @@ private static final class EmptyContentRetriever implements ContentRetriever {
 
 public static List<String> getJavaCode(String resp)
 {
-   return getCodeType(resp,"java",false);
+   Map<String,List<String>> frags = getCodeFragments(resp,"java");
+   return frags.get("java");
 }
 
 
-static List<String> getPatchCode(String resp)
+public static void outputFragments(IvyXmlWriter xw,String resp)
 {
-   List<String> l1 = getCodeType(resp,"patch",false);
-   List<String> l2 = getCodeType(resp,"diff",false);
-   List<String> l3 = getCodeType(resp,"",false);
+   Map<String,List<String>> frags = getCodeFragments(resp,"java");
+   for (Map.Entry<String,List<String>> ent : frags.entrySet()) {
+      String key = ent.getKey().toUpperCase();
+      switch (key) {
+         case "JAVA" :
+         case "IMAGE" :
+            break;
+         default :
+            continue;
+       }
+      for (String s : ent.getValue()) {
+         xw.cdataElement(key,s);
+       }
+    }
+   Map<String,String> jdocs = getJavaDoc(resp,frags);
+   if (jdocs != null) {
+      for (Map.Entry<String,String> ent : jdocs.entrySet()) {
+         xw.begin("JDOC");
+         xw.field("NAME",ent.getKey());
+         xw.cdata(ent.getValue());
+         xw.end("JDOC");
+       }
+    }
+   List<String> patches = getPatchCode(frags);
+   if (patches != null) {
+      for (String p : patches) {
+         xw.cdataElement("PATCH",p);
+       }
+    }
+}
+
+
+static List<String> getPatchCode(Map<String,List<String>> frags)
+{
+   List<String> l1 = frags.get("patch");
+   List<String> l2 = frags.get("diff");
+   List<String> l3 = frags.get("*");
    
    List<String> rslt = new ArrayList<>();
    if (l1 != null) {
@@ -1490,16 +1528,16 @@ static List<String> getPatchCode(String resp)
 }
 
 
-static List<String> getCodeType(String resp,String find,boolean dflt)
+static Map<String,List<String>> getCodeFragments(String resp,String find)
 {
-   if (resp == null) return null;
-   if (!resp.contains("```")) {
-      if (dflt) return List.of(resp);
-      else return List.of();
+   Map<String,List<String>> rslt = new HashMap<>();
+   
+   if (find != null) {
+      rslt.put(find,new ArrayList<>());
     }
-
-   List<String> base = new ArrayList<>();
-   List<String> rslt = new ArrayList<>();
+  
+   if (resp == null) return rslt;
+   
    int start = 0;
    for ( ; ; ) {
       int idx0 = resp.indexOf("```",start);
@@ -1509,35 +1547,37 @@ static List<String> getCodeType(String resp,String find,boolean dflt)
          break;
        }
       String type = resp.substring(idx0+3,idx1).trim();
-      if (type.isEmpty()) {
+      if (type.isBlank()) {
          idx1 = idx0 + 3;
+         char c = resp.charAt(idx1+1);
+         if (c > 128) {
+            type = "image";
+          }
+         else if (c == '[' || c == '{') {
+            type = "json";
+          }
+         else type = "*";
+         // check for patch/diff result
        }
       else idx1 = idx1+1;
       int idx2 = resp.indexOf("```",idx1);
-//    IvyLog.logD("LIMBA","Check code type `" + type + "' " + dflt + " " + idx2 + 
-//          " " + find + " " + type.equals(find));
       if (idx2 < 0)  {
          break;
        }
       else {
-         if (type.equals(find)) {
-            extractFragments(resp.substring(idx1,idx2),rslt);
+         List<String> ret = rslt.get(type);
+         if (ret == null) {
+            ret = new ArrayList<>();
+            rslt.put(type,ret);
           }
-         else if (type.isEmpty() && dflt) {
-            extractFragments(resp.substring(idx1,idx2),base);
-          }
-        
+         extractFragments(resp.substring(idx1,idx2),ret);
          start = idx2+3;
        }
     }
-
-   if (!base.isEmpty() && rslt.isEmpty() && dflt) {
-      IvyLog.logD("LIMBA","Add default code type " + dflt);
-      rslt = base;
-    }
-
+   
    return rslt;
 }
+
 
 
 private static void extractFragments(String text,List<String> rslt)
@@ -1549,13 +1589,13 @@ private static void extractFragments(String text,List<String> rslt)
 }
 
 
-public static Map<String,String> getJavaDoc(String resp,boolean json)
+public static Map<String,String> getJavaDoc(String resp,Map<String,List<String>> frags)
 {
    Map<String,String> jcodes = null;
-   if (json) jcodes = checkForJson(resp);
+   jcodes = checkForJavaDocJson(frags);
    
    if (jcodes == null) {
-      List<String> jc = getJavaCode(resp);
+      List<String> jc = frags.get("java");
       if (jc != null) {
          jcodes = new LinkedHashMap<>();
          for (int i = 0; i < jc.size(); ++i) {
@@ -1593,11 +1633,14 @@ public static Map<String,String> getJavaDoc(String resp,boolean json)
 
 
 
-private static Map<String,String> checkForJson(String resp)
+private static Map<String,String> checkForJavaDocJson(Map<String,List<String>> frags)
 {
    Map<String,String> jcodes = new LinkedHashMap<>();
    
-   List<String> jsons = getCodeType(resp,"json",true);
+   List<String> jsons = frags.get("json");
+   List<String> other = frags.get("*");
+   if (other != null && jsons == null) jsons = other;
+   else if (other != null) jsons.addAll(other);
    if (jsons == null || jsons.isEmpty()) return null;
   
    for (String resp1 : jsons) {

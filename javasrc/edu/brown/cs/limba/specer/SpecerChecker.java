@@ -262,10 +262,7 @@ private class CheckTypesDefined extends ASTVisitor {
           }
        }
       else if (typ != null && typ.isJavaLangObject()) {
-         System.err.println("CHECK OBJECT");
-         // need to allow Object in equals and other
-         //   generic methods
-   //    uses_object = true;
+         uses_object = true;
        }
     }
    

@@ -22,17 +22,18 @@
 
 package edu.brown.cs.limba.limba;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.http.HttpTimeoutException;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.w3c.dom.Element;
 
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
+import edu.brown.cs.ivy.file.IvyFile;
 import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
 import edu.brown.cs.ivy.xml.IvyXml;
@@ -424,7 +425,7 @@ private class CommandQuery extends CommandBase {
    private String command_name;
    protected String query_text;
    private EnumSet<LimbaToolSet> tool_set;
-   private CommandArgs query_context;
+   protected CommandArgs query_context;
    protected boolean no_history;
    protected boolean no_rag;
    protected String limba_model;
@@ -442,6 +443,19 @@ private class CommandQuery extends CommandBase {
          String k = IvyXml.getAttrString(ctxelt,"KEY");
          String v = IvyXml.getAttrString(ctxelt,"VALUE");
          if (v == null) v = IvyXml.getText(ctxelt);
+         if (v.trim().startsWith("@")) {
+            String fnm = v.trim().substring(1).trim();
+            if (!fnm.isBlank()) {
+               try {               
+                  File f = new File(fnm);
+                  v = IvyFile.loadFile(f);
+                }
+               catch (IOException e) { 
+                  IvyLog.logD("LIMBA","Problem loading context file " + fnm);
+                  v = "";
+                }
+             }
+          }
          if (k != null && v != null) {
             if (query_context == null) {
                query_context = new CommandArgs(k,v);
@@ -499,28 +513,7 @@ private class CommandQuery extends CommandBase {
             history,tool_set,query_context,limba_model);
       
       xw.cdataElement("RESPONSE",resp);
-      List<String> jcodes = LimbaMain.getJavaCode(resp);
-      if (jcodes != null) {
-         for (String jcode : jcodes) {
-            xw.cdataElement("JAVA",jcode);
-          }
-       }
-      Map<String,String> jdoc = LimbaMain.getJavaDoc(resp,false); 
-      if (jdoc != null) {
-         for (Map.Entry<String,String> ent : jdoc.entrySet()) {
-            xw.begin("JAVADOC");
-            xw.field("NAME",ent.getKey());
-            xw.cdata(ent.getValue());
-            xw.end("JAVADOC");
-          }
-       }
-      List<String> patches = LimbaMain.getPatchCode(resp); 
-   
-      if (patches != null) {
-         for (String p : patches) {
-            xw.cdataElement("PATCH",p);
-          }
-       }
+      LimbaMain.outputFragments(xw,resp);
     }
    
 }       // end of inner class CommandQuery
@@ -559,7 +552,7 @@ private class CommandSpec extends CommandQuery {
        } 
       
       SpecerCommand scmd = new SpecerCommand(limba_main,cmd,history,
-            limba_model);
+            query_context,limba_model);
       
       scmd.process(xw);
     }

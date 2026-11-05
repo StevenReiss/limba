@@ -138,6 +138,7 @@ private void process()
                client.getRemoteSocketAddress() + " " + (new Date()));
          Socket relay = new Socket(host_name,host_port);
          relay.setSoTimeout(1000*60*90);
+         client.setSoTimeout(1000*60*90);
          System.err.println("LIMBARELAY: Connected to relay host " + host_name + 
                " " + host_port);
          InputStream clientin = client.getInputStream();

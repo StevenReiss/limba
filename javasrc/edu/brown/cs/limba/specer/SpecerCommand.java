@@ -46,6 +46,7 @@ import java.util.Set;
 
 import dev.langchain4j.memory.ChatMemory;
 import edu.brown.cs.ivy.file.IvyLog;
+import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import edu.brown.cs.limba.limba.LimbaMain;
 import edu.brown.cs.limba.limba.LimbaConstants.LimbaToolSet;
@@ -64,6 +65,7 @@ private LimbaMain       limba_main;
 private String          cmd_contents;
 private ChatMemory      cmd_history;
 private String          limba_model;
+private CommandArgs     query_context;
 
 
 
@@ -74,11 +76,13 @@ private String          limba_model;
 /*                                                                              */
 /********************************************************************************/
 
-public SpecerCommand(LimbaMain lm,String cnts,ChatMemory history,String model)
+public SpecerCommand(LimbaMain lm,String cnts,ChatMemory history,
+      CommandArgs context,String model)
 {
    limba_main = lm;
    cmd_contents = cnts;
    cmd_history = history;
+   query_context = context;
    limba_model = model;
 }
 
@@ -97,7 +101,7 @@ public void process(IvyXmlWriter xw) throws Exception
    for (int i = 0; i < 3; ++i) {
       String resp = limba_main.askOllamaWithFunctions(ask,
             false,cmd_history,
-            EnumSet.noneOf(LimbaToolSet.class),null,
+            EnumSet.noneOf(LimbaToolSet.class),query_context,
             limba_model);
       
       String code = getCode(resp);

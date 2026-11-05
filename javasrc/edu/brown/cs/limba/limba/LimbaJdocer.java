@@ -22,8 +22,6 @@
 
 package edu.brown.cs.limba.limba;
 
-import java.util.Map;
-
 import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.file.IvyLog;
@@ -138,15 +136,7 @@ void process(IvyXmlWriter xw) throws Exception
    IvyLog.logD("LIMBA","Find  " + pbuf.toString());
    
    String resp = limba_main.askOllamaWithRetry(pbuf.toString(),use_context);
-   Map<String,String> jdocs = LimbaMain.getJavaDoc(resp,true); 
-   if (jdocs != null) {
-      for (Map.Entry<String,String> ent : jdocs.entrySet()) {
-         xw.begin("JDOC");
-         xw.field("NAME",ent.getKey());
-         xw.cdata(ent.getValue());
-         xw.end("JDOC");
-       }
-    }
+   LimbaMain.outputFragments(xw,resp);
 }
 
 

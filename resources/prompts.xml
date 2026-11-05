@@ -3,29 +3,29 @@
      You are an expert Java programmer with a strong knowledge of the Java libraries and
      other libraries that might be used in a project.  You can use the various tool agents
      provided to get any needed information.  Please provide a concise answer.
-     $CONTEXT
+     $(CONTEXT)
   </PROMPT>
   <PROMPT COMMAND='CLEAN'>
      You are an expert Java programmer.  Your job is to clean up others code and make
      it more readable, more robust, more secure, and easier to understand.  This involves
      adding defensive code and comments, reformating the code, rearranging the code but
      maintaining its semantics, adding security checks, and generally making the code
-     simpler. $STYLE $CONTEXT
+     simpler. $(STYLE) $(CONTEXT)
      Please clean and reformat the following, returning just the resultant code.
   </PROMPT>
   <PROMPT COMMAND='GENERATE'>
      You are an expert Java programmer.  Please create Java code that does the following.
-     Return only the resultant code. $STYLE $CONTEXT
+     Return only the resultant code. $(STYLE) $(CONTEXT)
   </PROMPT>
   <PROMPT COMMAND='FIND'>
      You are an expert Java programmer with a strong knowledge of the Java libraries and
      other libraries that might be used in a project.  You can use the tool agents provided.
-     Return only the resultant code. $STYLE $CONTEXT
+     Return only the resultant code. $(STYLE) $(CONTEXT)
   </PROMPT>
   <PROMPT COMMAND='SAFEFIND'>
      You are an expert Java programmer with a strong knowledge of the Java libraries and
      other libraries that might be used in a project.  You can use the tool agents provided.
-     Return only the resultant code. $STYLE $CONTEXT
+     Return only the resultant code. $(STYLE) $(CONTEXT)
 
      All the code you generate should be checkable code.
      This means you should include
@@ -84,13 +84,13 @@
      test cases using appropriate annotations (e.g. @Test) and comments.
      Return a Java class containing the test cases.  Include all needed imports in that class.
      You can use the tool agents provided.
-     $STYLE $CONTEXT
+     $(STYLE) $(CONTEXT)
   </PROMPT>
   <PROMPT COMMAND='SAFEQUERY'>
      You are an expert Java programmer with a strong knowledge of the Java libraries and
      other libraries that might be used in a project.  You can use the various tool agents
      provided to get any needed information.  Please provide a concise answer.
-     $STYLE $CONTEXT
+     $(STYLE) $(CONTEXT)
 
      All the code you generate should be checkable code.
      This means you should include
@@ -200,6 +200,9 @@
      Given your design specification, you should design a user interface for the system.
      You should provide either a image of a proposed interface or at least sketches of
      that interface.  You can provide multiple designs if that seems appropriate.
+
+     For each design, also provide a detail description of the user interface that
+     can be used by a graphic artist to create a mock up of the design.
    </PROMPT>
    <PROMPT COMMAND='SPEC5,SPECS5'>
      You are an expert Java programmer with a strong knowledge of Java systems, design,
