@@ -3,8 +3,10 @@
 <!-- <LIMBA DO='SETMODEL' MODEL='qwen3-coder:latest' /> -->
 <!-- <LIMBA DO='SETMODEL' MODEL='qwen3-coder:480b' /> -->
 <!-- <LIMBA DO='SETMODEL' MODEL='devstral-2:latest' /> -->
+<LIMBA DO='SETMODEL' MODEL='ornith-1.5:397b' />
 <LIMBA DO='SETMODEL' MODEL='qwen3.8:27b' />
 <LIMBA DO='SETMODEL' MODEL='qwen3-coder:latest' />
+<LIMBA DO='SETMODEL' MODEL='qwen3.8:27b' />
 <LIMBA DO='TRANSCRIPT' FILE='~/nextgen/limbatrans.html' APPEND='false' />
 <LIMBA DO='SETUPBUBBLES' MINT='limba_tutorial_debug' WORKSPACE='tutorial' />
 <LIMBA DO='PROJECT' />

@@ -148,7 +148,7 @@ private Lock rag_lock;
 private IvyFileLocker workspace_lock;
 
 private static final String SPLIT_PATTERN;
-private static boolean http_log = false;
+private static boolean http_log = true;
 
 static {
    String split = "^\\s*//\\s*Version\\s+\\d+$";
@@ -1062,7 +1062,7 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
             throw e;
           }
        }
-      catch (RuntimeException e) {
+      catch (Throwable e) {
          if (e.getMessage().contains("trying to execute")) {
             if (i != 2) {
                IvyLog.logE("LIMBA","Query failed, will retry",e);
@@ -1071,9 +1071,10 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
                throw e;
              }
           }
-       }
-      catch (Throwable t) {
-         IvyLog.logE("LIMBA","Problem with chained response",t);
+         else {
+            IvyLog.logE("LIMBA","Problem with chained response",e);
+            break;
+          }
        }
     }
    
@@ -1245,7 +1246,12 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
          chat = OllamaChatModel.builder()
             .baseUrl(getUrl())
             .maxRetries(3)
-            .timeout(Duration.ofMinutes(15))
+            .timeout(Duration.ofMinutes(90))
+            .temperature(0.0)
+            .returnThinking(false)
+            .think(false)
+            .numPredict(8192)
+            .numCtx(65536)
             .logRequests(http_log)
             .logResponses(http_log)
             .modelName(model)
@@ -1257,7 +1263,8 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
             .modelName(model)
             .logRequests(http_log)
             .logResponses(http_log)
-            .timeout(Duration.ofMinutes(15))
+            .timeout(Duration.ofMinutes(90))
+            .returnThinking(true)
             .maxRetries(3)
             .build();
          break;
@@ -1268,6 +1275,7 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
             .logRequests(http_log)
             .logResponses(http_log)
             .timeout(Duration.ofMinutes(15))
+            .returnThinking(true)
             .maxRetries(3)
             .build();
          break;
@@ -1278,6 +1286,7 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
             .logRequests(http_log)
             .logResponses(http_log)
             .timeout(Duration.ofMinutes(15))
+            .returnThinking(true)
             .maxRetries(3)
             .allowCodeExecution(true)
             .build();
@@ -1431,17 +1440,24 @@ private interface LimbaChatter {
 }
 
 private interface LimbaAssistant extends LimbaChatter {
+   
+   @dev.langchain4j.service.SystemMessage(
+         "You are an objective tool handler. " +
+         "Do not use thinking mode, do not write a thinking block, and output absolutely no reasoning. " +
+         "Provide your answer directly."
+   )
+   
    String chat(String msg);
 }
 
 private class ChainChatter implements LimbaAssistant {
 
    private ConversationalRetrievalChain ret_chain;
-
+   
    ChainChatter(ConversationalRetrievalChain chain) {
       ret_chain = chain;
     }
-
+   
    @Override public String chat(String msg) {
       return ret_chain.execute(msg);
     }
@@ -1698,7 +1714,7 @@ private boolean startOllama(String hostname,int port,String usehost)
    IvyLog.logD("LIMBA","Starting OLLAMA at " + host);
    try {
       ollama_api = new OllamaAPI(host);
-      ollama_api.setRequestTimeoutSeconds(900L);
+      ollama_api.setRequestTimeoutSeconds(5400L);
       for (int i = 0; i < 5; ++i) {
          boolean ping = ollama_api.ping();
          if (ping) {

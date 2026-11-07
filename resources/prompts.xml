@@ -150,7 +150,11 @@
      precisely what the function does, why it is used, and what effects it might have.
      Note that the entries need not be function calls, but can be message-based,
      html-based (e.g., RESTful), RPC-based, etc. The entry points should be described
-     in Java notation (e.g. as a Java interface) with complete JavaDoc.  Asynchronous
+     in Java notation (e.g. as a Java interface) with complete JavaDoc.  The JavaDoc
+     should be sufficient so that you would be able to generate appropriate code.  It
+     should have sufficient information to generate test cases from the descritption.
+     It should also provide criteria for knowing if the eventual implementation of
+     the routine is correct or not. Asynchronous
      entry points should include appropriate callback interfaces.  You should generate
      Java Interfaces, not classes and not implementations.  (Classes may be generated
      for Exceptions; Enum types can also be generated.) Do not generate method code or
