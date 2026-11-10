@@ -144,6 +144,7 @@ private Set<String> inited_models;
 private String workspace_name;
 private Map<String,LimbaChatter> chat_interfaces;
 private PrintWriter limba_transcript;
+private long   start_time;
 private Lock rag_lock;
 private IvyFileLocker workspace_lock;
 
@@ -172,6 +173,7 @@ private LimbaMain(String [] args)
    log_file = new File(f1,"limba.log");
    log_stderr = false;
    rag_lock = new ReentrantLock();
+   start_time = 0;
    
    File f2 = new File(f1,".bubbles");
    File f3 = new File(f2,"Limba.props");
@@ -770,6 +772,8 @@ private void process()
           }
        }
     }
+   
+   transcriptEnd();
 }
 
 
@@ -786,6 +790,7 @@ void transcriptStart(String nm,boolean append)
    IvyLog.logD("LIMBA","Start transcript " + nm);
    File ft = new File(nm);
    boolean fg = ft.exists() && append;
+   start_time = System.currentTimeMillis();
    try {
       limba_transcript = new PrintWriter(new FileWriter(ft,append),true);
       if (!fg) {
@@ -796,6 +801,14 @@ void transcriptStart(String nm,boolean append)
     }
    catch (IOException e) {
       IvyLog.logE("LIMBA","Can't open transcript file " + ft);
+    }
+}
+
+
+void transcriptEnd()
+{
+   if (limba_transcript != null) {
+      transcriptMessage("Total Time: " + (System.currentTimeMillis()-start_time));
     }
 }
 
@@ -1250,8 +1263,8 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
             .temperature(0.0)
             .returnThinking(false)
             .think(false)
-            .numPredict(8192)
-            .numCtx(65536)
+            .numPredict(-1)             // 8192
+            .numCtx(256000)             // 65536 -- dflt 4986
             .logRequests(http_log)
             .logResponses(http_log)
             .modelName(model)

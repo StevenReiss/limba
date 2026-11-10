@@ -158,6 +158,7 @@ LimbaCommand createCommand(Element xml)
       case "DEBUGREMOVE" :
          return new CommandDebugRemove(xml);
       case "EXIT" :
+         limba_main.transcriptEnd();
          System.exit(0);
     }
    
