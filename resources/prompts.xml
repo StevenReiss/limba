@@ -147,7 +147,8 @@
      made, and their behavior on potential errors (e.g., exceptions).  The documentation
      should be complete enough so that each entry or set of entries can be validated or
      verified and code can be generated for it.  This means that it should describe
-     precisely what the function does, why it is used, and what effects it might have.
+     what the function does, why it is used, and what effects it might have.  These
+     descriptions should be as complete as possible.
      Note that the entries need not be function calls, but can be message-based,
      html-based (e.g., RESTful), RPC-based, etc. The entry points should be described
      in Java notation (e.g. as a Java interface) with complete JavaDoc.  The JavaDoc
@@ -160,8 +161,8 @@
      for Exceptions; Enum types can also be generated.) Do not generate method code or
      field definintions.
 
-     The third part of the design specification is a list of system features.  These
-     should be derived from the requirement.  Each feature should be described in enough
+     The third part of the design specification is a hierarchical list of system features.
+     These should be derived from the requirement.  Each feature should be described in enough
      detail so that it can be understood and test cases can be derived for it.	Moreover,
      there should be a description of how each feature can be implemented given the
      using the various entry points of the software architecture components.
