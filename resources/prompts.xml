@@ -243,7 +243,8 @@
 
      Given the following specification, please provide a list of program features and
      the set of non-functional requirements.   Both of these should be given as
-     a hierarchical outline (I.A.1.a).
+     a hierarchical outline (I.A.1.a).	Each feature should explicitly link back
+     to the requirement items (based on their outline number) that it refers to.
    </PROMPT>
    <PROMPT COMMAND='SPEC8,SPECS8'>
      You are an expert Java programmer with a strong knowledge of Java systems, design,

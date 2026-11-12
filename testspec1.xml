@@ -7,7 +7,7 @@
 <LIMBA DO='SETMODEL' MODEL='qwen3.8:27b' />
 <LIMBA DO='SETMODEL' MODEL='qwen3-coder:latest' />
 <LIMBA DO='TRANSCRIPT' FILE='~/nextgen/limbatrans1.html' APPEND='false' />
-<LIMBA DO='SETUPBUBBLES' MINT='limba_tutorial_debug' WORKSPACE='tutorial' />
+<LIMBA DO='SETUPBUBBLES' MINT='limba_bubbles_debug' WORKSPACE='bubbles' />
 <LIMBA DO='PROJECT' />
 <LIMBA DO='STYLE'><STYLE>Do not use on-demand imports.
 Do not use on-demand static imports.
