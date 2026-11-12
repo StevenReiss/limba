@@ -121,7 +121,8 @@
      items for each of the components and features. Provide enough details so that
      one would not need to refer back to the original description in order to
      construct the system.  Provide enough details so that the requirements
-     specifications can later be checked against the eventual system.
+     specifications can later be checked against the eventual system.  The hierarchical
+     specification should be in outline (I.A.1.a) form.
 
      The system description is :
    </PROMPT>
@@ -166,6 +167,7 @@
      detail so that it can be understood and test cases can be derived for it.	Moreover,
      there should be a description of how each feature can be implemented given the
      using the various entry points of the software architecture components.
+     This should be in outline (I.A.1.a) form.
 
      The fourth part of the design specification is a set of non-functional specifications
      that the software system needs to meet.
@@ -220,6 +222,9 @@
      lacking documentation (i.e., JavaDoc), please add that as well.  Do not provide
      code for the various entry points, instead provide any code-related information in the
      associated JavaDoc.  Again, only provide Interfaces and Enums (except for Exceptions).
+
+     Also be sure that the JavaDoc associated with the various entry points has
+     enough information to create appropriate unit tests.
    </PROMPT>
    <PROMPT COMMAND='SPEC6,SPECS6'>
      You are an expert Java programmer with a strong knowledge of Java systems, design,
@@ -227,20 +232,25 @@
 
      You will eventually want to generate code from your design specification.	Please
      determine what additional information you will need to have in order to do so.
+
+     Be sure to include detailed descriptions of each entry so that appropriate test
+     cases can be generated.  The descriptions should also include enough information
+     to allow verification of the generated code.
    </PROMPT>
    <PROMPT COMMAND='SPEC7,SPECS7'>
      You are an expert Java programmer with a strong knowledge of Java systems, design,
      and requirements specifications.
 
      Given the following specification, please provide a list of program features and
-     the set of non-functional requirements.
+     the set of non-functional requirements.   Both of these should be given as
+     a hierarchical outline (I.A.1.a).
    </PROMPT>
    <PROMPT COMMAND='SPEC8,SPECS8'>
      You are an expert Java programmer with a strong knowledge of Java systems, design,
      and requirements specifications.
 
      Given the design specification you just generated, please provide one or more
-     Junit system tests.  You should also provide approrpriate unit tests.
+     JUnit system tests.  You should also provide approrpriate unit tests.
    </PROMPT>
 
 

@@ -1,0 +1,100 @@
+<LIMBA DO='PING' />
+<LIMBA DO='LIST' />
+<!-- <LIMBA DO='SETMODEL' MODEL='qwen3-coder:latest' /> -->
+<!-- <LIMBA DO='SETMODEL' MODEL='qwen3-coder:480b' /> -->
+<!-- <LIMBA DO='SETMODEL' MODEL='devstral-2:latest' /> -->
+<LIMBA DO='SETMODEL' MODEL='ornith-1.5:397b' />
+<LIMBA DO='SETMODEL' MODEL='qwen3.8:27b' />
+<LIMBA DO='SETMODEL' MODEL='qwen3-coder:latest' />
+<LIMBA DO='TRANSCRIPT' FILE='~/nextgen/limbatrans1.html' APPEND='false' />
+<LIMBA DO='SETUPBUBBLES' MINT='limba_tutorial_debug' WORKSPACE='tutorial' />
+<LIMBA DO='PROJECT' />
+<LIMBA DO='STYLE'><STYLE>Do not use on-demand imports.
+Do not use on-demand static imports.
+Do not use anonymous classes.
+Do not use lambdas.
+Place right brace on a separate line.</STYLE></LIMBA>
+
+
+<LIMBA DO='CLEAR' ID='LIMBA_SPEC_1' />
+<LIMBA DO='SPEC1' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1' >
+  <CONTENTS><![CDATA[
+~ /home/spr/nextgen/foam01.txt
+]]></CONTENTS>
+</LIMBA>
+<LIMBA DO='SPEC2' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1' >
+  <CONTENTS><![CDATA[
+~ /home/spr/nextgen/foam01.txt
+]]></CONTENTS>
+</LIMBA>
+<LIMBA DO='SPEC3' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
+  <CONTENTS><![CDATA[
+~ /home/spr/nextgen/foam01.txt
+]]></CONTENTS>
+</LIMBA>
+<LIMBA DO='SPEC6' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
+  <CONTENTS><![CDATA[
+]]></CONTENTS>
+</LIMBA>
+<LIMBA DO='SPEC7' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
+  <CONTENTS><![CDATA[
+~ /home/spr/nextgen/foam02.txt
+]]></CONTENTS>
+</LIMBA>
+<LIMBA DO='SPEC8' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
+  <CONTENTS><![CDATA[
+]]></CONTENTS>
+</LIMBA>
+
+
+</LIMBA>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
