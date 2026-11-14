@@ -541,12 +541,6 @@ public String getPrompt(String cmd)
        }
     }
    
-   Map<String,String> keymap = getKeyMap(); 
-   if (keymap != null) {
-      base = IvyFile.expandName(base,keymap);
-      ptxt = IvyFile.expandName(ptxt,keymap);
-    }
-   
    if (base == null) return ptxt;
    if (ptxt == null) return base;
    return base + " " + ptxt;
@@ -1032,12 +1026,17 @@ String askOllama(String cmd0,boolean usectx,ChatMemory history,
 {
    long start = System.currentTimeMillis();
    
+   if (key_map != null) {
+      if (context == null) context = new HashMap<>(key_map);
+      else context.putAll(key_map);
+    }
+   
    String cmd = cmd0;
-   if (user_style != null) {
+   if (user_style != null && !user_style.isBlank()) {
       if (context == null) context = new HashMap<>();
       context.putIfAbsent("STYLE",user_style);
     }
-   if (user_context != null) {
+   if (user_context != null && !user_context.isBlank()) {
       if (context == null) context = new HashMap<>();
       context.putIfAbsent("CONTEXT",user_context);
     }

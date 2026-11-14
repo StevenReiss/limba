@@ -13,23 +13,27 @@
 Do not use on-demand static imports.
 Do not use anonymous classes.
 Do not use lambdas.
+Use only a single exception type for the whole system.
 Place right brace on a separate line.</STYLE></LIMBA>
 
 
 <LIMBA DO='CLEAR' ID='LIMBA_SPEC_1' />
 <LIMBA DO='SPEC1' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1' >
   <CONTENTS><![CDATA[
-~ /home/spr/nextgen/foam01.txt
+~ /home/spr/nextgen/foam01.md
 ]]></CONTENTS>
 </LIMBA>
 <LIMBA DO='SPEC2' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1' >
   <CONTENTS><![CDATA[
-~ /home/spr/nextgen/foam01.txt
+~ /home/spr/nextgen/foam01.md
 ]]></CONTENTS>
 </LIMBA>
+
+
+
 <LIMBA DO='SPEC3' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
   <CONTENTS><![CDATA[
-~ /home/spr/nextgen/foam01.txt
+~ /home/spr/nextgen/foam01.md
 ]]></CONTENTS>
 </LIMBA>
 <LIMBA DO='SPEC6' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
@@ -38,7 +42,7 @@ Place right brace on a separate line.</STYLE></LIMBA>
 </LIMBA>
 <LIMBA DO='SPEC7' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
   <CONTENTS><![CDATA[
-~ /home/spr/nextgen/foam02.txt
+~ /home/spr/nextgen/foam02.md
 ]]></CONTENTS>
 </LIMBA>
 <LIMBA DO='SPEC8' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
@@ -46,26 +50,9 @@ Place right brace on a separate line.</STYLE></LIMBA>
 ]]></CONTENTS>
 </LIMBA>
 
+<LIMBA DO='EXIT' />
 
 </LIMBA>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

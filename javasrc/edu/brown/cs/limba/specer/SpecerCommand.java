@@ -62,6 +62,7 @@ public class SpecerCommand implements SpecerConstants
 /********************************************************************************/
 
 private LimbaMain       limba_main;
+private String          cmd_name;
 private String          cmd_contents;
 private ChatMemory      cmd_history;
 private String          limba_model;
@@ -76,10 +77,11 @@ private CommandArgs     query_context;
 /*                                                                              */
 /********************************************************************************/
 
-public SpecerCommand(LimbaMain lm,String cnts,ChatMemory history,
+public SpecerCommand(LimbaMain lm,String cmd,String cnts,ChatMemory history,
       CommandArgs context,String model)
 {
    limba_main = lm;
+   cmd_name = cmd;
    cmd_contents = cnts;
    cmd_history = history;
    query_context = context;
@@ -103,6 +105,11 @@ public void process(IvyXmlWriter xw) throws Exception
             false,cmd_history,
             EnumSet.noneOf(LimbaToolSet.class),query_context,
             limba_model);
+      
+      switch (cmd_name) {
+         case "SPEC1" :
+            return;
+       }
       
       String code = getCode(resp);
       if (code == null) {

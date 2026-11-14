@@ -534,9 +534,9 @@ private class CommandSpec extends CommandQuery {
     }
    
    @Override public void localProcess(IvyXmlWriter xw) throws Exception {
-      String cmd = query_text;
+      String cnts = query_text;
       if (programmer_prompt != null) {
-         cmd = programmer_prompt + "\n\n" + query_text;
+         cnts = programmer_prompt + "\n\n" + query_text;
        }
       
       ChatMemory history = null;
@@ -552,7 +552,8 @@ private class CommandSpec extends CommandQuery {
          IvyLog.logD("LIMBA","Use history " + command_id + " " + history);
        } 
       
-      SpecerCommand scmd = new SpecerCommand(limba_main,cmd,history,
+      SpecerCommand scmd = new SpecerCommand(limba_main,
+            getCommandName(),cnts,history,
             query_context,limba_model);
       
       scmd.process(xw);
