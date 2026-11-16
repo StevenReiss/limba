@@ -213,7 +213,7 @@
      For each design, also provide a detail description of the user interface that
      can be used by a graphic artist to create a mock up of the design.
    </PROMPT>
-   <PROMPT COMMAND='SPEC5,SPECS5'>
+   <PROMPT COMMAND='SPEC5,SPECS5'>  <!-- done internally after spec1 -->
      You are an expert Java programmer with a strong knowledge of Java systems, design,
      and requirements specifications.
 

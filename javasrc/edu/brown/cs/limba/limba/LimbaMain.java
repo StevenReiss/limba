@@ -63,6 +63,7 @@ import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import dev.langchain4j.model.ollama.OllamaChatModel;
+import dev.langchain4j.model.ollama.OllamaChatModel.OllamaChatModelBuilder;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
@@ -1249,13 +1250,17 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
    if (rslt != null) return rslt;
    
    ChatModel chat = null;
+   boolean large = false;
+   if (context != null && context.get("LARGE") != null) {
+      large = true;
+    }
    
    IvyLog.logD("LIMBA","Get chain with " + model_type + " " +
          model + " " + usectx + " " + toolids + " " + key);
    
    switch (model_type) {
       case OLLAMA_MODEL :
-         chat = OllamaChatModel.builder()
+         OllamaChatModelBuilder bldr = OllamaChatModel.builder()
             .baseUrl(getUrl())
             .maxRetries(3)
             .timeout(Duration.ofMinutes(90))
@@ -1266,8 +1271,12 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
             .numCtx(256000)             // 65536 -- dflt 4986
             .logRequests(http_log)
             .logResponses(http_log)
-            .modelName(model)
-            .build();
+            .modelName(model);
+         if (large) {
+            bldr = bldr.numPredict(-1)             // 8192
+               .numCtx(256000);             // 65536 -- dflt 4986
+          }
+         chat = bldr.build();
          break;
       case OPENAI_MODEL :
          chat = OpenAiChatModel.builder()

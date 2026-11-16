@@ -539,6 +539,11 @@ private class CommandSpec extends CommandQuery {
          cnts = programmer_prompt + "\n\n" + query_text;
        }
       
+      if (query_context == null) {
+         query_context = new CommandArgs();
+       }
+      query_context.putIfAbsent("LARGE",true);
+      
       ChatMemory history = null;
       if (command_id != null && !no_history) {
          history = memory_map.get(command_id);

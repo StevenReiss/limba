@@ -19,34 +19,41 @@ Place right brace on a separate line.</STYLE></LIMBA>
 
 <LIMBA DO='CLEAR' ID='LIMBA_SPEC_1' />
 <LIMBA DO='SPEC1' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1' >
+  <CONTEXT KEY='LARGE' VALUE='TRUE' />
   <CONTENTS><![CDATA[
 ~ /home/spr/nextgen/foam01.md
 ]]></CONTENTS>
 </LIMBA>
 <LIMBA DO='SPEC2' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1' >
-  <CONTENTS><![CDATA[
-~ /home/spr/nextgen/foam01.md
-]]></CONTENTS>
-</LIMBA>
-
-
-
-<LIMBA DO='SPEC3' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
-  <CONTENTS><![CDATA[
-~ /home/spr/nextgen/foam01.md
-]]></CONTENTS>
-</LIMBA>
-<LIMBA DO='SPEC6' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
-  <CONTENTS><![CDATA[
-]]></CONTENTS>
-</LIMBA>
-<LIMBA DO='SPEC7' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
+  <CONTEXT KEY='LARGE' VALUE='TRUE' />
   <CONTENTS><![CDATA[
 ~ /home/spr/nextgen/foam02.md
 ]]></CONTENTS>
 </LIMBA>
-<LIMBA DO='SPEC8' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
+<LIMBA DO='SPEC6' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
+  <CONTEXT KEY='LARGE' VALUE='TRUE' />
   <CONTENTS><![CDATA[
+]]></CONTENTS>
+</LIMBA>
+<LIMBA DO='SPEC3' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
+  <CONTEXT KEY='LARGE' VALUE='TRUE' />
+  <CONTENTS><![CDATA[
+]]></CONTENTS>
+</LIMBA>
+<LIMBA DO='SPEC8' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
+  <CONTEXT KEY='LARGE' VALUE='TRUE' />
+  <CONTENTS><![CDATA[
+]]></CONTENTS>
+</LIMBA>
+<LIMBA DO='SPEC4' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
+  <CONTEXT KEY='LARGE' VALUE='TRUE' />
+  <CONTENTS><![CDATA[
+]]></CONTENTS>
+</LIMBA>
+<LIMBA DO='SPEC7' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
+  <CONTEXT KEY='LARGE' VALUE='TRUE' />
+  <CONTENTS><![CDATA[
+~ /home/spr/nextgen/foam02.md
 ]]></CONTENTS>
 </LIMBA>
 
