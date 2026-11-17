@@ -124,6 +124,9 @@
      specifications can later be checked against the eventual system.  The hierarchical
      specification should be in outline (I.A.1.a) form.
 
+     You should make sure that all information in the description is included in the
+     requirements specification as it will be used later for developing the system.
+
      The system description is :
    </PROMPT>
    <PROMPT COMMAND='SPEC2,SPECS2'>
@@ -176,6 +179,17 @@
 
      For Java code, note: $(STYLE)
 
+     The generated output should include explicit links.  That is, each entry point
+     generated should refer to the requirements specification items that it is meant
+     to satisfy (multiple items are possible).
+
+     All this information should be included
+     in the JavaDoc for the entry point or as parenthetical information for the
+     feature.
+
+     For completeness, You should ensure that each functional requirement is linked
+     to by some entry point in the design specification.
+
      The system description is :
    </PROMPT>
    <PROMPT COMMAND='SPEC3,SPECS3'>
@@ -206,7 +220,7 @@
      You are an expert user interface developer with a strong knowledge of what interfaces
      look good, what users want, and how to make a user interface effective and efficient.
 
-     Given your design specification, you should design a user interface for the system.
+     Given the following specification, you should design a user interface for the system.
      You should provide either a image of a proposed interface or at least sketches of
      that interface.  You can provide multiple designs if that seems appropriate.
 
@@ -228,7 +242,9 @@
 
      Also be sure that the JavaDoc associated with the various entry points has
      enough information to create appropriate unit tests.
-   </PROMPT>
+
+     Recall that for Java code, note: $(STYLE)
+  </PROMPT>
    <PROMPT COMMAND='SPEC6,SPECS6'>
      You are an expert Java programmer with a strong knowledge of Java systems, design,
      and requirements specifications.
@@ -239,6 +255,8 @@
      Be sure to include detailed descriptions of each entry so that appropriate test
      cases can be generated.  The descriptions should also include enough information
      to allow verification of the generated code.
+
+     Recall that for Java code, note: $(STYLE)
    </PROMPT>
    <PROMPT COMMAND='SPEC7,SPECS7'>
      You are an expert Java programmer with a strong knowledge of Java systems, design,

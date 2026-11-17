@@ -14,6 +14,7 @@ Do not use on-demand static imports.
 Do not use anonymous classes.
 Do not use lambdas.
 Use only a single exception type for the whole system.
+Use enumerations instead of strings whereever possible,
 Place right brace on a separate line.</STYLE></LIMBA>
 
 
@@ -24,6 +25,10 @@ Place right brace on a separate line.</STYLE></LIMBA>
 ~ /home/spr/nextgen/foam01.md
 ]]></CONTENTS>
 </LIMBA>
+
+<LIMBA DO='EXIT' />
+
+<LIMBA DO='CLEAR' ID='LIMBA_SPEC_1' />
 <LIMBA DO='SPEC2' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1' >
   <CONTEXT KEY='LARGE' VALUE='TRUE' />
   <CONTENTS><![CDATA[
@@ -32,6 +37,7 @@ Place right brace on a separate line.</STYLE></LIMBA>
 </LIMBA>
 <LIMBA DO='SPEC6' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
   <CONTEXT KEY='LARGE' VALUE='TRUE' />
+  <CONTEXT KEY='GENERATE' VALUE='java' />
   <CONTENTS><![CDATA[
 ]]></CONTENTS>
 </LIMBA>
@@ -48,6 +54,7 @@ Place right brace on a separate line.</STYLE></LIMBA>
 <LIMBA DO='SPEC4' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
   <CONTEXT KEY='LARGE' VALUE='TRUE' />
   <CONTENTS><![CDATA[
+~ /home/spr/nextgen/foam02.md
 ]]></CONTENTS>
 </LIMBA>
 <LIMBA DO='SPEC7' TOOLS='' NORAG='true' ID='LIMBA_SPEC_1'>
@@ -60,12 +67,6 @@ Place right brace on a separate line.</STYLE></LIMBA>
 <LIMBA DO='EXIT' />
 
 </LIMBA>
-
-
-
-
-
-
 
 
 

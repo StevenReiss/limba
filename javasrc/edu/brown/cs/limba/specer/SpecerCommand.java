@@ -108,6 +108,10 @@ public void process(IvyXmlWriter xw) throws Exception
       
       switch (cmd_name) {
          case "SPEC1" :
+         case "SPEC3" :
+         case "SPEC4" :
+         case "SPEC7" :
+         case "SPEC8" :
             return;
        }
       

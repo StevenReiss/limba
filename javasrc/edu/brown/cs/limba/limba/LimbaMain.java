@@ -1267,8 +1267,6 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
             .temperature(0.0)
             .returnThinking(false)
             .think(false)
-            .numPredict(-1)             // 8192
-            .numCtx(256000)             // 65536 -- dflt 4986
             .logRequests(http_log)
             .logResponses(http_log)
             .modelName(model);
