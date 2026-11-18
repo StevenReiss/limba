@@ -106,13 +106,21 @@ public void process(IvyXmlWriter xw) throws Exception
             EnumSet.noneOf(LimbaToolSet.class),query_context,
             limba_model);
       
+      boolean llmcheck = false;
       switch (cmd_name) {
          case "SPEC1" :
          case "SPEC3" :
          case "SPEC4" :
          case "SPEC7" :
          case "SPEC8" :
+         case "SPEC9" :
             return;
+         case "SPEC2" :
+            llmcheck = true;
+            break;
+         case "SPEC6" :
+            llmcheck = false;
+            break;
        }
       
       String code = getCode(resp);
@@ -137,10 +145,12 @@ public void process(IvyXmlWriter xw) throws Exception
       
       IvyLog.logD("SPECER","Errors detected: " + errs);
       
-      if (i == 1) errs.clear();
+      if (i == 2) errs.clear();
       
       if (errs.isEmpty()) {
-         code = checkWithLLM(code);
+         if (llmcheck) {
+            code = checkWithLLM(code);
+          }
          xw.begin("SPECIFICATION");
          xw.textElement("CONTENTS",code);
          xw.end("SPECIFICATION");

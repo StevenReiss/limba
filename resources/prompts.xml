@@ -139,7 +139,7 @@
      developer so that they can validate and approve the system before the code is
      actually generated.
 
-     The design specification should consist of several parts.	First it should contain
+     The design specification should consist of two parts.  First it should contain
      an overview describing the purpose and extent of the software system.
 
      Second it should
@@ -165,19 +165,9 @@
      for Exceptions; Enum types can also be generated.) Do not generate method code or
      field definintions.
 
-     The third part of the design specification is a hierarchical list of system features.
-     These should be derived from the requirement.  Each feature should be described in enough
-     detail so that it can be understood and test cases can be derived for it.	Moreover,
-     there should be a description of how each feature can be implemented given the
-     using the various entry points of the software architecture components.
-     This should be in outline (I.A.1.a) form.
+     Be sure to include both parts of the design specification in your response.
 
-     The fourth part of the design specification is a set of non-functional specifications
-     that the software system needs to meet.
-
-     Be sure to include all parts of the design specification in your response.
-
-     For Java code, note: $(STYLE)
+     For the Java code, note: $(STYLE)
 
      The generated output should include explicit links.  That is, each entry point
      generated should refer to the requirements specification items that it is meant
@@ -189,6 +179,8 @@
 
      For completeness, You should ensure that each functional requirement is linked
      to by some entry point in the design specification.
+
+     Make sure there is an interface defined for each core \omponent.
 
      The system description is :
    </PROMPT>
@@ -240,6 +232,10 @@
      associated JavaDoc.  Again, only provide Interfaces and Enums (except for Exceptions).
      Do not provide any Classes other than exceptions.
 
+     Ensure that each functional specification is covered by at least one
+     entry point.  Ensure that the same task is not performed by multiple
+     entry points.
+
      Also be sure that the JavaDoc associated with the various entry points has
      enough information to create appropriate unit tests.
 
@@ -262,9 +258,9 @@
      You are an expert Java programmer with a strong knowledge of Java systems, design,
      and requirements specifications.
 
-     Given the following specification, please provide a list of program features and
-     the set of non-functional requirements.   Both of these should be given as
-     a hierarchical outline (I.A.1.a).	Each feature should explicitly link back
+     Given the following specification, please provide a list of program features.
+     these should be given as
+     a hierarchical outline (1.2.3.4).	Each feature should explicitly link back
      to the requirement items (based on their outline number) that it refers to.
    </PROMPT>
    <PROMPT COMMAND='SPEC8,SPECS8'>
@@ -274,7 +270,33 @@
      Given the design specification you just generated, please provide one or more
      JUnit system tests.  You should also provide approrpriate unit tests.
    </PROMPT>
+   <PROMPT COMMAND='SPEC9,SPECS9'>
+     You are an expert Java programmer with a strong knowledge of Java systems, design,
+     and requirements specifications.
+
+     Given the design specification you just generated and the requirements
+     specification given below, provide a list of any functional requirements
+     that are not referenced by the entry points in the design.
+   </PROMPT>
 
 
 
 </PROMPTS>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

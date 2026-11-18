@@ -897,6 +897,7 @@ private void processXmlFile(Reader fr)
                xw.end("RESULT");
                IvyLog.logD("LIMBA","LIMBA RESULT for " + 
                      cmd.getCommandName() + ": " + xw.toString());
+               System.err.println("DONE command " + cmd.getCommandName());
              }
             catch (Throwable t) {
                IvyLog.logE("LIMBA",
@@ -1244,7 +1245,7 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
    if (toolids == null) {
       toolids = EnumSet.of(LimbaToolSet.PROJECT);
     }
-   String key = getKey(toolids,context,model);
+   String key = getKey(toolids,context,model,mem);
 
    LimbaChatter rslt = chat_interfaces.get(key);
    if (rslt != null) return rslt;
@@ -1272,7 +1273,7 @@ private LimbaChatter getChain(ChatMemory mem,boolean usectx,
             .modelName(model);
          if (large) {
             bldr = bldr.numPredict(-1)             // 8192
-               .numCtx(256000);             // 65536 -- dflt 4986
+               .numCtx(512000);             // 65536 -- dflt 4986
           }
          chat = bldr.build();
          break;
@@ -1435,16 +1436,18 @@ List<Object> getTools(EnumSet<LimbaToolSet> toolids,Map<String,?> context)
 }
 
 
-private String getKey(EnumSet<LimbaToolSet> tools,Map<String,?> context,String model)
+private String getKey(EnumSet<LimbaToolSet> tools,Map<String,?> context,String model,
+      ChatMemory mem)
 {
    String k = "*";
    if (!tools.isEmpty()) {
       k = tools.toString();
     }
    if (tools.contains(LimbaToolSet.DEBUG)) {
-      k += "." + context.get("DEBUGID") + ".";
+      k += "." + context.get("DEBUGID");
     }
-   if (model != null) k += model;
+   if (model != null) k += "." + model;
+   if (mem != null) k += "." + mem.hashCode();
 
    return k;
 }
